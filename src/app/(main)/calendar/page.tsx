@@ -15,6 +15,8 @@ import {
   ChevronRight,
   Download,
   Filter,
+  Lock,
+  LockOpen,
   Power,
   PowerOff,
   ShieldCheck,
@@ -60,9 +62,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE];
 const adminRoles = [ROLES.ADMIN];
+const dayBlockingRoles = [ROLES.ADMIN, ROLES.CALIDAD];
 
 const daysOfWeek = [
   'Lunes',
@@ -90,13 +95,19 @@ export default function CalendarPage() {
     toggleForms,
     weekendsEnabled,
     toggleWeekends,
+    blockedDays,
+    addBlockedDay,
+    removeBlockedDay
   } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
+  const [selectedDateForBlock, setSelectedDateForBlock] = useState<Date | null>(null);
+  const [blockReason, setBlockReason] = useState('');
   const router = useRouter();
 
   const canToggleForms = user && privilegedRoles.includes(user.role);
   const canEnableWeekends = user && adminRoles.includes(user.role);
+  const canBlockDays = user && dayBlockingRoles.includes(user.role);
 
   const inspectionsByDay = useMemo(() => {
     const filteredRecords = mockRecords.filter(
@@ -152,15 +163,42 @@ export default function CalendarPage() {
   };
   
   const handleDateClick = (date: Date) => {
+    const dateKey = format(date, 'yyyy-MM-dd');
+    const isBlocked = blockedDays[dateKey];
     if (isSunday(date) && !weekendsEnabled) return;
+    if (isBlocked && !canBlockDays) return;
+
+    if (canBlockDays && view === 'month') {
+        setSelectedDateForBlock(date);
+        setBlockReason(blockedDays[dateKey]?.reason || '');
+        return;
+    }
     setCurrentDate(date);
     setView('day');
   }
   
   const handleTimeSlotDoubleClick = (date: Date, hour: string) => {
+    const dateKey = format(date, 'yyyy-MM-dd');
+    if (blockedDays[dateKey]) return;
     if (isSunday(date) && !weekendsEnabled) return;
     const url = `/inspections/individual?date=${format(date, 'yyyy-MM-dd')}&time=${hour}`;
     router.push(url);
+  }
+  
+  const handleBlockDay = () => {
+    if (selectedDateForBlock) {
+        addBlockedDay(format(selectedDateForBlock, 'yyyy-MM-dd'), blockReason);
+        setSelectedDateForBlock(null);
+        setBlockReason('');
+    }
+  }
+
+  const handleUnblockDay = () => {
+      if (selectedDateForBlock) {
+          removeBlockedDay(format(selectedDateForBlock, 'yyyy-MM-dd'));
+          setSelectedDateForBlock(null);
+          setBlockReason('');
+      }
   }
   
   const exportToCsv = () => {
@@ -191,29 +229,52 @@ export default function CalendarPage() {
           );
           const dateKey = format(date, 'yyyy-MM-dd');
           const dayInspections = inspectionsByDay[dateKey] || [];
+          const blockedDayInfo = blockedDays[dateKey];
 
-          return (
-            <div
+          const dayCell = (
+             <div
               key={day}
               onClick={() => handleDateClick(date)}
               className={cn(
                 'h-24 rounded-md border p-2 text-sm transition-colors hover:bg-accent/50 cursor-pointer',
                 isSameDay(date, new Date()) && 'bg-accent text-accent-foreground',
-                isSunday(date) &&
-                  !weekendsEnabled &&
-                  'bg-destructive/10 text-destructive cursor-not-allowed hover:bg-destructive/10',
-                isSunday(date) && weekendsEnabled && 'bg-green-100'
+                isSunday(date) && !weekendsEnabled && 'bg-destructive/10 text-destructive cursor-not-allowed hover:bg-destructive/10',
+                isSunday(date) && weekendsEnabled && 'bg-green-100',
+                blockedDayInfo && 'bg-muted-foreground/20 text-muted-foreground cursor-not-allowed hover:bg-muted-foreground/20',
+                canBlockDays && blockedDayInfo && 'cursor-pointer hover:bg-muted-foreground/30',
               )}
             >
               <span>{day}</span>
-              {dayInspections.length > 0 && (
+              {dayInspections.length > 0 && !blockedDayInfo && (
                 <div className="mt-1 rounded-sm bg-primary/20 px-1 py-0.5 text-xs text-primary-foreground">
                   {dayInspections.length}{' '}
                   {dayInspections.length > 1 ? 'Inspecciones' : 'Inspección'}
                 </div>
               )}
+               {blockedDayInfo && (
+                  <div className="mt-1 flex items-center gap-1 rounded-sm bg-destructive/80 px-1 py-0.5 text-xs text-destructive-foreground">
+                     <Lock className="h-3 w-3" />
+                     <span className="truncate">{blockedDayInfo.reason || "Bloqueado"}</span>
+                  </div>
+              )}
             </div>
-          );
+          )
+
+          if (blockedDayInfo) {
+            return (
+              <TooltipProvider key={`tp-${day}`}>
+                <Tooltip>
+                  <TooltipTrigger asChild>{dayCell}</TooltipTrigger>
+                  <TooltipContent>
+                    <p className='font-bold'>Día Bloqueado</p>
+                    <p>{blockedDayInfo.reason}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )
+          }
+
+          return dayCell;
         })}
       </div>
     </>
@@ -263,33 +324,42 @@ export default function CalendarPage() {
         ))}
       </div>
       <div className="grid grid-cols-7 flex-1">
-        {weekDays.map((day) => (
-          <div
-            key={day.toString()}
-            className={cn('border-l relative', isSameDay(day, new Date()) && 'bg-accent/50')}
-          >
-            {hoursOfDay.map((hour) => (
-              <div
-                key={`${day}-${hour}`}
-                onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
-                className={cn(
-                  'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
-                  isSunday(day) &&
-                    !weekendsEnabled &&
-                    'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
-                  isSunday(day) && weekendsEnabled && 'bg-green-100/50'
-                )}
-              >
-                 {renderInspectionsForSlot(day, hour)}
-              </div>
-            ))}
-          </div>
-        ))}
+        {weekDays.map((day) => {
+          const dateKey = format(day, 'yyyy-MM-dd');
+          const isBlocked = !!blockedDays[dateKey];
+          return (
+            <div
+              key={day.toString()}
+              className={cn('border-l relative', 
+                isSameDay(day, new Date()) && 'bg-accent/50',
+                isBlocked && 'bg-muted-foreground/20'
+              )}
+            >
+              {hoursOfDay.map((hour) => (
+                <div
+                  key={`${day}-${hour}`}
+                  onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
+                  className={cn(
+                    'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
+                    isSunday(day) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
+                    isSunday(day) && weekendsEnabled && 'bg-green-100/50',
+                    isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/20'
+                  )}
+                >
+                  {!isBlocked && renderInspectionsForSlot(day, hour)}
+                </div>
+              ))}
+            </div>
+          )
+        })}
       </div>
     </div>
   );
 
-  const renderDayView = () => (
+  const renderDayView = () => {
+    const dateKey = format(currentDate, 'yyyy-MM-dd');
+    const isBlocked = !!blockedDays[dateKey];
+    return (
     <div className="flex border-t">
       <div className="w-16 flex-shrink-0 text-center text-xs">
         {hoursOfDay.map((hour) => (
@@ -305,7 +375,8 @@ export default function CalendarPage() {
         <div
           className={cn(
             'border-l relative',
-            isSameDay(currentDate, new Date()) && 'bg-accent/50'
+            isSameDay(currentDate, new Date()) && 'bg-accent/50',
+            isBlocked && 'bg-muted-foreground/20'
           )}
         >
           {hoursOfDay.map((hour) => (
@@ -314,19 +385,18 @@ export default function CalendarPage() {
               onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
               className={cn(
                 'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
-                isSunday(currentDate) &&
-                  !weekendsEnabled &&
-                  'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
-                isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50'
+                isSunday(currentDate) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
+                isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50',
+                isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/20'
               )}
             >
-              {renderInspectionsForSlot(currentDate, hour)}
+              {!isBlocked && renderInspectionsForSlot(currentDate, hour)}
             </div>
           ))}
         </div>
       </div>
     </div>
-  );
+  )};
 
   return (
     <div className="flex flex-col gap-6">
@@ -421,6 +491,43 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+
+       {canBlockDays && (
+        <Dialog open={!!selectedDateForBlock} onOpenChange={(isOpen) => !isOpen && setSelectedDateForBlock(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Gestionar Bloqueo de Día</DialogTitle>
+                    <DialogDescription>
+                        Bloquea o desbloquea el {selectedDateForBlock && format(selectedDateForBlock, "dd 'de' MMMM, yyyy", { locale: es })}.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label htmlFor="reason">Motivo del bloqueo (ej. Día Feriado)</Label>
+                    <Textarea 
+                        id="reason"
+                        value={blockReason}
+                        onChange={(e) => setBlockReason(e.target.value)}
+                        placeholder="Añade una nota..."
+                        className="mt-2"
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => setSelectedDateForBlock(null)}>Cancelar</Button>
+                     {blockedDays[selectedDateForBlock ? format(selectedDateForBlock, 'yyyy-MM-dd') : ''] ? (
+                        <Button variant="outline" onClick={handleUnblockDay} className="text-green-600 border-green-600 hover:bg-green-100 hover:text-green-700">
+                            <LockOpen className="mr-2 h-4 w-4" />
+                            Desbloquear Día
+                        </Button>
+                     ) : (
+                        <Button variant="destructive" onClick={handleBlockDay}>
+                            <Lock className="mr-2 h-4 w-4" />
+                            Bloquear Día
+                        </Button>
+                     )}
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+      )}
 
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-y-2">

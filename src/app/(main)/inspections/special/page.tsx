@@ -72,7 +72,7 @@ const inspectionTypes = [
 
 export default function SpecialInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled } = useAppContext();
+  const { user, weekendsEnabled, blockedDays } = useAppContext();
   const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -412,6 +412,8 @@ export default function SpecialInspectionPage() {
                            selected={field.value} 
                            onSelect={field.onChange} 
                            disabled={(date) => {
+                            const dateKey = format(date, 'yyyy-MM-dd');
+                            if (blockedDays[dateKey]) return true;
                             if (isSunday(date) && !weekendsEnabled) return true;
                             return date < new Date(new Date().setDate(new Date().getDate() - 1));
                           }}

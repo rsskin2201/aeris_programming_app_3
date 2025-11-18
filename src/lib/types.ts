@@ -45,3 +45,7 @@ export type ModuleInfo = {
   path: string;
   icon: React.ElementType;
 };
+
+export type BlockedDay = {
+    reason: string;
+}

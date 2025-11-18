@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback } from 'react';
-import type { User, Role, Zone } from '@/lib/types';
+import type { User, Role, Zone, BlockedDay } from '@/lib/types';
 import { ROLES, ZONES } from '@/lib/types';
 import { mockUsers } from '@/lib/mock-data';
 
@@ -13,6 +13,7 @@ interface AppContextType {
   isZoneConfirmed: boolean;
   formsEnabled: boolean;
   weekendsEnabled: boolean;
+  blockedDays: Record<string, BlockedDay>;
   login: (username: string, operatorName?: string) => User | null;
   logout: () => void;
   setZone: (zone: Zone) => void;
@@ -20,6 +21,8 @@ interface AppContextType {
   confirmZone: (zone: Zone) => void;
   toggleForms: () => void;
   toggleWeekends: () => void;
+  addBlockedDay: (date: string, reason: string) => void;
+  removeBlockedDay: (date: string) => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -31,6 +34,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isZoneConfirmed, setIsZoneConfirmed] = useState(false);
   const [formsEnabled, setFormsEnabled] = useState(true);
   const [weekendsEnabled, setWeekendsEnabled] = useState(false);
+  const [blockedDays, setBlockedDays] = useState<Record<string, BlockedDay>>({
+      "2024-09-16": { reason: "Día de la Independencia" },
+      "2024-11-18": { reason: "Revolución Mexicana" },
+  });
 
 
   const login = (username: string, opName?: string): User | null => {
@@ -80,6 +87,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWeekendsEnabled(prev => !prev);
   }, []);
 
+  const addBlockedDay = useCallback((date: string, reason: string) => {
+    setBlockedDays(prev => ({ ...prev, [date]: { reason } }));
+  }, []);
+
+  const removeBlockedDay = useCallback((date: string) => {
+    setBlockedDays(prev => {
+        const newBlockedDays = { ...prev };
+        delete newBlockedDays[date];
+        return newBlockedDays;
+    });
+  }, []);
+
 
   const contextValue = useMemo(
     () => ({
@@ -89,6 +108,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isZoneConfirmed,
       formsEnabled,
       weekendsEnabled,
+      blockedDays,
       login,
       logout,
       setZone,
@@ -96,8 +116,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       confirmZone,
       toggleForms,
       toggleWeekends,
+      addBlockedDay,
+      removeBlockedDay,
     }),
-    [user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, confirmZone, toggleForms, toggleWeekends]
+    [user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay]
   );
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

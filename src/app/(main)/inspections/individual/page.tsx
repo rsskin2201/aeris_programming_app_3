@@ -59,7 +59,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
-  const { user, zone, weekendsEnabled } = useAppContext();
+  const { user, zone, weekendsEnabled, blockedDays } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(false);
@@ -407,6 +407,8 @@ export default function IndividualInspectionPage() {
                           selected={field.value} 
                           onSelect={field.onChange} 
                           disabled={(date) => {
+                            const dateKey = format(date, 'yyyy-MM-dd');
+                            if (blockedDays[dateKey]) return true;
                             if (isSunday(date) && !weekendsEnabled) return true;
                             return date < new Date(new Date().setDate(new Date().getDate() - 1));
                           }}
