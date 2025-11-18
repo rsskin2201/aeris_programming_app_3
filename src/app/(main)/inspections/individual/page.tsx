@@ -358,18 +358,13 @@ export default function IndividualInspectionPage() {
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="horarioProgramacion" render={({ field }) => (
-                   <FormItem>
-                    <FormLabel>Horario Programación</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un horario" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        <SelectItem value="9:00 - 13:00">9:00 - 13:00 hrs</SelectItem>
-                        <SelectItem value="13:00 - 18:00">13:00 - 18:00 hrs</SelectItem>
-                        <SelectItem value="Abierto">Abierto</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+                    <FormItem>
+                        <FormLabel>Horario Programación</FormLabel>
+                        <FormControl>
+                            <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
                 )} />
                 <FormField control={form.control} name="gestor" render={({ field }) => (
                   <FormItem>
@@ -421,3 +416,5 @@ export default function IndividualInspectionPage() {
     </div>
   );
 }
+
+    
