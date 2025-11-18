@@ -11,11 +11,13 @@ interface AppContextType {
   operatorName: string | null;
   zone: Zone;
   isZoneConfirmed: boolean;
+  formsEnabled: boolean;
   login: (username: string, operatorName?: string) => User | null;
   logout: () => void;
   setZone: (zone: Zone) => void;
   switchRole: (role: Role) => void;
   confirmZone: (zone: Zone) => void;
+  toggleForms: () => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -25,6 +27,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [operatorName, setOperatorName] = useState<string | null>(null);
   const [zone, setZone] = useState<Zone>(ZONES[0]);
   const [isZoneConfirmed, setIsZoneConfirmed] = useState(false);
+  const [formsEnabled, setFormsEnabled] = useState(true);
 
 
   const login = (username: string, opName?: string): User | null => {
@@ -32,7 +35,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     const userToLogin = foundUser || (() => {
         const roleKey = Object.keys(ROLES).find(key => ROLES[key as keyof typeof ROLES].toLowerCase().split(' ')[0] === username.toLowerCase());
-        return roleKey ? mockUsers.find(u => u.role === ROLES[roleKey as keyof typeof ROLES]) : undefined;
+        return roleKey ? mockUsers.find(u => u.role === ROLES[key as keyof typeof ROLES]) : undefined;
     })();
 
     if (userToLogin) {
@@ -66,19 +69,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsZoneConfirmed(true);
   }, []);
 
+  const toggleForms = useCallback(() => {
+    setFormsEnabled(prev => !prev);
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       user,
       operatorName,
       zone,
       isZoneConfirmed,
+      formsEnabled,
       login,
       logout,
       setZone,
       switchRole,
       confirmZone,
+      toggleForms,
     }),
-    [user, operatorName, zone, isZoneConfirmed, confirmZone]
+    [user, operatorName, zone, isZoneConfirmed, formsEnabled, confirmZone, toggleForms]
   );
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

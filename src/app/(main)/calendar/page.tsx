@@ -7,13 +7,17 @@ import { useMemo, useState } from "react";
 import { useAppContext } from "@/hooks/use-app-context";
 import { mockRecords } from "@/lib/mock-data";
 import { format, getDate, parseISO } from 'date-fns';
+import { ROLES } from "@/lib/types";
 
 const daysOfWeek = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const daysInMonth = Array.from({ length: 31 }, (_, i) => i + 1);
 
+const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE];
+
 export default function CalendarPage() {
-  const [formsActive, setFormsActive] = useState(true);
-  const { zone } = useAppContext();
+  const { user, zone, formsEnabled, toggleForms } = useAppContext();
+
+  const canToggleForms = user && privilegedRoles.includes(user.role);
 
   const inspectionsByDay = useMemo(() => {
     const filteredRecords = mockRecords.filter(record => zone === 'Todas las zonas' || record.zone === zone);
@@ -36,10 +40,12 @@ export default function CalendarPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filtros</Button>
           <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Exportar .csv</Button>
-          <Button variant={formsActive ? "destructive" : "secondary"} onClick={() => setFormsActive(!formsActive)}>
-            {formsActive ? <PowerOff className="mr-2 h-4 w-4" /> : <Power className="mr-2 h-4 w-4" />}
-            {formsActive ? 'Desactivar Formularios' : 'Activar Formularios'}
-          </Button>
+          {canToggleForms && (
+            <Button variant={formsEnabled ? "destructive" : "secondary"} onClick={toggleForms}>
+              {formsEnabled ? <PowerOff className="mr-2 h-4 w-4" /> : <Power className="mr-2 h-4 w-4" />}
+              {formsEnabled ? 'Deshabilitar Formularios' : 'Habilitar Formularios'}
+            </Button>
+          )}
         </div>
       </div>
 
