@@ -56,12 +56,14 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
   }, [manager, defaultValues, form]);
   
   const { isSubmitting } = form.formState;
+  
+  const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    field.onChange(e.target.value.toUpperCase());
+  }
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log({
         ...values,
-        name: values.name.toUpperCase(),
-        subAssignment: values.subAssignment.toUpperCase(),
         fecha_alta: isEditMode ? manager?.createdAt : format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
         usuario_alta: isEditMode ? 'N/A (edición)' : user?.username,
         fecha_mod: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
@@ -122,7 +124,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
                     <Input 
                         {...field} 
                         placeholder="Nombre completo" 
-                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        onChange={(e) => handleUpperCase(e, field)}
                     />
                 </FormControl>
                 <FormMessage />
@@ -169,7 +171,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
                         <Input
                                 {...field}
                                 placeholder="Ej: Sector Residencial"
-                                onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                onChange={(e) => handleUpperCase(e, field)}
                         />
                     </FormControl>
                     <FormMessage />

@@ -53,11 +53,13 @@ export function QualityControlCompanyForm({ company, onClose }: QualityControlCo
   
   const { isSubmitting } = form.formState;
 
+  const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    field.onChange(e.target.value.toUpperCase());
+  }
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log({
         ...values,
-        name: values.name.toUpperCase(),
-        rfc: values.rfc.toUpperCase(),
         fecha_alta: isEditMode ? company?.created_at : format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
         usuario_alta: isEditMode ? 'N/A (edición)' : user?.username,
         fecha_mod: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
@@ -118,7 +120,7 @@ export function QualityControlCompanyForm({ company, onClose }: QualityControlCo
                     <Input 
                         {...field} 
                         placeholder="Razón Social Completa" 
-                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        onChange={(e) => handleUpperCase(e, field)}
                     />
                 </FormControl>
                 <FormMessage />
@@ -132,7 +134,7 @@ export function QualityControlCompanyForm({ company, onClose }: QualityControlCo
                         <Input
                              {...field}
                              placeholder="Registro Federal de Contribuyentes"
-                             onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                             onChange={(e) => handleUpperCase(e, field)}
                              maxLength={13}
                         />
                     </FormControl>

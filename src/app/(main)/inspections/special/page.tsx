@@ -6,7 +6,7 @@ import * as z from "zod";
 import { CalendarIcon, ChevronLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { format, isSunday } from "date-fns";
 import { es } from 'date-fns/locale';
 
 import { cn } from "@/lib/utils";
@@ -68,7 +68,7 @@ const inspectionTypes = [
 
 export default function SpecialInspectionPage() {
   const { toast } = useToast();
-  const { user, zone } = useAppContext();
+  const { user, zone, weekendsEnabled } = useAppContext();
   const router = useRouter();
 
   const getInitialStatus = (role: Role | undefined) => {
@@ -311,7 +311,7 @@ export default function SpecialInspectionPage() {
                 <FormField control={form.control} name="oferta" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Oferta/Campaña (Opcional)</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
+                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -361,7 +361,15 @@ export default function SpecialInspectionPage() {
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))} initialFocus />
+                         <Calendar 
+                           mode="single" 
+                           selected={field.value} 
+                           onSelect={field.onChange} 
+                           disabled={(date) => {
+                            if (isSunday(date) && !weekendsEnabled) return true;
+                            return date < new Date(new Date().setDate(new Date().getDate() - 1));
+                          }}
+                           initialFocus />
                       </PopoverContent>
                     </Popover>
                     <FormMessage />

@@ -57,12 +57,13 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
   
   const { isSubmitting } = form.formState;
 
+  const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    field.onChange(e.target.value.toUpperCase());
+  }
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log({
         ...values,
-        subAssignment: values.subAssignment.toUpperCase(),
-        sector: values.sector.toUpperCase(),
-        sectorKey: values.sectorKey.toUpperCase(),
         fecha_alta: isEditMode ? sector?.createdAt : format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
         usuario_alta: isEditMode ? 'N/A (edición)' : user?.username,
         fecha_mod: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
@@ -151,7 +152,7 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
                         <Input
                             {...field}
                             placeholder="Ej. Residencial Santa Fe"
-                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                            onChange={(e) => handleUpperCase(e, field)}
                         />
                     </FormControl>
                     <FormMessage />
@@ -166,7 +167,7 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
                             <Input
                                 {...field}
                                 placeholder="Ej. Santa Fe"
-                                onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                onChange={(e) => handleUpperCase(e, field)}
                             />
                         </FormControl>
                         <FormMessage />
@@ -179,7 +180,7 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
                             <Input
                                 {...field}
                                 placeholder="Ej. SF01"
-                                onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                onChange={(e) => handleUpperCase(e, field)}
                             />
                         </FormControl>
                         <FormMessage />

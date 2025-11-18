@@ -12,12 +12,14 @@ interface AppContextType {
   zone: Zone;
   isZoneConfirmed: boolean;
   formsEnabled: boolean;
+  weekendsEnabled: boolean;
   login: (username: string, operatorName?: string) => User | null;
   logout: () => void;
   setZone: (zone: Zone) => void;
   switchRole: (role: Role) => void;
   confirmZone: (zone: Zone) => void;
   toggleForms: () => void;
+  toggleWeekends: () => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -28,6 +30,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [zone, setZone] = useState<Zone>(ZONES[0]);
   const [isZoneConfirmed, setIsZoneConfirmed] = useState(false);
   const [formsEnabled, setFormsEnabled] = useState(true);
+  const [weekendsEnabled, setWeekendsEnabled] = useState(false);
 
 
   const login = (username: string, opName?: string): User | null => {
@@ -72,6 +75,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toggleForms = useCallback(() => {
     setFormsEnabled(prev => !prev);
   }, []);
+  
+  const toggleWeekends = useCallback(() => {
+    setWeekendsEnabled(prev => !prev);
+  }, []);
+
 
   const contextValue = useMemo(
     () => ({
@@ -80,14 +88,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       zone,
       isZoneConfirmed,
       formsEnabled,
+      weekendsEnabled,
       login,
       logout,
       setZone,
       switchRole,
       confirmZone,
       toggleForms,
+      toggleWeekends,
     }),
-    [user, operatorName, zone, isZoneConfirmed, formsEnabled, confirmZone, toggleForms]
+    [user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, confirmZone, toggleForms, toggleWeekends]
   );
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

@@ -67,10 +67,13 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
   
   const { isSubmitting } = form.formState;
 
+  const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    field.onChange(e.target.value.toUpperCase());
+  }
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log({
         ...values,
-        name: values.name.toUpperCase(),
         certStartDate: format(values.certStartDate, 'yyyy-MM-dd'),
         certEndDate: format(values.certEndDate, 'yyyy-MM-dd'),
         fecha_alta: isEditMode ? installer?.createdAt : format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
@@ -133,7 +136,7 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
                     <Input 
                         {...field} 
                         placeholder="Nombre completo" 
-                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        onChange={(e) => handleUpperCase(e, field)}
                     />
                 </FormControl>
                 <FormMessage />
@@ -225,7 +228,7 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
            )}
 
           <DialogFooter className="pt-4">
-            <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
+            <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Guardar</Button>
             <DialogClose asChild>
                 <Button type="button" variant="outline">Cancelar</Button>
             </DialogClose>
