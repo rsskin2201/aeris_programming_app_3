@@ -21,7 +21,7 @@ import {
   PowerOff,
   ShieldCheck,
   ShieldOff,
-  CalendarLock,
+  CalendarClock,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
@@ -553,7 +553,7 @@ export default function CalendarPage() {
           <div className='flex items-center gap-2'>
             {canBlockDays && (
               <Button variant="outline" onClick={openBlockDialog}>
-                <CalendarLock className="mr-2 h-4 w-4" />
+                <CalendarClock className="mr-2 h-4 w-4" />
                 Gestionar Bloqueo
               </Button>
             )}
