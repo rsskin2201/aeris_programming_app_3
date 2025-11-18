@@ -90,11 +90,14 @@ export default function Header() {
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold md:text-base text-primary">
           <Icons.logo className="h-8 w-8" />
-          <span>AERIS</span>
+          <span className="font-headline text-xl">AERIS</span>
         </Link>
-        <Link href="/" className={`transition-colors hover:text-foreground ${pathname === '/' ? 'text-foreground' : 'text-muted-foreground'}`}>
-          Panel Principal
-        </Link>
+        <Button asChild variant={pathname === '/' ? 'secondary' : 'ghost'} size="sm">
+            <Link href="/">
+                <Home className="mr-2 h-4 w-4" />
+                Panel Principal
+            </Link>
+        </Button>
       </nav>
 
        <Sheet>
@@ -112,11 +115,14 @@ export default function Header() {
           <nav className="grid gap-6 text-lg font-medium">
              <Link href="/" className="flex items-center gap-2 text-lg font-bold text-primary">
               <Icons.logo className="h-8 w-8" />
-              <span>AERIS</span>
+              <span className="font-headline text-xl">AERIS</span>
             </Link>
-            <Link href="/" className={`transition-colors hover:text-foreground ${pathname === '/' ? 'text-foreground' : 'text-muted-foreground'}`}>
-              Panel Principal
-            </Link>
+            <Button asChild variant={pathname === '/' ? 'secondary' : 'ghost'}>
+                <Link href="/">
+                    <Home className="mr-2 h-4 w-4" />
+                    Panel Principal
+                </Link>
+            </Button>
           </nav>
         </SheetContent>
       </Sheet>
