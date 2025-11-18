@@ -23,11 +23,9 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import {
   HelpCircle,
   Home,
-  Search,
   ChevronDown,
   User as UserIcon,
   Globe,
@@ -39,7 +37,6 @@ import {
   Users,
   LogOut,
   Menu,
-  Mail,
   Copy,
   Clock,
 } from 'lucide-react';
@@ -54,9 +51,6 @@ import { Icons } from '../icons';
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import {
@@ -86,17 +80,6 @@ export default function Header() {
 
   if (!user) return null;
 
-  const userPermissions = PERMISSIONS[user.role] || [];
-  const visibleModules = Object.values(MODULES).filter(m => userPermissions.includes(m));
-
-  const pathSegments = pathname.split('/').filter(Boolean);
-  const breadcrumbs = pathSegments.map((segment, index) => {
-    const href = '/' + pathSegments.slice(0, index + 1).join('/');
-    const isLast = index === pathSegments.length - 1;
-    const name = segment.charAt(0).toUpperCase() + segment.slice(1);
-    return { href, name, isLast };
-  });
-  
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: 'Copiado', description: 'El correo electrónico se ha copiado al portapapeles.' });
@@ -105,9 +88,9 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold md:text-base text-primary">
+        <Link href="/" className="flex items-center gap-2 text-lg font-bold md:text-base text-primary">
           <Icons.logo className="h-8 w-8" />
-          <span className="sr-only">AERIS</span>
+          <span>AERIS</span>
         </Link>
         <Link href="/" className={`transition-colors hover:text-foreground ${pathname === '/' ? 'text-foreground' : 'text-muted-foreground'}`}>
           Panel Principal
@@ -127,103 +110,95 @@ export default function Header() {
         </SheetTrigger>
         <SheetContent side="left">
           <nav className="grid gap-6 text-lg font-medium">
-             <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-primary">
+             <Link href="/" className="flex items-center gap-2 text-lg font-bold text-primary">
               <Icons.logo className="h-8 w-8" />
               <span>AERIS</span>
             </Link>
-            <Link href="/" className={pathname === '/' ? 'text-foreground' : 'text-muted-foreground'}>
+            <Link href="/" className={`transition-colors hover:text-foreground ${pathname === '/' ? 'text-foreground' : 'text-muted-foreground'}`}>
               Panel Principal
             </Link>
-            {/* You can add more mobile links here if needed */}
           </nav>
         </SheetContent>
       </Sheet>
 
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-        <div className="relative ml-auto flex-1 md:grow-0">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar..."
-            className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
-          />
-        </div>
+        <div className="ml-auto flex items-center gap-2">
+            <Badge variant="outline" className="hidden lg:inline-flex">
+            Ambiente: Producción
+            </Badge>
 
-        <Badge variant="outline" className="hidden lg:inline-flex">
-          Ambiente: Producción
-        </Badge>
-
-        <ZoneSelector />
-        
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9">
-                    <HelpCircle className="h-4 w-4" />
-                    <span className="sr-only">Soporte</span>
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Soporte Técnico</DialogTitle>
-                    <DialogDescription>
-                        Para dudas o aclaraciones, contacta al administrador.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between rounded-md border bg-muted px-3 py-2">
-                        <a href="mailto:jorge.ricardo.seichi.gonzalez.garcia@nttdata.com" className="truncate text-sm font-medium text-primary hover:underline">
-                            jorge.ricardo.seichi.gonzalez.garcia@nttdata.com
-                        </a>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy('jorge.ricardo.seichi.gonzalez.garcia@nttdata.com')}>
-                            <Copy className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <div>
-                        <h4 className="mb-2 font-medium text-sm">Horarios de Atención</h4>
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                            <p className="flex items-center"><Clock className="mr-2 h-4 w-4" /> Lunes a Viernes: 09:00 a.m. - 06:00 p.m.</p>
-                            <p className="flex items-center"><Clock className="mr-2 h-4 w-4" /> Sábados: 09:00 a.m. - 01:00 p.m.</p>
+            <ZoneSelector />
+            
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-9 w-9">
+                        <HelpCircle className="h-4 w-4" />
+                        <span className="sr-only">Soporte</span>
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Soporte Técnico</DialogTitle>
+                        <DialogDescription>
+                            Para dudas o aclaraciones, contacta al administrador.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between rounded-md border bg-muted px-3 py-2">
+                            <a href="mailto:jorge.ricardo.seichi.gonzalez.garcia@nttdata.com" className="truncate text-sm font-medium text-primary hover:underline">
+                                jorge.ricardo.seichi.gonzalez.garcia@nttdata.com
+                            </a>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy('jorge.ricardo.seichi.gonzalez.garcia@nttdata.com')}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div>
+                            <h4 className="mb-2 font-medium text-sm">Horarios de Atención</h4>
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                                <p className="flex items-center"><Clock className="mr-2 h-4 w-4" /> Lunes a Viernes: 09:00 a.m. - 06:00 p.m.</p>
+                                <p className="flex items-center"><Clock className="mr-2 h-4 w-4" /> Sábados: 09:00 a.m. - 01:00 p.m.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+                </DialogContent>
+            </Dialog>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="flex h-9 items-center gap-2"
-            >
-              <UserIcon className="h-4 w-4" />
-              <span className="hidden md:inline">{user?.name}</span>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Mi Cuenta ({user.role})</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Cambiar Rol (Demo)</DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                      <DropdownMenuRadioGroup value={user?.role} onValueChange={(value) => switchRole(value as any)}>
-                          {Object.values(ROLES).map((role) => (
-                              <DropdownMenuRadioItem key={role} value={role}>
-                                  {role}
-                              </DropdownMenuRadioItem>
-                          ))}
-                      </DropdownMenuRadioGroup>
-                  </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Cerrar sesión</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                variant="outline"
+                className="flex h-9 items-center gap-2"
+                >
+                <UserIcon className="h-4 w-4" />
+                <span className="hidden md:inline">{user?.name}</span>
+                <ChevronDown className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Mi Cuenta ({user.role})</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Cambiar Rol (Demo)</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                        <DropdownMenuRadioGroup value={user?.role} onValueChange={(value) => switchRole(value as any)}>
+                            {Object.values(ROLES).map((role) => (
+                                <DropdownMenuRadioItem key={role} value={role}>
+                                    {role}
+                                </DropdownMenuRadioItem>
+                            ))}
+                        </DropdownMenuRadioGroup>
+                    </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Cerrar sesión</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
       </div>
     </header>
   );
