@@ -21,6 +21,7 @@ import {
   PowerOff,
   ShieldCheck,
   ShieldOff,
+  CalendarLock,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
@@ -67,7 +68,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE];
 const adminRoles = [ROLES.ADMIN];
-const dayBlockingRoles = [ROLES.ADMIN, ROLES.CALIDAD];
+const dayBlockingRoles = [ROLES.ADMIN, ROLES.CALIDAD, 'Empresa Control de Calidad'];
 
 const daysOfWeek = [
   'Lunes',
@@ -101,7 +102,7 @@ export default function CalendarPage() {
   } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
-  const [selectedDateForBlock, setSelectedDateForBlock] = useState<Date | null>(null);
+  const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
   const [blockReason, setBlockReason] = useState('');
   const router = useRouter();
 
@@ -166,13 +167,7 @@ export default function CalendarPage() {
     const dateKey = format(date, 'yyyy-MM-dd');
     const isBlocked = blockedDays[dateKey];
     if (isSunday(date) && !weekendsEnabled) return;
-    if (isBlocked && !canBlockDays) return;
 
-    if (canBlockDays && view === 'month') {
-        setSelectedDateForBlock(date);
-        setBlockReason(blockedDays[dateKey]?.reason || '');
-        return;
-    }
     setCurrentDate(date);
     setView('day');
   }
@@ -184,21 +179,23 @@ export default function CalendarPage() {
     const url = `/inspections/individual?date=${format(date, 'yyyy-MM-dd')}&time=${hour}`;
     router.push(url);
   }
+
+  const openBlockDialog = () => {
+    const dateKey = format(currentDate, 'yyyy-MM-dd');
+    setBlockReason(blockedDays[dateKey]?.reason || '');
+    setIsBlockDialogOpen(true);
+  }
   
   const handleBlockDay = () => {
-    if (selectedDateForBlock) {
-        addBlockedDay(format(selectedDateForBlock, 'yyyy-MM-dd'), blockReason);
-        setSelectedDateForBlock(null);
-        setBlockReason('');
-    }
+    addBlockedDay(format(currentDate, 'yyyy-MM-dd'), blockReason);
+    setIsBlockDialogOpen(false);
+    setBlockReason('');
   }
 
   const handleUnblockDay = () => {
-      if (selectedDateForBlock) {
-          removeBlockedDay(format(selectedDateForBlock, 'yyyy-MM-dd'));
-          setSelectedDateForBlock(null);
-          setBlockReason('');
-      }
+    removeBlockedDay(format(currentDate, 'yyyy-MM-dd'));
+    setIsBlockDialogOpen(false);
+    setBlockReason('');
   }
   
   const exportToCsv = () => {
@@ -241,7 +238,6 @@ export default function CalendarPage() {
                 isSunday(date) && !weekendsEnabled && 'bg-destructive/10 text-destructive cursor-not-allowed hover:bg-destructive/10',
                 isSunday(date) && weekendsEnabled && 'bg-green-100',
                 blockedDayInfo && 'bg-muted-foreground/20 text-muted-foreground cursor-not-allowed hover:bg-muted-foreground/20',
-                canBlockDays && blockedDayInfo && 'cursor-pointer hover:bg-muted-foreground/30',
               )}
             >
               <span>{day}</span>
@@ -493,12 +489,12 @@ export default function CalendarPage() {
       </div>
 
        {canBlockDays && (
-        <Dialog open={!!selectedDateForBlock} onOpenChange={(isOpen) => !isOpen && setSelectedDateForBlock(null)}>
+        <Dialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Gestionar Bloqueo de Día</DialogTitle>
                     <DialogDescription>
-                        Bloquea o desbloquea el {selectedDateForBlock && format(selectedDateForBlock, "dd 'de' MMMM, yyyy", { locale: es })}.
+                        Bloquea o desbloquea el {format(currentDate, "dd 'de' MMMM, yyyy", { locale: es })}.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
@@ -512,8 +508,8 @@ export default function CalendarPage() {
                     />
                 </div>
                 <DialogFooter>
-                    <Button variant="ghost" onClick={() => setSelectedDateForBlock(null)}>Cancelar</Button>
-                     {blockedDays[selectedDateForBlock ? format(selectedDateForBlock, 'yyyy-MM-dd') : ''] ? (
+                    <Button variant="ghost" onClick={() => setIsBlockDialogOpen(false)}>Cancelar</Button>
+                     {blockedDays[format(currentDate, 'yyyy-MM-dd')] ? (
                         <Button variant="outline" onClick={handleUnblockDay} className="text-green-600 border-green-600 hover:bg-green-100 hover:text-green-700">
                             <LockOpen className="mr-2 h-4 w-4" />
                             Desbloquear Día
@@ -554,31 +550,39 @@ export default function CalendarPage() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-center gap-2 rounded-md bg-muted p-1 text-sm">
-            <Button
-              size="sm"
-              variant={view === 'month' ? 'ghost' : 'ghost'}
-              className={view === 'month' ? 'bg-background' : ''}
-              onClick={() => setView('month')}
-            >
-              Mes
-            </Button>
-            <Button
-              size="sm"
-              variant={view === 'week' ? 'ghost' : 'ghost'}
-              className={view === 'week' ? 'bg-background' : ''}
-              onClick={() => setView('week')}
-            >
-              Semana
-            </Button>
-            <Button
-              size="sm"
-              variant={view === 'day' ? 'ghost' : 'ghost'}
-              className={view === 'day' ? 'bg-background' : ''}
-              onClick={() => setView('day')}
-            >
-              Día
-            </Button>
+          <div className='flex items-center gap-2'>
+            {canBlockDays && (
+              <Button variant="outline" onClick={openBlockDialog}>
+                <CalendarLock className="mr-2 h-4 w-4" />
+                Gestionar Bloqueo
+              </Button>
+            )}
+            <div className="flex items-center gap-2 rounded-md bg-muted p-1 text-sm">
+              <Button
+                size="sm"
+                variant={view === 'month' ? 'ghost' : 'ghost'}
+                className={view === 'month' ? 'bg-background' : ''}
+                onClick={() => setView('month')}
+              >
+                Mes
+              </Button>
+              <Button
+                size="sm"
+                variant={view === 'week' ? 'ghost' : 'ghost'}
+                className={view === 'week' ? 'bg-background' : ''}
+                onClick={() => setView('week')}
+              >
+                Semana
+              </Button>
+              <Button
+                size="sm"
+                variant={view === 'day' ? 'ghost' : 'ghost'}
+                className={view === 'day' ? 'bg-background' : ''}
+                onClick={() => setView('day')}
+              >
+                Día
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
