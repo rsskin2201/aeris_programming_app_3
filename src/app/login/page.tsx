@@ -22,7 +22,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex items-center gap-3">
-            <Icons.logo className="h-12 w-12 text-primary" />
+            <Icons.logo className="h-16 w-16 text-primary" />
             <h1 className="font-headline text-5xl font-bold text-primary">AERIS</h1>
           </div>
           <CardTitle className="font-headline text-2xl">Bienvenido</CardTitle>
