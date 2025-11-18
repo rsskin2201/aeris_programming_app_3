@@ -49,3 +49,21 @@ export type ModuleInfo = {
 export type BlockedDay = {
     reason: string;
 }
+
+export const STATUS = {
+    REGISTRADA: 'REGISTRADA',
+    CONFIRMADA_POR_GE: 'CONFIRMADA POR GE',
+    PROGRAMADA: 'PROGRAMADA',
+    EN_PROCESO: 'EN PROCESO',
+    APROBADA: 'APROBADA',
+    NO_APROBADA: 'NO APROBADA',
+    CANCELADA: 'CANCELADA',
+    RESULTADO_REGISTRADO: 'RESULTADO REGISTRADO',
+    // Old statuses for compatibility
+    Aprobado: 'Aprobado',
+    Contemplado: 'Contemplado',
+    Pendiente_Aprobacion: 'Pendiente Aprobación',
+    Rechazado: 'Rechazado',
+} as const;
+
+export type Status = (typeof STATUS)[keyof typeof STATUS];

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -85,11 +84,7 @@ export default function SpecialInspectionPage() {
     }
   };
 
-  const generateId = () => {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 10).toUpperCase();
-    return `INSP-ES-${timestamp}-${random}`;
-  };
+  const generateId = () => `INSP-ES-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
   const defaultValues: FormValues = useMemo(() => ({
     id: generateId(),

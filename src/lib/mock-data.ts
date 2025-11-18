@@ -1,4 +1,4 @@
-import { Role, ROLES, User, Zone, ZONES } from '@/lib/types';
+import { Role, ROLES, User, Zone, ZONES, Status, STATUS } from '@/lib/types';
 
 export const mockUsers: User[] = [
   { name: 'Admin User', username: 'admin', role: ROLES.ADMIN, zone: 'Todas las zonas' },
@@ -18,7 +18,7 @@ export type InspectionRecord = {
   requestDate: string;
   createdAt: string;
   createdBy: string;
-  status: 'Pendiente Aprobación' | 'Contemplado' | 'Aprobado' | 'Rechazado';
+  status: Status;
   inspector: string;
   zone: Zone;
   gestor: string;
@@ -29,11 +29,11 @@ export type InspectionRecord = {
 };
 
 export const mockRecords: InspectionRecord[] = [
-  { id: 'INS-001', type: 'Individual PES', address: 'Av. Siempre Viva 742', client: 'Springfield Power Plant', requestDate: '2024-07-15', createdAt: '2024-07-14 10:30', createdBy: 'gestor', status: 'Aprobado', inspector: 'Juan Pérez', zone: 'Zona Norte', gestor: 'RICARDO MENDOZA', collaboratorCompany: 'GASLINK S.A. DE C.V.', sector: 'SANTA FE', poliza: 'P-12345', caso: 'AT-0000001' },
-  { id: 'INS-002', type: 'Especial', address: 'Calle Falsa 123', client: 'Kwik-E-Mart', requestDate: '2024-07-16', createdAt: '2024-07-15 11:00', createdBy: 'colaboradora', status: 'Contemplado', inspector: 'Maria Garcia', zone: 'Zona Centro', gestor: 'VERÓNICA LUNA', collaboratorCompany: 'SERVIGAS DEL NORTE', sector: 'CENTRO', poliza: 'P-67890', caso: 'AT-0000002' },
-  { id: 'INS-003', type: 'Masiva PES', address: 'Blvd. del Ocaso 450', client: 'Residencial Ocaso', requestDate: '2024-07-18', createdAt: '2024-07-17 14:00', createdBy: 'admin', status: 'Pendiente Aprobación', inspector: 'N/A', zone: 'Bajio Norte', gestor: 'ALEJANDRO SOLIS', collaboratorCompany: 'CONEXIONES SEGURAS', sector: 'INDUSTRIAL QUERETARO', poliza: 'P-11223', caso: 'AT-0000003' },
-  { id: 'INS-004', type: 'Individual PES', address: 'Paseo de la Reforma 222', client: 'Torre Mayor Oficinas', requestDate: '2024-07-20', createdAt: '2024-07-19 09:15', createdBy: 'gestor', status: 'Rechazado', inspector: 'N/A', zone: 'Bajio Sur', gestor: 'RICARDO MENDOZA', collaboratorCompany: 'ENERGÍA CONFIABLE', sector: 'SANTA FE', poliza: 'P-44556', caso: 'AT-0000004' },
-  { id: 'INS-005', type: 'Individual PES', address: 'Insurgentes Sur 300', client: 'Comercial del Sur', requestDate: '2024-07-21', createdAt: '2024-07-20 16:45', createdBy: 'colaboradora', status: 'Aprobado', inspector: 'Juan Pérez', zone: 'Zona Norte', gestor: 'VERÓNICA LUNA', collaboratorCompany: 'GASLINK S.A. DE C.V.', sector: 'CENTRO', poliza: 'P-77889', caso: 'AT-0000005' },
+  { id: 'INS-001', type: 'Individual PES', address: 'Av. Siempre Viva 742', client: 'Springfield Power Plant', requestDate: '2024-07-15', createdAt: '2024-07-14 10:30', createdBy: 'gestor', status: STATUS.APROBADA, inspector: 'Juan Pérez', zone: 'Zona Norte', gestor: 'RICARDO MENDOZA', collaboratorCompany: 'GASLINK S.A. DE C.V.', sector: 'SANTA FE', poliza: 'P-12345', caso: 'AT-0000001' },
+  { id: 'INS-002', type: 'Especial', address: 'Calle Falsa 123', client: 'Kwik-E-Mart', requestDate: '2024-07-16', createdAt: '2024-07-15 11:00', createdBy: 'colaboradora', status: STATUS.Contemplado, inspector: 'Maria Garcia', zone: 'Zona Centro', gestor: 'VERÓNICA LUNA', collaboratorCompany: 'SERVIGAS DEL NORTE', sector: 'CENTRO', poliza: 'P-67890', caso: 'AT-0000002' },
+  { id: 'INS-003', type: 'Masiva PES', address: 'Blvd. del Ocaso 450', client: 'Residencial Ocaso', requestDate: '2024-07-18', createdAt: '2024-07-17 14:00', createdBy: 'admin', status: STATUS.Pendiente_Aprobacion, inspector: 'N/A', zone: 'Bajio Norte', gestor: 'ALEJANDRO SOLIS', collaboratorCompany: 'CONEXIONES SEGURAS', sector: 'INDUSTRIAL QUERETARO', poliza: 'P-11223', caso: 'AT-0000003' },
+  { id: 'INS-004', type: 'Individual PES', address: 'Paseo de la Reforma 222', client: 'Torre Mayor Oficinas', requestDate: '2024-07-20', createdAt: '2024-07-19 09:15', createdBy: 'gestor', status: STATUS.Rechazado, inspector: 'N/A', zone: 'Bajio Sur', gestor: 'RICARDO MENDOZA', collaboratorCompany: 'ENERGÍA CONFIABLE', sector: 'SANTA FE', poliza: 'P-44556', caso: 'AT-0000004' },
+  { id: 'INS-005', type: 'Individual PES', address: 'Insurgentes Sur 300', client: 'Comercial del Sur', requestDate: '2024-07-21', createdAt: '2024-07-20 16:45', createdBy: 'colaboradora', status: STATUS.APROBADA, inspector: 'Juan Pérez', zone: 'Zona Norte', gestor: 'VERÓNICA LUNA', collaboratorCompany: 'GASLINK S.A. DE C.V.', sector: 'CENTRO', poliza: 'P-77889', caso: 'AT-0000005' },
 ];
 
 export const mockInstallerCompanies = [

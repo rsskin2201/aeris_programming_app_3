@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role } from "@/lib/types";
-import { mockInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
+import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 
 const inspectionDetailSchema = z.object({
@@ -78,11 +78,7 @@ export default function MassiveInspectionPage() {
     }
   };
 
-  const generateId = () => {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 10).toUpperCase();
-    return `INSP-IM-${timestamp}-${random}`;
-  };
+  const generateId = () => `INSP-IM-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
   const defaultValues: FormValues = useMemo(() => ({
     municipality: "",
@@ -412,7 +408,7 @@ export default function MassiveInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {mockInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                        {sampleInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />

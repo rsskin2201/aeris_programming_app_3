@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback } from 'react';
 import type { User, Role, Zone, BlockedDay } from '@/lib/types';
 import { ROLES, ZONES } from '@/lib/types';
-import { mockUsers } from '@/lib/mock-data';
+import { mockUsers, mockRecords as initialMockRecords, InspectionRecord } from '@/lib/mock-data';
 
 interface AppContextType {
   user: User | null;
@@ -14,6 +14,9 @@ interface AppContextType {
   formsEnabled: boolean;
   weekendsEnabled: boolean;
   blockedDays: Record<string, BlockedDay>;
+  records: InspectionRecord[];
+  getRecordById: (id: string) => InspectionRecord | undefined;
+  updateRecord: (updatedRecord: InspectionRecord) => void;
   login: (username: string, operatorName?: string) => User | null;
   logout: () => void;
   setZone: (zone: Zone) => void;
@@ -34,6 +37,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isZoneConfirmed, setIsZoneConfirmed] = useState(false);
   const [formsEnabled, setFormsEnabled] = useState(true);
   const [weekendsEnabled, setWeekendsEnabled] = useState(false);
+  const [records, setRecords] = useState<InspectionRecord[]>(initialMockRecords);
   const [blockedDays, setBlockedDays] = useState<Record<string, BlockedDay>>({
       "2024-09-16": { reason: "Día de la Independencia" },
       "2024-11-18": { reason: "Revolución Mexicana" },
@@ -98,6 +102,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return newBlockedDays;
     });
   }, []);
+  
+  const getRecordById = useCallback((id: string) => {
+    return records.find(record => record.id === id);
+  }, [records]);
+
+  const updateRecord = useCallback((updatedRecord: InspectionRecord) => {
+    setRecords(prevRecords => 
+        prevRecords.map(record => record.id === updatedRecord.id ? updatedRecord : record)
+    );
+  }, []);
 
 
   const contextValue = useMemo(
@@ -109,6 +123,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       formsEnabled,
       weekendsEnabled,
       blockedDays,
+      records,
+      getRecordById,
+      updateRecord,
       login,
       logout,
       setZone,
@@ -119,7 +136,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addBlockedDay,
       removeBlockedDay,
     }),
-    [user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay]
+    [user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, records, getRecordById, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay]
   );
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

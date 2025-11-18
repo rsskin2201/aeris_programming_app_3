@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { mockRecords, InspectionRecord, sampleExpansionManagers, sampleCollaborators, sampleSectors } from "@/lib/mock-data";
+import { InspectionRecord, sampleExpansionManagers, sampleCollaborators, sampleSectors } from "@/lib/mock-data";
 import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppContext } from '@/hooks/use-app-context';
@@ -22,22 +23,33 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 
 const statusVariant: Record<InspectionRecord['status'], 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  'REGISTRADA': 'outline',
+  'CONFIRMADA POR GE': 'default',
+  'PROGRAMADA': 'default',
+  'EN PROCESO': 'secondary',
+  'APROBADA': 'default',
+  'NO APROBADA': 'destructive',
+  'CANCELADA': 'destructive',
+  'RESULTADO REGISTRADO': 'default',
+  // Old statuses for compatibility
   'Aprobado': 'default',
   'Contemplado': 'secondary',
   'Pendiente Aprobación': 'outline',
   'Rechazado': 'destructive',
 };
 
+
 export default function RecordsPage() {
-  const { zone } = useAppContext();
+  const { zone, records } = useAppContext();
+  const router = useRouter();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>();
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const filteredRecords = useMemo(() =>
-    mockRecords.filter(record => zone === 'Todas las zonas' || record.zone === zone),
-    [zone]
+    records.filter(record => zone === 'Todas las zonas' || record.zone === zone),
+    [zone, records]
   );
   
   const paginatedRecords = useMemo(() => {
@@ -53,6 +65,14 @@ export default function RecordsPage() {
       setPage(newPage);
     }
   }
+
+  const handleAction = (recordId: string, mode: 'view' | 'edit') => {
+    // This is a simplification. In a real app, you'd check the record type 
+    // and navigate to the correct form (individual, massive, special).
+    // For now, we'll assume all are individual.
+    router.push(`/inspections/individual?id=${recordId}&mode=${mode}`);
+  }
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -208,8 +228,8 @@ export default function RecordsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>Visualizar</DropdownMenuItem>
-                        <DropdownMenuItem>Modificar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction(record.id, 'view')}>Visualizar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction(record.id, 'edit')}>Modificar</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

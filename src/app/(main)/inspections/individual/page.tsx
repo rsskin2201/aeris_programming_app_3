@@ -6,9 +6,9 @@ import * as z from "zod";
 import { CalendarIcon, ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { format, isSunday, parse } from "date-fns";
+import { format, isSunday, parse, isBefore, set, endOfDay } from "date-fns";
 import { es } from 'date-fns/locale';
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { ROLES, Role } from "@/lib/types";
-import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
+import { ROLES, Role, STATUS } from "@/lib/types";
+import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers, InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 
 const formSchema = z.object({
@@ -57,27 +57,28 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMADA_POR_GE, STATUS.REGISTRADA];
+
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
-  const { user, zone, weekendsEnabled, blockedDays } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, getRecordById, updateRecord } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pageMode, setPageMode] = useState<'new' | 'view' | 'edit'>('new');
+  const [currentRecord, setCurrentRecord] = useState<InspectionRecord | null>(null);
 
   const getInitialStatus = (role: Role | undefined) => {
+    if (pageMode !== 'new') return currentRecord?.status || '';
     switch (role) {
-      case ROLES.GESTOR: return "CONFIRMADA POR GE";
+      case ROLES.GESTOR: return STATUS.CONFIRMADA_POR_GE;
       case ROLES.COLABORADOR:
-      default: return "REGISTRADA";
+      default: return STATUS.REGISTRADA;
     }
   };
 
-  const generateId = () => {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 10).toUpperCase();
-    return `INSP-PS-${timestamp}-${random}`;
-  };
+  const generateId = () => `INSP-PS-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
   const defaultValues = useMemo(() => {
     const dateParam = searchParams.get('date');
@@ -108,15 +109,86 @@ export default function IndividualInspectionPage() {
       sector: "",
       status: getInitialStatus(user?.role),
     }
-  }, [user?.role, searchParams]);
-
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
     mode: 'onChange',
   });
+  
+  useEffect(() => {
+    const recordId = searchParams.get('id');
+    const mode = searchParams.get('mode');
 
+    if (recordId) {
+        const record = getRecordById(recordId);
+        if (record) {
+            setCurrentRecord(record);
+            setPageMode(mode === 'view' ? 'view' : 'edit');
+            form.reset({
+                ...record,
+                fechaProgramacion: parse(record.requestDate, 'yyyy-MM-dd', new Date()),
+                // This is a simplification. A real app might need to parse time.
+                horarioProgramacion: '09:00', 
+            });
+        }
+    } else {
+        setPageMode('new');
+        form.reset({
+            ...defaultValues,
+            id: generateId(),
+            status: getInitialStatus(user?.role)
+        });
+    }
+}, [searchParams, getRecordById, form, user?.role, defaultValues]);
+
+
+  const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
+    if (pageMode === 'view') return true;
+    if (pageMode === 'edit' && currentRecord) {
+        const canEdit = editableStatuses.includes(currentRecord.status as any);
+        if (!canEdit) return true;
+
+        const now = new Date();
+        const eighteenHoursBefore = set(parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()), { hours: -6 }); // 18:00 prev day
+
+        switch (fieldName) {
+            case 'status':
+                return ![ROLES.ADMIN, ROLES.SOPORTE, ROLES.CALIDAD].includes(user!.role);
+            case 'gestor':
+                return ![ROLES.ADMIN, ROLES.SOPORTE].includes(user!.role);
+            case 'empresaColaboradora':
+                return ![ROLES.GESTOR, ROLES.ADMIN, ROLES.SOPORTE].includes(user!.role);
+            case 'poliza':
+            case 'caso':
+                return ![ROLES.COLABORADOR, ROLES.GESTOR, ROLES.SOPORTE, ROLES.ADMIN].includes(user!.role);
+            case 'tipoInspeccion':
+                return !currentRecord.id.startsWith("INSP-PS");
+            case 'fechaProgramacion':
+            case 'horarioProgramacion':
+                if (user?.role === ROLES.COLABORADOR) {
+                    return isBefore(now, eighteenHoursBefore);
+                }
+                return false; // Gestor y Admin pueden modificar
+            case 'municipality':
+            case 'colonia':
+            case 'calle':
+            case 'numero':
+                if (user?.role === ROLES.COLABORADOR) {
+                    return isBefore(now, eighteenHoursBefore);
+                }
+                return false;
+             case 'sector':
+             case 'instalador':
+                return false; // Modificable si el status lo permite
+            default:
+                return false; // Por defecto no se bloquea si el status es editable
+        }
+    }
+    return false; // Modo 'new'
+  };
+  
   const formData = form.watch();
 
   const handlePreview = () => {
@@ -135,27 +207,50 @@ export default function IndividualInspectionPage() {
   
   function onFinalSubmit(values: FormValues) {
     setIsSubmitting(true);
-    console.log({ ...values });
-
-    toast({
-      title: "Solicitud Enviada",
-      description: `La solicitud con ID ${values.id} se creó con estatus: ${values.status}.`,
-    });
     
+    // Simulate API call
     setTimeout(() => {
-      setIsSubmitting(false);
-      setIsConfirming(false);
-      router.push('/records');
+        const recordToSave = {
+            ...values,
+            client: 'Cliente (TBD)', // Placeholder
+            address: `${values.calle} ${values.numero}, ${values.colonia}`,
+            requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
+            type: 'Individual PES' as const,
+            createdAt: currentRecord?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+            createdBy: currentRecord?.createdBy || user?.username || 'desconocido',
+            inspector: currentRecord?.inspector || 'N/A', // Placeholder
+            zone: 'Zona Norte', // Placeholder
+        };
+
+        if (pageMode === 'edit' && currentRecord) {
+            updateRecord(recordToSave as InspectionRecord);
+        } else {
+            // Here you would call a function to add a new record to the context
+            console.log("Creating new record:", recordToSave);
+        }
+
+        toast({
+          title: pageMode === 'edit' ? "Solicitud Actualizada" : "Solicitud Enviada",
+          description: `La solicitud con ID ${values.id} se ${pageMode === 'edit' ? 'actualizó' : 'creó'} con estatus: ${values.status}.`,
+        });
+
+        setIsSubmitting(false);
+        setIsConfirming(false);
+        router.push('/records');
     }, 1500);
   }
 
   const handleReset = () => {
-    const newId = generateId();
-    form.reset({
-        ...defaultValues,
-        id: newId,
-        status: getInitialStatus(user?.role)
-    });
+    if (pageMode === 'new') {
+        const newId = generateId();
+        form.reset({
+            ...defaultValues,
+            id: newId,
+            status: getInitialStatus(user?.role)
+        });
+    } else {
+        form.reset(); // Resets to the loaded record data
+    }
   }
   
   const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: any) => {
@@ -173,7 +268,7 @@ export default function IndividualInspectionPage() {
             <span className="text-sm font-medium text-muted-foreground">{fieldLabel}</span>
              <div className="text-right flex items-center gap-2">
                 <span className="text-sm font-semibold">{displayValue}</span>
-                 {isTouched && (
+                 {(pageMode !== 'view' && isTouched) && (
                     <div className="w-4 h-4">
                         {error ? <AlertCircle className="text-destructive" /> : <CheckCircle className="text-green-500" />}
                     </div>
@@ -187,13 +282,21 @@ export default function IndividualInspectionPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" asChild>
-          <Link href="/inspections">
+          <Link href="/records">
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
         <div>
-          <h1 className="font-headline text-3xl font-semibold">Programación Individual de PES</h1>
-          <p className="text-muted-foreground">Formulario para una Puesta en Servicio en campo.</p>
+          <h1 className="font-headline text-3xl font-semibold">
+            {pageMode === 'new' && 'Programación Individual de PES'}
+            {pageMode === 'view' && 'Visualizar Inspección Individual'}
+            {pageMode === 'edit' && 'Modificar Inspección Individual'}
+          </h1>
+          <p className="text-muted-foreground">
+             {pageMode === 'new' && 'Formulario para una Puesta en Servicio en campo.'}
+             {pageMode === 'view' && 'Consulta de los detalles de una inspección registrada.'}
+             {pageMode === 'edit' && 'Modificación de los detalles de una inspección.'}
+          </p>
         </div>
       </div>
       
@@ -217,14 +320,14 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="poliza" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Póliza</FormLabel>
-                        <FormControl><Input placeholder="Opcional" {...field} type="text" /></FormControl>
+                        <FormControl><Input placeholder="Opcional" {...field} type="text" disabled={isFieldDisabled('poliza')} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
                  <FormField control={form.control} name="caso" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Caso (AT)</FormLabel>
-                        <FormControl><Input placeholder="Ej. AT-1234567" {...field} maxLength={11} /></FormControl>
+                        <FormControl><Input placeholder="Ej. AT-1234567" {...field} maxLength={11} disabled={isFieldDisabled('caso')} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -232,7 +335,7 @@ export default function IndividualInspectionPage() {
                 <FormField control={form.control} name="municipality" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Municipio</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('municipality')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un municipio" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {mockMunicipalities.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
@@ -244,7 +347,7 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="colonia" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Colonia</FormLabel>
-                        <FormControl><Input placeholder="Colonia" {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl>
+                        <FormControl><Input placeholder="Colonia" {...field} onChange={(e) => handleUpperCase(e, field)} disabled={isFieldDisabled('colonia')} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -252,14 +355,14 @@ export default function IndividualInspectionPage() {
                     <FormField control={form.control} name="calle" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Calle</FormLabel>
-                            <FormControl><Input placeholder="Nombre de la calle" {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                            <FormControl><Input placeholder="Nombre de la calle" {...field} onChange={(e) => handleUpperCase(e, field)} disabled={isFieldDisabled('calle')}/></FormControl>
                             <FormMessage />
                         </FormItem>
                     )} />
                     <FormField control={form.control} name="numero" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Número</FormLabel>
-                            <FormControl><Input placeholder="Número exterior/interior" {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl>
+                            <FormControl><Input placeholder="Número exterior/interior" {...field} onChange={(e) => handleUpperCase(e, field)} disabled={isFieldDisabled('numero')} /></FormControl>
                             <FormMessage />
                         </FormItem>
                     )} />
@@ -267,28 +370,28 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="portal" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Portal (Opcional)</FormLabel>
-                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} disabled={isFieldDisabled('portal')} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
                  <FormField control={form.control} name="escalera" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Escalera (Opcional)</FormLabel>
-                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} disabled={isFieldDisabled('escalera')} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
                  <FormField control={form.control} name="piso" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Piso (Opcional)</FormLabel>
-                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} disabled={isFieldDisabled('piso')} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
                  <FormField control={form.control} name="puerta" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Puerta (Opcional)</FormLabel>
-                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} disabled={isFieldDisabled('puerta')} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -304,7 +407,7 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="tipoInspeccion" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de Inspección</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isFieldDisabled('tipoInspeccion')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
                         <SelectItem value="Programacion PES">Programacion PES</SelectItem>
@@ -316,7 +419,7 @@ export default function IndividualInspectionPage() {
                 <FormField control={form.control} name="tipoProgramacion" render={({ field }) => (
                    <FormItem>
                     <FormLabel>Tipo de Programación</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('tipoProgramacion')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {['SALESFORCE', 'PARRILLA', 'REPROGRAMACION', 'ESPONTANEA', 'PEC'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
@@ -328,7 +431,7 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="tipoMdd" render={({ field }) => (
                    <FormItem>
                     <FormLabel>Tipo MDD</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('tipoMdd')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {['G-1,6', 'G-10', 'G-2,5', 'G-4', 'G-6', 'G-16', 'G-25', 'G-40'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
@@ -340,7 +443,7 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="mercado" render={({ field }) => (
                    <FormItem>
                     <FormLabel>Mercado</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('mercado')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un mercado" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {['ES-SV', 'CN', 'NE', 'SH', 'SP', 'SV'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
@@ -352,7 +455,7 @@ export default function IndividualInspectionPage() {
                 <FormField control={form.control} name="oferta" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Oferta/Campaña</FormLabel>
-                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} disabled={isFieldDisabled('oferta')}/></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -368,7 +471,7 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="empresaColaboradora" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Empresa Colaboradora</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('empresaColaboradora')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {sampleCollaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
@@ -380,7 +483,7 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="instalador" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Instalador</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('instalador')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {sampleInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
@@ -395,7 +498,7 @@ export default function IndividualInspectionPage() {
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
-                          <Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                          <Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} disabled={isFieldDisabled('fechaProgramacion')}>
                             {field.value ? format(field.value, "PPP", { locale: es }) : <span>Elige una fecha</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -422,7 +525,7 @@ export default function IndividualInspectionPage() {
                     <FormItem>
                         <FormLabel>Horario Programación</FormLabel>
                         <FormControl>
-                            <Input type="time" {...field} />
+                            <Input type="time" {...field} disabled={isFieldDisabled('horarioProgramacion')} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -430,7 +533,7 @@ export default function IndividualInspectionPage() {
                 <FormField control={form.control} name="gestor" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Gestor</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('gestor')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un gestor" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {sampleExpansionManagers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
@@ -442,7 +545,7 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="sector" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Sector</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('sector')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {sampleSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
@@ -454,9 +557,14 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="status" render={({ field }) => (
                    <FormItem>
                     <FormLabel>Status</FormLabel>
-                     <FormControl>
-                        <Input {...field} readOnly disabled />
-                     </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isFieldDisabled('status')}>
+                      <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Selecciona un estado" /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.values(STATUS).filter(s => typeof s === 'string').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                     </Select>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -464,68 +572,68 @@ export default function IndividualInspectionPage() {
               </CardContent>
             </Card>
 
-            <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
-                <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
-                <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
-                    <DialogTrigger asChild>
-                         <Button type="button" onClick={handlePreview} disabled={isSubmitting}>
-                            Guardar
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-xl">
-                        <DialogHeader>
-                            <DialogTitle>Confirmar Creación de Inspección</DialogTitle>
-                            <DialogDescription>
-                                Revisa los datos del formulario antes de confirmar la solicitud.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="max-h-[50vh] overflow-y-auto p-1 pr-4">
-                            <h3 className="font-semibold text-lg mb-2">Ubicación del Servicio</h3>
-                            {renderFieldWithFeedback('id', 'ID de Registro', formData.id)}
-                            {renderFieldWithFeedback('poliza', 'Póliza', formData.poliza)}
-                            {renderFieldWithFeedback('caso', 'Caso (AT)', formData.caso)}
-                            {renderFieldWithFeedback('municipality', 'Municipio', formData.municipality)}
-                            {renderFieldWithFeedback('colonia', 'Colonia', formData.colonia)}
-                            {renderFieldWithFeedback('calle', 'Calle', formData.calle)}
-                            {renderFieldWithFeedback('numero', 'Número', formData.numero)}
-                            {renderFieldWithFeedback('portal', 'Portal', formData.portal)}
-                            {renderFieldWithFeedback('escalera', 'Escalera', formData.escalera)}
-                            {renderFieldWithFeedback('piso', 'Piso', formData.piso)}
-                            {renderFieldWithFeedback('puerta', 'Puerta', formData.puerta)}
+            {pageMode !== 'view' && (
+              <div className="flex justify-end gap-2">
+                  <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
+                  <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
+                  <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
+                      <DialogTrigger asChild>
+                          <Button type="button" onClick={handlePreview} disabled={isSubmitting}>
+                              Guardar
+                          </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-xl">
+                          <DialogHeader>
+                              <DialogTitle>Confirmar {pageMode === 'edit' ? 'Modificación' : 'Creación'} de Inspección</DialogTitle>
+                              <DialogDescription>
+                                  Revisa los datos del formulario antes de confirmar la solicitud.
+                              </DialogDescription>
+                          </DialogHeader>
+                          <div className="max-h-[50vh] overflow-y-auto p-1 pr-4">
+                              <h3 className="font-semibold text-lg mb-2">Ubicación del Servicio</h3>
+                              {renderFieldWithFeedback('id', 'ID de Registro', formData.id)}
+                              {renderFieldWithFeedback('poliza', 'Póliza', formData.poliza)}
+                              {renderFieldWithFeedback('caso', 'Caso (AT)', formData.caso)}
+                              {renderFieldWithFeedback('municipality', 'Municipio', formData.municipality)}
+                              {renderFieldWithFeedback('colonia', 'Colonia', formData.colonia)}
+                              {renderFieldWithFeedback('calle', 'Calle', formData.calle)}
+                              {renderFieldWithFeedback('numero', 'Número', formData.numero)}
+                              {renderFieldWithFeedback('portal', 'Portal', formData.portal)}
+                              {renderFieldWithFeedback('escalera', 'Escalera', formData.escalera)}
+                              {renderFieldWithFeedback('piso', 'Piso', formData.piso)}
+                              {renderFieldWithFeedback('puerta', 'Puerta', formData.puerta)}
 
-                            <h3 className="font-semibold text-lg mb-2 mt-4">Detalles de la Programación</h3>
-                             {renderFieldWithFeedback('tipoInspeccion', 'Tipo de Inspección', formData.tipoInspeccion)}
-                            {renderFieldWithFeedback('tipoProgramacion', 'Tipo de Programación', formData.tipoProgramacion)}
-                            {renderFieldWithFeedback('tipoMdd', 'Tipo MDD', formData.tipoMdd)}
-                            {renderFieldWithFeedback('mercado', 'Mercado', formData.mercado)}
-                            {renderFieldWithFeedback('oferta', 'Oferta/Campaña', formData.oferta)}
+                              <h3 className="font-semibold text-lg mb-2 mt-4">Detalles de la Programación</h3>
+                              {renderFieldWithFeedback('tipoInspeccion', 'Tipo de Inspección', formData.tipoInspeccion)}
+                              {renderFieldWithFeedback('tipoProgramacion', 'Tipo de Programación', formData.tipoProgramacion)}
+                              {renderFieldWithFeedback('tipoMdd', 'Tipo MDD', formData.tipoMdd)}
+                              {renderFieldWithFeedback('mercado', 'Mercado', formData.mercado)}
+                              {renderFieldWithFeedback('oferta', 'Oferta/Campaña', formData.oferta)}
 
-                            <h3 className="font-semibold text-lg mb-2 mt-4">Asignación y Estatus</h3>
-                            {renderFieldWithFeedback('empresaColaboradora', 'Empresa Colaboradora', formData.empresaColaboradora)}
-                            {renderFieldWithFeedback('instalador', 'Instalador', formData.instalador)}
-                            {renderFieldWithFeedback('fechaProgramacion', 'Fecha Programación', formData.fechaProgramacion)}
-                            {renderFieldWithFeedback('horarioProgramacion', 'Horario', formData.horarioProgramacion)}
-                            {renderFieldWithFeedback('gestor', 'Gestor', formData.gestor)}
-                            {renderFieldWithFeedback('sector', 'Sector', formData.sector)}
-                            {renderFieldWithFeedback('status', 'Estatus', formData.status)}
-                        </div>
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button variant="outline" disabled={isSubmitting}>Cancelar</Button>
-                            </DialogClose>
-                            <Button onClick={() => onFinalSubmit(formData)} disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Confirmar y Guardar
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            </div>
+                              <h3 className="font-semibold text-lg mb-2 mt-4">Asignación y Estatus</h3>
+                              {renderFieldWithFeedback('empresaColaboradora', 'Empresa Colaboradora', formData.empresaColaboradora)}
+                              {renderFieldWithFeedback('instalador', 'Instalador', formData.instalador)}
+                              {renderFieldWithFeedback('fechaProgramacion', 'Fecha Programación', formData.fechaProgramacion)}
+                              {renderFieldWithFeedback('horarioProgramacion', 'Horario', formData.horarioProgramacion)}
+                              {renderFieldWithFeedback('gestor', 'Gestor', formData.gestor)}
+                              {renderFieldWithFeedback('sector', 'Sector', formData.sector)}
+                              {renderFieldWithFeedback('status', 'Estatus', formData.status)}
+                          </div>
+                          <DialogFooter>
+                              <DialogClose asChild>
+                                  <Button variant="outline" disabled={isSubmitting}>Cancelar</Button>
+                              </DialogClose>
+                              <Button onClick={() => onFinalSubmit(formData)} disabled={isSubmitting}>
+                                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                  Confirmar y Guardar
+                              </Button>
+                          </DialogFooter>
+                      </DialogContent>
+                  </Dialog>
+              </div>
+            )}
         </form>
       </Form>
     </div>
   );
 }
-
-    
