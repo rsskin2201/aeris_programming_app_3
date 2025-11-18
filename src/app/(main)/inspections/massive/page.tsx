@@ -27,7 +27,7 @@ import { Separator } from "@/components/ui/separator";
 const inspectionDetailSchema = z.object({
   id: z.string(),
   poliza: z.string().optional(),
-  caso: z.string().optional().refine(val => !val || /^AT-\d{7}$/.test(val), {
+  caso: z.string().max(11, 'El caso no debe exceder los 11 caracteres.').optional().refine(val => !val || /^AT-\d{7}$/.test(val), {
     message: 'El formato debe ser AT-XXXXXXX'
   }),
   portal: z.string().optional(),

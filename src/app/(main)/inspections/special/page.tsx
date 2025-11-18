@@ -26,7 +26,7 @@ import { useMemo } from "react";
 const formSchema = z.object({
   id: z.string().optional(),
   poliza: z.string().optional(),
-  caso: z.string().optional().refine(val => !val || /^AT-\d{7}$/.test(val), {
+  caso: z.string().max(11, 'El caso no debe exceder los 11 caracteres.').optional().refine(val => !val || /^AT-\d{7}$/.test(val), {
     message: 'El formato debe ser AT-XXXXXXX'
   }),
   municipality: z.string().min(1, "El municipio es requerido."),

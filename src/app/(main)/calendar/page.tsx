@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
-import { mockRecords } from '@/lib/mock-data';
+import { mockRecords, InspectionRecord } from '@/lib/mock-data';
 import {
   addDays,
   addMonths,
@@ -74,6 +74,13 @@ const daysOfWeek = [
   'Domingo',
 ];
 const hoursOfDay = Array.from({ length: 11 }, (_, i) => `${String(i + 9).padStart(2, '0')}:00`); // 09:00 to 19:00
+
+const statusColors: Record<InspectionRecord['status'], string> = {
+    'Aprobado': 'bg-green-500/80 border-green-700 text-white',
+    'Contemplado': 'bg-yellow-500/80 border-yellow-700 text-white',
+    'Pendiente Aprobación': 'bg-blue-500/80 border-blue-700 text-white',
+    'Rechazado': 'bg-red-500/80 border-red-700 text-white',
+};
 
 export default function CalendarPage() {
   const {
@@ -217,11 +224,13 @@ export default function CalendarPage() {
     const slotKey = `${format(day, 'yyyy-MM-dd')}-${String(hourNumber).padStart(2, '0')}`;
     const slotInspections = inspectionsByTime[slotKey] || [];
 
+    if (slotInspections.length === 0) return null;
+
     return slotInspections.map((inspection) => (
       <TooltipProvider key={inspection.id}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="mb-1 rounded-md bg-primary/80 p-1 text-xs text-primary-foreground shadow-sm hover:bg-primary">
+            <div className={cn("mb-1 rounded-md p-1 text-xs shadow-sm hover:opacity-80 border-l-4", statusColors[inspection.status])}>
               <p className="truncate font-medium">{inspection.client}</p>
               <p className="truncate text-xs">{inspection.address}</p>
             </div>
@@ -264,7 +273,7 @@ export default function CalendarPage() {
                 key={`${day}-${hour}`}
                 onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
                 className={cn(
-                  'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer',
+                  'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
                   isSunday(day) &&
                     !weekendsEnabled &&
                     'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
@@ -304,7 +313,7 @@ export default function CalendarPage() {
               key={`${currentDate}-${hour}`}
               onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
               className={cn(
-                'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer',
+                'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
                 isSunday(currentDate) &&
                   !weekendsEnabled &&
                   'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
