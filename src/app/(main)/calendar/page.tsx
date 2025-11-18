@@ -18,7 +18,7 @@ const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sába
 const hoursOfDay = Array.from({ length: 11 }, (_, i) => `${String(i + 9).padStart(2, '0')}:00`); // 09:00 to 19:00
 
 export default function CalendarPage() {
-  const { user, zone, formsEnabled, toggleForms, enableWeekends, weekendsEnabled } = useAppContext();
+  const { user, zone, formsEnabled, toggleForms, weekendsEnabled, toggleWeekends } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
 
@@ -146,7 +146,7 @@ export default function CalendarPage() {
           <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filtros</Button>
           <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Exportar .csv</Button>
           {canEnableWeekends && (
-             <Button variant={weekendsEnabled ? "destructive" : "secondary"} onClick={toggleForms}>
+             <Button variant={weekendsEnabled ? "destructive" : "secondary"} onClick={toggleWeekends}>
               {weekendsEnabled ? <ShieldOff className="mr-2 h-4 w-4" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
               {weekendsEnabled ? 'Deshab. Domingos' : 'Hab. Domingos'}
             </Button>
