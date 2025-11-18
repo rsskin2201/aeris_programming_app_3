@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { CalendarIcon, ChevronLeft, FileUp, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { format, isSunday } from "date-fns";
+import { useRouter, useSearchParams } from "next/navigation";
+import { format, isSunday, parse } from "date-fns";
 import { es } from 'date-fns/locale';
 
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role } from "@/lib/types";
-import { mockInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
+import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
 import { useMemo } from "react";
 
 const formSchema = z.object({
@@ -58,6 +58,7 @@ export default function IndividualInspectionPage() {
   const { toast } = useToast();
   const { user, zone, weekendsEnabled } = useAppContext();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const getInitialStatus = (role: Role | undefined) => {
     switch (role) {
@@ -73,30 +74,36 @@ export default function IndividualInspectionPage() {
     return `INSP-PS-${timestamp}-${random}`;
   };
 
-  const defaultValues = useMemo(() => ({
-    id: generateId(),
-    poliza: "",
-    caso: "",
-    municipality: "",
-    colonia: "",
-    calle: "",
-    numero: "",
-    portal: "",
-    escalera: "",
-    piso: "",
-    puerta: "",
-    tipoInspeccion: "Programacion PES",
-    tipoProgramacion: "",
-    tipoMdd: "",
-    mercado: "",
-    oferta: "",
-    empresaColaboradora: "",
-    horarioProgramacion: "",
-    instalador: "",
-    gestor: "",
-    sector: "",
-    status: getInitialStatus(user?.role),
-  }), [user?.role]);
+  const defaultValues = useMemo(() => {
+    const dateParam = searchParams.get('date');
+    const timeParam = searchParams.get('time');
+
+    return {
+      id: generateId(),
+      poliza: "",
+      caso: "",
+      municipality: "",
+      colonia: "",
+      calle: "",
+      numero: "",
+      portal: "",
+      escalera: "",
+      piso: "",
+      puerta: "",
+      tipoInspeccion: "Programacion PES",
+      tipoProgramacion: "",
+      tipoMdd: "",
+      mercado: "",
+      oferta: "",
+      empresaColaboradora: "",
+      fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : undefined,
+      horarioProgramacion: timeParam || "",
+      instalador: "",
+      gestor: "",
+      sector: "",
+      status: getInitialStatus(user?.role),
+    }
+  }, [user?.role, searchParams]);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -333,7 +340,7 @@ export default function IndividualInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {mockInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                        {sampleInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
