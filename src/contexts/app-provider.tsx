@@ -8,9 +8,10 @@ import { mockUsers } from '@/lib/mock-data';
 
 interface AppContextType {
   user: User | null;
+  operatorName: string | null;
   zone: Zone;
   isZoneConfirmed: boolean;
-  login: (username: string) => User | null;
+  login: (username: string, operatorName?: string) => User | null;
   logout: () => void;
   setZone: (zone: Zone) => void;
   switchRole: (role: Role) => void;
@@ -21,32 +22,32 @@ export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [operatorName, setOperatorName] = useState<string | null>(null);
   const [zone, setZone] = useState<Zone>(ZONES[0]);
   const [isZoneConfirmed, setIsZoneConfirmed] = useState(false);
 
 
-  const login = (username: string): User | null => {
+  const login = (username: string, opName?: string): User | null => {
     const foundUser = mockUsers.find((u) => u.username.toLowerCase() === username.toLowerCase());
-    if (foundUser) {
-      setUser(foundUser);
+    
+    const userToLogin = foundUser || (() => {
+        const roleKey = Object.keys(ROLES).find(key => ROLES[key as keyof typeof ROLES].toLowerCase().split(' ')[0] === username.toLowerCase());
+        return roleKey ? mockUsers.find(u => u.role === ROLES[roleKey as keyof typeof ROLES]) : undefined;
+    })();
+
+    if (userToLogin) {
+      setUser(userToLogin);
+      setOperatorName(opName || userToLogin.name);
       setIsZoneConfirmed(false); // Reset on login
-      return foundUser;
+      return userToLogin;
     }
-    // For demo, allow login with any role name for testing
-    const roleKey = Object.keys(ROLES).find(key => ROLES[key as keyof typeof ROLES].toLowerCase().split(' ')[0] === username.toLowerCase());
-    if (roleKey) {
-        const roleUser = mockUsers.find(u => u.role === ROLES[roleKey as keyof typeof ROLES]);
-        if (roleUser) {
-            setUser(roleUser);
-            setIsZoneConfirmed(false); // Reset on login
-            return roleUser;
-        }
-    }
+    
     return null;
   };
 
   const logout = () => {
     setUser(null);
+    setOperatorName(null);
     setIsZoneConfirmed(false);
   };
   
@@ -54,6 +55,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const newUser = mockUsers.find(u => u.role === role);
     if (newUser) {
       setUser(newUser);
+      // Keep operatorName or reset to new user's default name
+      setOperatorName(currentOpName => currentOpName || newUser.name);
       setIsZoneConfirmed(false); // Reset on role switch
     }
   };
@@ -66,6 +69,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(
     () => ({
       user,
+      operatorName,
       zone,
       isZoneConfirmed,
       login,
@@ -74,7 +78,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       switchRole,
       confirmZone,
     }),
-    [user, zone, isZoneConfirmed, confirmZone]
+    [user, operatorName, zone, isZoneConfirmed, confirmZone]
   );
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

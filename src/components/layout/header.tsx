@@ -75,7 +75,7 @@ const moduleIcons = {
 
 export default function Header() {
   const pathname = usePathname();
-  const { user, switchRole, logout } = useAppContext();
+  const { user, operatorName, switchRole, logout } = useAppContext();
   const { toast } = useToast();
 
   if (!user) return null;
@@ -176,7 +176,7 @@ export default function Header() {
                 className="flex h-9 items-center gap-2"
                 >
                 <UserIcon className="h-4 w-4" />
-                <span className="hidden md:inline">{user?.name}</span>
+                <span className="hidden md:inline">{operatorName}</span>
                 <ChevronDown className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>

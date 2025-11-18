@@ -41,11 +41,11 @@ export function LoginForm() {
     setIsLoading(true);
     // Simulate API call and loading animation
     setTimeout(() => {
-      const user = login(values.username);
+      const user = login(values.username, values.operatorName);
       if (user) {
         toast({
           title: 'Inicio de sesión exitoso',
-          description: `Bienvenido, ${user.name}`,
+          description: `Bienvenido, ${values.operatorName || user.name}`,
         });
         router.push('/');
       } else {

@@ -24,7 +24,7 @@ const moduleList: ModuleInfo[] = [
 ];
 
 export default function DashboardPage() {
-  const { user } = useAppContext();
+  const { user, operatorName } = useAppContext();
 
   if (!user) return null;
 
@@ -35,7 +35,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="font-headline text-3xl font-semibold">Bienvenido, {user.name}</h1>
+        <h1 className="font-headline text-3xl font-semibold">Bienvenido, {operatorName}</h1>
         <p className="text-muted-foreground">Tu rol actual es: {user.role}. Estos son tus módulos disponibles.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

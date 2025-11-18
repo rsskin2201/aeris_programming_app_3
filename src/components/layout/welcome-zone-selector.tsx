@@ -18,7 +18,7 @@ import { Globe } from 'lucide-react';
 import { Icons } from '../icons';
 
 export function WelcomeZoneSelector() {
-  const { zone, confirmZone, user } = useAppContext();
+  const { zone, confirmZone, operatorName } = useAppContext();
   const [selectedZone, setSelectedZone] = useState<Zone>(zone);
 
   const handleSave = () => {
@@ -34,7 +34,7 @@ export function WelcomeZoneSelector() {
                     <Icons.logo className="h-12 w-12 text-primary" />
                     <h1 className="font-headline text-5xl font-bold text-primary">AERIS</h1>
                 </div>
-                <DialogTitle className="text-center text-2xl">¡Bienvenido, {user?.name}!</DialogTitle>
+                <DialogTitle className="text-center text-2xl">¡Bienvenido, {operatorName}!</DialogTitle>
                 <DialogDescription className="text-center">
                     Para comenzar, elige la zona en la que trabajarás.
                 </DialogDescription>
