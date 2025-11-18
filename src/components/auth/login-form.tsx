@@ -46,6 +46,7 @@ export function LoginForm() {
         toast({
           title: 'Inicio de sesión exitoso',
           description: `Bienvenido, ${values.operatorName || user.name}`,
+          duration: 2000,
         });
         router.push('/');
       } else {
