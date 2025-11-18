@@ -39,6 +39,7 @@ import {
   Users,
   LogOut,
   Menu,
+  Mail,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -56,6 +57,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const moduleIcons = {
   [MODULES.INSPECTIONS]: Briefcase,
@@ -136,11 +145,29 @@ export default function Header() {
         </Badge>
 
         <ZoneSelector />
-
-        <Button variant="outline" size="icon" className="h-9 w-9">
-          <HelpCircle className="h-4 w-4" />
-          <span className="sr-only">Soporte</span>
-        </Button>
+        
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9">
+                    <HelpCircle className="h-4 w-4" />
+                    <span className="sr-only">Soporte</span>
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Soporte</DialogTitle>
+                    <DialogDescription>
+                        Para dudas o aclaraciones, contacta al administrador.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex items-center space-x-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <a href="mailto:admin@aeris.com" className="text-sm text-primary hover:underline">
+                        admin@aeris.com
+                    </a>
+                </div>
+            </DialogContent>
+        </Dialog>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
