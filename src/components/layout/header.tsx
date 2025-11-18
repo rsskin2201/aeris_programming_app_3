@@ -40,6 +40,8 @@ import {
   LogOut,
   Menu,
   Mail,
+  Copy,
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -65,6 +67,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const moduleIcons = {
   [MODULES.INSPECTIONS]: Briefcase,
@@ -79,6 +82,7 @@ const moduleIcons = {
 export default function Header() {
   const pathname = usePathname();
   const { user, switchRole, logout } = useAppContext();
+  const { toast } = useToast();
 
   if (!user) return null;
 
@@ -92,6 +96,11 @@ export default function Header() {
     const name = segment.charAt(0).toUpperCase() + segment.slice(1);
     return { href, name, isLast };
   });
+  
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: 'Copiado', description: 'El correo electrónico se ha copiado al portapapeles.' });
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -155,16 +164,27 @@ export default function Header() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Soporte</DialogTitle>
+                    <DialogTitle>Soporte Técnico</DialogTitle>
                     <DialogDescription>
                         Para dudas o aclaraciones, contacta al administrador.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a href="mailto:admin@aeris.com" className="text-sm text-primary hover:underline">
-                        admin@aeris.com
-                    </a>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between rounded-md border bg-muted px-3 py-2">
+                        <a href="mailto:jorge.ricardo.seichi.gonzalez.garcia@nttdata.com" className="truncate text-sm font-medium text-primary hover:underline">
+                            jorge.ricardo.seichi.gonzalez.garcia@nttdata.com
+                        </a>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy('jorge.ricardo.seichi.gonzalez.garcia@nttdata.com')}>
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div>
+                        <h4 className="mb-2 font-medium text-sm">Horarios de Atención</h4>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                            <p className="flex items-center"><Clock className="mr-2 h-4 w-4" /> Lunes a Viernes: 09:00 a.m. - 06:00 p.m.</p>
+                            <p className="flex items-center"><Clock className="mr-2 h-4 w-4" /> Sábados: 09:00 a.m. - 01:00 p.m.</p>
+                        </div>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>
