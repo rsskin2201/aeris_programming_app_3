@@ -20,7 +20,7 @@ const inspectionTypes = [
         id: 'masiva',
         title: 'Programación Masiva de PES',
         description: 'Para solicitudes masivas en una misma dirección.',
-        href: '#', // Not implemented yet
+        href: '/inspections/massive',
         requiredModule: MODULES.INSPECTIONS,
     },
     {
@@ -82,7 +82,7 @@ export default function InspectionsPage() {
                     <CardDescription>{card.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button asChild disabled={card.href === '#' || !formsEnabled} onClick={(e) => handleCardClick(e, card.href)}>
+                    <Button asChild disabled={!formsEnabled} onClick={(e) => handleCardClick(e, card.href)}>
                         <Link href={card.href}>Iniciar Solicitud</Link>
                     </Button>
                 </CardContent>
