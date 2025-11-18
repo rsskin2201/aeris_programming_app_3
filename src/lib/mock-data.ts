@@ -1,4 +1,4 @@
-import { Role, ROLES, User } from '@/lib/types';
+import { Role, ROLES, User, Zone } from '@/lib/types';
 
 export const mockUsers: User[] = [
   { name: 'Admin User', username: 'admin', role: ROLES.ADMIN },
@@ -56,4 +56,35 @@ export const mockMunicipalities = [
     { id: 'MUN-05', name: 'Monterrey' },
     { id: 'MUN-06', name: 'San Pedro Garza García' },
     { id: 'MUN-07', name: 'Ciudad de México - Miguel Hidalgo' },
+];
+
+export type CollaboratorCompany = {
+    id: string;
+    name: string;
+    rfc: string;
+    zone: Zone;
+    status: 'Activa' | 'Inactiva' | 'Deshabilitada';
+    created_at: string;
+}
+
+export const sampleCollaborators: CollaboratorCompany[] = [
+    { id: 'EC-001', name: 'GasLink S.A. de C.V.', rfc: 'GLI010203AB4', zone: 'Zona Norte', status: 'Activa', created_at: '2023-01-15' },
+    { id: 'EC-002', name: 'ServiGas del Norte', rfc: 'SGN050607CD8', zone: 'Zona Norte', status: 'Activa', created_at: '2023-02-20' },
+    { id: 'EC-003', name: 'Conexiones Seguras', rfc: 'CSE101112EFG', zone: 'Bajio Norte', status: 'Inactiva', created_at: '2023-03-10' },
+    { id: 'EC-004', name: 'Energía Confiable', rfc: 'ECO151213HIJ', zone: 'Zona Centro', status: 'Deshabilitada', created_at: '2023-04-05' },
+];
+
+export type QualityControlCompany = {
+  id: string;
+  name: string;
+  rfc: string;
+  zone: Zone;
+  status: 'Activa' | 'Inactiva' | 'Deshabilitada';
+  created_at: string;
+}
+
+export const sampleQualityControlCompanies: QualityControlCompany[] = [
+  { id: 'ECC-001', name: 'VeriGas Calidad Total', rfc: 'VGT010101XYZ', zone: 'Zona Centro', status: 'Activa', created_at: '2022-11-30' },
+  { id: 'ECC-002', name: 'Inspecciones Precisas S.C.', rfc: 'IPE020202ABC', zone: 'Bajio Sur', status: 'Activa', created_at: '2023-05-18' },
+  { id: 'ECC-003', name: 'Control y Seguridad Energética', rfc: 'CSE030303DEF', zone: 'Zona Norte', status: 'Inactiva', created_at: '2023-08-01' },
 ];
