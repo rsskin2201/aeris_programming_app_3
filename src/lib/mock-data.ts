@@ -124,4 +124,20 @@ export const sampleInstallers: Installer[] = [
     { id: 'INST-003', name: 'Fernando Gonzalez', position: 'Instalador', collaboratorCompany: 'Conexiones Seguras', certStartDate: '2024-05-15', certEndDate: '2025-05-15', status: 'Inactivo', createdAt: '2024-05-01' },
 ];
 
+export type ExpansionManager = {
+    id: string;
+    name: string;
+    position: 'Gestor de Expansion';
+    zone: Zone;
+    assignment: 'Expansión' | 'Saturación';
+    subAssignment: string;
+    status: 'Activo' | 'Inactivo' | 'Deshabilitado';
+    createdAt: string;
+}
+
+export const sampleExpansionManagers: ExpansionManager[] = [
+    { id: 'GE-001', name: 'Ricardo Mendoza', position: 'Gestor de Expansion', zone: 'Zona Norte', assignment: 'Expansión', subAssignment: 'Sector Residencial Norte', status: 'Activo', createdAt: '2023-01-20' },
+    { id: 'GE-002', name: 'Verónica Luna', position: 'Gestor de Expansion', zone: 'Zona Centro', assignment: 'Saturación', subAssignment: 'Comercial Centro Histórico', status: 'Activo', createdAt: '2023-02-25' },
+    { id: 'GE-003', name: 'Alejandro Solis', position: 'Gestor de Expansion', zone: 'Bajio Norte', assignment: 'Expansión', subAssignment: 'Parque Industrial Querétaro', status: 'Inactivo', createdAt: '2023-04-12' },
+];
     
