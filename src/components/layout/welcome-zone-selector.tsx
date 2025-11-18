@@ -30,9 +30,9 @@ export function WelcomeZoneSelector() {
        <Dialog open={true}>
         <DialogContent className="sm:max-w-[425px]" hideCloseButton={true}>
             <DialogHeader>
-                 <div className="mx-auto mb-4 flex items-center gap-2">
-                    <Icons.logo className="h-10 w-10 text-primary" />
-                    <h1 className="font-headline text-4xl font-bold text-primary">AERIS</h1>
+                 <div className="mx-auto mb-4 flex items-center gap-3">
+                    <Icons.logo className="h-12 w-12 text-primary" />
+                    <h1 className="font-headline text-5xl font-bold text-primary">AERIS</h1>
                 </div>
                 <DialogTitle className="text-center text-2xl">¡Bienvenido, {user?.name}!</DialogTitle>
                 <DialogDescription className="text-center">
