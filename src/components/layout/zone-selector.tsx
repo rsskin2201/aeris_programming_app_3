@@ -31,7 +31,7 @@ export function ZoneSelector() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button variant="outline" className="flex h-9 items-center gap-2">
           <Globe className="h-4 w-4" />
           <span className="hidden sm:inline">Zona:</span>
           <span className="font-semibold">{zone}</span>

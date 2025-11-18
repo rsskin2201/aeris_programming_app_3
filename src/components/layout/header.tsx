@@ -24,28 +24,57 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   HelpCircle,
   Home,
-  PanelLeft,
   Search,
   ChevronDown,
   User as UserIcon,
   Globe,
-  Check,
+  Briefcase,
+  Calendar,
+  ListTodo,
+  Settings,
+  PieChart,
+  Users,
+  LogOut,
+  Menu,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AppSidebar } from './app-sidebar';
 import { useAppContext } from '@/hooks/use-app-context';
-import { ROLES, ZONES } from '@/lib/types';
+import { ROLES, MODULES } from '@/lib/types';
 import { ZoneSelector } from './zone-selector';
 import { Badge } from '../ui/badge';
+import { PERMISSIONS } from '@/lib/permissions';
+import { Icons } from '../icons';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+
+const moduleIcons = {
+  [MODULES.INSPECTIONS]: Briefcase,
+  [MODULES.CALENDAR]: Calendar,
+  [MODULES.RECORDS]: ListTodo,
+  [MODULES.ENTITIES]: Settings,
+  [MODULES.STATISTICS]: PieChart,
+  [MODULES.USERS]: Users,
+  [MODULES.DASHBOARD]: Home,
+};
 
 export default function Header() {
   const pathname = usePathname();
-  const { user, zone, switchRole } = useAppContext();
+  const { user, switchRole, logout } = useAppContext();
+
+  if (!user) return null;
+
+  const userPermissions = PERMISSIONS[user.role] || [];
+  const visibleModules = Object.values(MODULES).filter(m => userPermissions.includes(m));
 
   const pathSegments = pathname.split('/').filter(Boolean);
   const breadcrumbs = pathSegments.map((segment, index) => {
@@ -56,102 +85,99 @@ export default function Header() {
   });
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-      <Sheet>
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+      <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+        <Link href="/" className="flex items-center gap-2 text-lg font-semibold md:text-base text-primary">
+          <Icons.logo className="h-8 w-8" />
+          <span className="sr-only">AERIS</span>
+        </Link>
+        <Link href="/" className={`transition-colors hover:text-foreground ${pathname === '/' ? 'text-foreground' : 'text-muted-foreground'}`}>
+          Panel Principal
+        </Link>
+      </nav>
+
+       <Sheet>
         <SheetTrigger asChild>
-          <Button size="icon" variant="outline" className="sm:hidden">
-            <PanelLeft className="h-5 w-5" />
-            <span className="sr-only">Toggle Menu</span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="shrink-0 md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="sm:max-w-xs p-0 bg-sidebar text-sidebar-foreground border-r-0">
-          <AppSidebar />
+        <SheetContent side="left">
+          <nav className="grid gap-6 text-lg font-medium">
+             <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-primary">
+              <Icons.logo className="h-8 w-8" />
+              <span>AERIS</span>
+            </Link>
+            <Link href="/" className={pathname === '/' ? 'text-foreground' : 'text-muted-foreground'}>
+              Panel Principal
+            </Link>
+            {/* You can add more mobile links here if needed */}
+          </nav>
         </SheetContent>
       </Sheet>
 
-      <Breadcrumb className="hidden md:flex">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/">
-                <Home className="h-4 w-4" />
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          {breadcrumbs.length > 0 ? (
-            breadcrumbs.map((crumb) => (
-              <BreadcrumbItem key={crumb.href}>
-                {crumb.isLast ? (
-                  <BreadcrumbPage>{crumb.name}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <Link href={crumb.href}>{crumb.name}</Link>
-                  </BreadcrumbLink>
-                )}
-                {!crumb.isLast && <BreadcrumbSeparator />}
-              </BreadcrumbItem>
-            ))
-          ) : (
-            <BreadcrumbItem>
-              <BreadcrumbPage>Panel Principal</BreadcrumbPage>
-            </BreadcrumbItem>
-          )}
-        </BreadcrumbList>
-      </Breadcrumb>
+      <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+        <div className="relative ml-auto flex-1 md:grow-0">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Buscar..."
+            className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
+          />
+        </div>
 
-      <div className="relative ml-auto flex-1 md:grow-0">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Buscar..."
-          className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
-        />
+        <Badge variant="outline" className="hidden lg:inline-flex">
+          Ambiente: Producción
+        </Badge>
+
+        <ZoneSelector />
+
+        <Button variant="outline" size="icon" className="h-9 w-9">
+          <HelpCircle className="h-4 w-4" />
+          <span className="sr-only">Soporte</span>
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="flex h-9 items-center gap-2"
+            >
+              <UserIcon className="h-4 w-4" />
+              <span className="hidden md:inline">{user?.name}</span>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Mi Cuenta ({user.role})</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Cambiar Rol (Demo)</DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                      <DropdownMenuRadioGroup value={user?.role} onValueChange={(value) => switchRole(value as any)}>
+                          {Object.values(ROLES).map((role) => (
+                              <DropdownMenuRadioItem key={role} value={role}>
+                                  {role}
+                              </DropdownMenuRadioItem>
+                          ))}
+                      </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Cerrar sesión</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-
-      <Badge variant="outline" className="hidden lg:inline-flex">
-        Ambiente: Producción
-      </Badge>
-
-      <ZoneSelector />
-
-      <Button variant="outline" size="icon" className="h-8 w-8">
-        <HelpCircle className="h-4 w-4" />
-        <span className="sr-only">Soporte</span>
-      </Button>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <UserIcon className="h-4 w-4" />
-            <span className="hidden md:inline">{user?.name}</span>
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>Cambiar Rol (Demo)</DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                    <DropdownMenuRadioGroup value={user?.role} onValueChange={(value) => switchRole(value as any)}>
-                        {Object.values(ROLES).map((role) => (
-                            <DropdownMenuRadioItem key={role} value={role}>
-                                {role}
-                            </DropdownMenuRadioItem>
-                        ))}
-                    </DropdownMenuRadioGroup>
-                </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Cerrar sesión</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </header>
   );
 }
