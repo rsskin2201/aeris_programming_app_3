@@ -149,13 +149,6 @@ export default function IndividualInspectionPage() {
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            
-            <FormField control={form.control} name="id" render={({ field }) => (
-                <FormItem>
-                    <FormLabel>ID de Registro</FormLabel>
-                    <FormControl><Input {...field} readOnly disabled className="font-mono" /></FormControl>
-                </FormItem>
-            )} />
 
             <Card>
               <CardHeader>
@@ -163,10 +156,18 @@ export default function IndividualInspectionPage() {
                 <CardDescription>Dirección donde se realizará la inspección.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-6 md:grid-cols-2">
+                <div className="md:col-span-2">
+                    <FormField control={form.control} name="id" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>ID de Registro</FormLabel>
+                            <FormControl><Input {...field} readOnly disabled className="font-mono" /></FormControl>
+                        </FormItem>
+                    )} />
+                </div>
                  <FormField control={form.control} name="poliza" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Póliza</FormLabel>
-                        <FormControl><Input placeholder="Opcional" {...field} type="number" /></FormControl>
+                        <FormControl><Input placeholder="Opcional" {...field} type="text" inputMode="numeric" pattern="[0-9]*" /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -416,5 +417,3 @@ export default function IndividualInspectionPage() {
     </div>
   );
 }
-
-    
