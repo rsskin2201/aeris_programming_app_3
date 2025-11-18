@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role } from "@/lib/types";
-import { mockInstallers, sampleCollaborators, mockSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
+import { mockInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
 import { useMemo } from "react";
 
 const formSchema = z.object({
@@ -389,7 +389,7 @@ export default function IndividualInspectionPage() {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {mockSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
+                        {sampleSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
