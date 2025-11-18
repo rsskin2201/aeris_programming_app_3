@@ -3,11 +3,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon, ChevronLeft, FileUp, Loader2 } from "lucide-react";
+import { CalendarIcon, ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse } from "date-fns";
 import { es } from 'date-fns/locale';
+import React, { useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role } from "@/lib/types";
 import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
-import { useMemo } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -54,11 +55,15 @@ const formSchema = z.object({
   status: z.string(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
   const { user, zone, weekendsEnabled } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getInitialStatus = (role: Role | undefined) => {
     switch (role) {
@@ -106,15 +111,30 @@ export default function IndividualInspectionPage() {
   }, [user?.role, searchParams]);
 
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
+    mode: 'onChange',
   });
+
+  const formData = form.watch();
+
+  const handlePreview = () => {
+      form.trigger().then(isValid => {
+          if (isValid) {
+              setIsConfirming(true);
+          } else {
+               toast({
+                variant: "destructive",
+                title: "Errores en el formulario",
+                description: "Por favor, revisa los campos marcados en rojo y corrige los errores antes de continuar.",
+            });
+          }
+      })
+  }
   
-  const { isSubmitting } = form.formState;
-
-
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onFinalSubmit(values: FormValues) {
+    setIsSubmitting(true);
     console.log({ ...values });
 
     toast({
@@ -123,8 +143,10 @@ export default function IndividualInspectionPage() {
     });
     
     setTimeout(() => {
+      setIsSubmitting(false);
+      setIsConfirming(false);
       router.push('/records');
-    }, 1000);
+    }, 1500);
   }
 
   const handleReset = () => {
@@ -138,6 +160,27 @@ export default function IndividualInspectionPage() {
   
   const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: any) => {
       field.onChange(e.target.value.toUpperCase());
+  }
+  
+  const renderFieldWithFeedback = (fieldName: keyof FormValues, fieldLabel: string, value: any) => {
+      const { errors, touchedFields } = form.formState;
+      const isTouched = touchedFields[fieldName];
+      const error = errors[fieldName];
+      const displayValue = value instanceof Date ? format(value, "PPP", { locale: es }) : value || <span className="text-muted-foreground">No especificado</span>;
+
+      return (
+         <div className="flex items-start justify-between py-2 border-b">
+            <span className="text-sm font-medium text-muted-foreground">{fieldLabel}</span>
+             <div className="text-right flex items-center gap-2">
+                <span className="text-sm font-semibold">{displayValue}</span>
+                 {isTouched && (
+                    <div className="w-4 h-4">
+                        {error ? <AlertCircle className="text-destructive" /> : <CheckCircle className="text-green-500" />}
+                    </div>
+                )}
+            </div>
+        </div>
+      );
   }
 
   return (
@@ -155,7 +198,7 @@ export default function IndividualInspectionPage() {
       </div>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={(e) => { e.preventDefault(); handlePreview() }} className="space-y-8">
 
             <Card>
               <CardHeader>
@@ -174,14 +217,14 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="poliza" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Póliza</FormLabel>
-                        <FormControl><Input placeholder="Opcional" {...field} type="text" inputMode="numeric" pattern="[0-9]*" /></FormControl>
+                        <FormControl><Input placeholder="Opcional" {...field} type="text" /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
                  <FormField control={form.control} name="caso" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Caso (AT)</FormLabel>
-                        <FormControl><Input placeholder="Ej. AT-1234567" {...field} /></FormControl>
+                        <FormControl><Input placeholder="Ej. AT-1234567" {...field} maxLength={11} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -422,13 +465,65 @@ export default function IndividualInspectionPage() {
             <div className="flex justify-end gap-2">
                 <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
                 <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
-                <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Guardar
-                </Button>
+                <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
+                    <DialogTrigger asChild>
+                         <Button type="button" onClick={handlePreview} disabled={isSubmitting}>
+                            Guardar
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-xl">
+                        <DialogHeader>
+                            <DialogTitle>Confirmar Creación de Inspección</DialogTitle>
+                            <DialogDescription>
+                                Revisa los datos del formulario antes de confirmar la solicitud.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="max-h-[50vh] overflow-y-auto p-1 pr-4">
+                            <h3 className="font-semibold text-lg mb-2">Ubicación del Servicio</h3>
+                            {renderFieldWithFeedback('id', 'ID de Registro', formData.id)}
+                            {renderFieldWithFeedback('poliza', 'Póliza', formData.poliza)}
+                            {renderFieldWithFeedback('caso', 'Caso (AT)', formData.caso)}
+                            {renderFieldWithFeedback('municipality', 'Municipio', formData.municipality)}
+                            {renderFieldWithFeedback('colonia', 'Colonia', formData.colonia)}
+                            {renderFieldWithFeedback('calle', 'Calle', formData.calle)}
+                            {renderFieldWithFeedback('numero', 'Número', formData.numero)}
+                            {renderFieldWithFeedback('portal', 'Portal', formData.portal)}
+                            {renderFieldWithFeedback('escalera', 'Escalera', formData.escalera)}
+                            {renderFieldWithFeedback('piso', 'Piso', formData.piso)}
+                            {renderFieldWithFeedback('puerta', 'Puerta', formData.puerta)}
+
+                            <h3 className="font-semibold text-lg mb-2 mt-4">Detalles de la Programación</h3>
+                             {renderFieldWithFeedback('tipoInspeccion', 'Tipo de Inspección', formData.tipoInspeccion)}
+                            {renderFieldWithFeedback('tipoProgramacion', 'Tipo de Programación', formData.tipoProgramacion)}
+                            {renderFieldWithFeedback('tipoMdd', 'Tipo MDD', formData.tipoMdd)}
+                            {renderFieldWithFeedback('mercado', 'Mercado', formData.mercado)}
+                            {renderFieldWithFeedback('oferta', 'Oferta/Campaña', formData.oferta)}
+
+                            <h3 className="font-semibold text-lg mb-2 mt-4">Asignación y Estatus</h3>
+                            {renderFieldWithFeedback('empresaColaboradora', 'Empresa Colaboradora', formData.empresaColaboradora)}
+                            {renderFieldWithFeedback('instalador', 'Instalador', formData.instalador)}
+                            {renderFieldWithFeedback('fechaProgramacion', 'Fecha Programación', formData.fechaProgramacion)}
+                            {renderFieldWithFeedback('horarioProgramacion', 'Horario', formData.horarioProgramacion)}
+                            {renderFieldWithFeedback('gestor', 'Gestor', formData.gestor)}
+                            {renderFieldWithFeedback('sector', 'Sector', formData.sector)}
+                            {renderFieldWithFeedback('status', 'Estatus', formData.status)}
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button variant="outline" disabled={isSubmitting}>Cancelar</Button>
+                            </DialogClose>
+                            <Button onClick={() => onFinalSubmit(formData)} disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Confirmar y Guardar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </form>
       </Form>
     </div>
   );
 }
+
+    
