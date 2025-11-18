@@ -11,9 +11,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { CollaboratorCompanyForm } from "@/components/entities/collaborator-company-form";
 import { QualityControlCompanyForm } from "@/components/entities/quality-control-company-form";
 import { InspectorForm } from "@/components/entities/inspector-form";
+import { InstallerForm } from "@/components/entities/installer-form";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { sampleCollaborators, sampleQualityControlCompanies, sampleInspectors } from "@/lib/mock-data";
-import type { CollaboratorCompany, QualityControlCompany, Inspector } from "@/lib/mock-data";
+import { sampleCollaborators, sampleQualityControlCompanies, sampleInspectors, sampleInstallers } from "@/lib/mock-data";
+import type { CollaboratorCompany, QualityControlCompany, Inspector, Installer } from "@/lib/mock-data";
 
 
 const entities = [
@@ -25,10 +26,12 @@ export default function EntitiesPage() {
   const [collaboratorDialogOpen, setCollaboratorDialogOpen] = useState(false);
   const [qualityDialogOpen, setQualityDialogOpen] = useState(false);
   const [inspectorDialogOpen, setInspectorDialogOpen] = useState(false);
+  const [installerDialogOpen, setInstallerDialogOpen] = useState(false);
   
   const [selectedCollaborator, setSelectedCollaborator] = useState<CollaboratorCompany | null>(null);
   const [selectedQualityCompany, setSelectedQualityCompany] = useState<QualityControlCompany | null>(null);
   const [selectedInspector, setSelectedInspector] = useState<Inspector | null>(null);
+  const [selectedInstaller, setSelectedInstaller] = useState<Installer | null>(null);
 
   const handleEditCollaborator = (company: CollaboratorCompany) => {
     setSelectedCollaborator(company);
@@ -58,6 +61,16 @@ export default function EntitiesPage() {
   const handleNewInspector = () => {
     setSelectedInspector(null);
     setInspectorDialogOpen(true);
+  };
+
+  const handleEditInstaller = (installer: Installer) => {
+    setSelectedInstaller(installer);
+    setInstallerDialogOpen(true);
+  };
+
+  const handleNewInstaller = () => {
+    setSelectedInstaller(null);
+    setInstallerDialogOpen(true);
   };
 
 
@@ -146,6 +159,74 @@ export default function EntitiesPage() {
                 </CardContent>
               </Card>
               <CollaboratorCompanyForm company={selectedCollaborator} onClose={() => setCollaboratorDialogOpen(false)}/>
+            </Dialog>
+          </TabsContent>
+          
+          <TabsContent value="Instalador">
+            <Dialog open={installerDialogOpen} onOpenChange={setInstallerDialogOpen}>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Listado de: Instaladores</CardTitle>
+                    <CardDescription>Gestiona los instaladores.</CardDescription>
+                  </div>
+                  <DialogTrigger asChild>
+                    <Button onClick={handleNewInstaller}>
+                      <PlusCircle className="mr-2" />
+                      Nuevo Registro
+                    </Button>
+                  </DialogTrigger>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Nombre Instalador</TableHead>
+                        <TableHead>Empresa</TableHead>
+                        <TableHead>Cert. Fin</TableHead>
+                        <TableHead>Estatus</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sampleInstallers.map(item => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-mono">{item.id}</TableCell>
+                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell>{item.collaboratorCompany}</TableCell>
+                          <TableCell>{item.certEndDate}</TableCell>
+                           <TableCell>
+                            <Badge variant={
+                                item.status === 'Activo' ? 'default' : 
+                                item.status === 'Inactivo' ? 'secondary' : 'destructive'
+                            }>{item.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Toggle menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleEditInstaller(item)}>Editar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activo')} className="text-green-600">Activar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactivo')} className="text-yellow-600">Poner Inactivo</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {/* TODO: Add Pagination Controls */}
+                </CardContent>
+              </Card>
+              <InstallerForm installer={selectedInstaller} onClose={() => setInstallerDialogOpen(false)} />
             </Dialog>
           </TabsContent>
 
@@ -287,7 +368,7 @@ export default function EntitiesPage() {
             </Dialog>
           </TabsContent>
           
-          {entities.filter(e => e !== 'Empresa Colaboradora' && e !== 'Empresa de Control de Calidad' && e !== 'Inspector').map(entity => (
+          {entities.filter(e => e !== 'Empresa Colaboradora' && e !== 'Empresa de Control de Calidad' && e !== 'Inspector' && e !== 'Instalador').map(entity => (
             <TabsContent key={entity} value={entity}>
               <Card>
                 <CardHeader>
@@ -304,3 +385,5 @@ export default function EntitiesPage() {
     </div>
   );
 }
+
+    

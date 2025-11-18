@@ -105,3 +105,23 @@ export const sampleInspectors: Inspector[] = [
     { id: 'INSP-002', name: 'María García', position: 'Inspector', qualityCompany: 'Inspecciones Precisas S.C.', certStartDate: '2023-06-01', certEndDate: '2024-06-01', status: 'Activo', createdAt: '2023-05-20' },
     { id: 'INSP-003', name: 'Carlos Sánchez', position: 'Inspector', qualityCompany: 'VeriGas Calidad Total', certStartDate: '2024-03-15', certEndDate: '2025-03-15', status: 'Inactivo', createdAt: '2024-03-01' },
 ];
+
+
+export type Installer = {
+    id: string;
+    name: string;
+    position: 'Instalador';
+    collaboratorCompany: string;
+    certStartDate: string;
+    certEndDate: string;
+    status: 'Activo' | 'Inactivo' | 'Deshabilitado';
+    createdAt: string;
+};
+
+export const sampleInstallers: Installer[] = [
+    { id: 'INST-001', name: 'Pedro Ramirez', position: 'Instalador', collaboratorCompany: 'GasLink S.A. de C.V.', certStartDate: '2024-02-01', certEndDate: '2025-02-01', status: 'Activo', createdAt: '2024-01-15' },
+    { id: 'INST-002', name: 'Laura Juarez', position: 'Instalador', collaboratorCompany: 'ServiGas del Norte', certStartDate: '2023-08-01', certEndDate: '2024-08-01', status: 'Activo', createdAt: '2023-07-20' },
+    { id: 'INST-003', name: 'Fernando Gonzalez', position: 'Instalador', collaboratorCompany: 'Conexiones Seguras', certStartDate: '2024-05-15', certEndDate: '2025-05-15', status: 'Inactivo', createdAt: '2024-05-01' },
+];
+
+    
