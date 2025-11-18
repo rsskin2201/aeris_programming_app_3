@@ -1,3 +1,6 @@
+'use client';
+
+import { useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -5,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { mockRecords, InspectionRecord } from "@/lib/mock-data";
 import { MoreHorizontal, Download, Filter } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useAppContext } from '@/hooks/use-app-context';
 
 const statusVariant: Record<InspectionRecord['status'], 'default' | 'secondary' | 'destructive' | 'outline'> = {
   'Aprobado': 'default',
@@ -15,6 +19,13 @@ const statusVariant: Record<InspectionRecord['status'], 'default' | 'secondary' 
 
 
 export default function RecordsPage() {
+  const { zone } = useAppContext();
+
+  const filteredRecords = useMemo(() =>
+    mockRecords.filter(record => zone === 'Todas las zonas' || record.zone === zone),
+    [zone]
+  );
+
   return (
     <div className="flex flex-col gap-6">
        <div className="flex flex-wrap items-center justify-between gap-4">
@@ -40,12 +51,13 @@ export default function RecordsPage() {
                 <TableHead>Cliente</TableHead>
                 <TableHead>Fecha Solicitud</TableHead>
                 <TableHead>Inspector</TableHead>
+                <TableHead>Zona</TableHead>
                 <TableHead>Estatus</TableHead>
                 <TableHead><span className="sr-only">Acciones</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockRecords.map((record) => (
+              {filteredRecords.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell className="font-medium">{record.id}</TableCell>
                   <TableCell>{record.type}</TableCell>
@@ -53,6 +65,7 @@ export default function RecordsPage() {
                   <TableCell>{record.client}</TableCell>
                   <TableCell>{record.requestDate}</TableCell>
                   <TableCell>{record.inspector}</TableCell>
+                  <TableCell>{record.zone}</TableCell>
                   <TableCell>
                     <Badge variant={statusVariant[record.status]}>{record.status}</Badge>
                   </TableCell>

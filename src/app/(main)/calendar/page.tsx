@@ -3,13 +3,31 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Download, Filter, Power, PowerOff } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useAppContext } from "@/hooks/use-app-context";
+import { mockRecords } from "@/lib/mock-data";
+import { format, getDate, parseISO } from 'date-fns';
 
 const daysOfWeek = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const daysInMonth = Array.from({ length: 31 }, (_, i) => i + 1);
 
 export default function CalendarPage() {
   const [formsActive, setFormsActive] = useState(true);
+  const { zone } = useAppContext();
+
+  const inspectionsByDay = useMemo(() => {
+    const filteredRecords = mockRecords.filter(record => zone === 'Todas las zonas' || record.zone === zone);
+    
+    const inspections: Record<number, number> = {};
+    filteredRecords.forEach(record => {
+      // Assuming requestDate is 'YYYY-MM-DD'
+      // This is a simplification; a real app would handle dates more robustly.
+      const dayOfMonth = getDate(parseISO(record.requestDate));
+      inspections[dayOfMonth] = (inspections[dayOfMonth] || 0) + 1;
+    });
+    return inspections;
+  }, [zone]);
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,8 +64,11 @@ export default function CalendarPage() {
             {daysInMonth.map(day => (
               <div key={day} className={`h-24 rounded-md border p-2 text-sm ${day > 30 ? 'bg-muted/50 text-muted-foreground' : ''}`}>
                 <span>{day}</span>
-                {day === 15 && <div className="mt-1 rounded-sm bg-primary/20 px-1 py-0.5 text-xs text-primary-foreground">2 Inspecciones</div>}
-                 {day === 16 && <div className="mt-1 rounded-sm bg-primary/20 px-1 py-0.5 text-xs text-primary-foreground">3 Inspecciones</div>}
+                {inspectionsByDay[day] && (
+                    <div className="mt-1 rounded-sm bg-primary/20 px-1 py-0.5 text-xs text-primary-foreground">
+                        {inspectionsByDay[day]} {inspectionsByDay[day] > 1 ? 'Inspecciones' : 'Inspección'}
+                    </div>
+                )}
               </div>
             ))}
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +17,7 @@ import { sampleCollaborators, sampleQualityControlCompanies, sampleInspectors, s
 import type { CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from "@/lib/mock-data";
 import { ExpansionManagerForm } from "@/components/entities/expansion-manager-form";
 import { SectorForm } from "@/components/entities/sector-form";
+import { useAppContext } from "@/hooks/use-app-context";
 
 
 const entities = [
@@ -25,6 +26,7 @@ const entities = [
 
 
 export default function EntitiesPage() {
+  const { zone } = useAppContext();
   const [collaboratorDialogOpen, setCollaboratorDialogOpen] = useState(false);
   const [qualityDialogOpen, setQualityDialogOpen] = useState(false);
   const [inspectorDialogOpen, setInspectorDialogOpen] = useState(false);
@@ -39,6 +41,30 @@ export default function EntitiesPage() {
   const [selectedManager, setSelectedManager] = useState<ExpansionManager | null>(null);
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
 
+  const filteredCollaborators = useMemo(() => 
+    sampleCollaborators.filter(c => zone === 'Todas las zonas' || c.zone === zone), 
+    [zone]
+  );
+  const filteredInstallers = useMemo(() => 
+    sampleInstallers.filter(i => zone === 'Todas las zonas' || i.zone === zone), 
+    [zone]
+  );
+  const filteredExpansionManagers = useMemo(() => 
+    sampleExpansionManagers.filter(m => zone === 'Todas las zonas' || m.zone === zone), 
+    [zone]
+  );
+  const filteredQualityCompanies = useMemo(() => 
+    sampleQualityControlCompanies.filter(c => zone === 'Todas las zonas' || c.zone === zone), 
+    [zone]
+  );
+  const filteredInspectors = useMemo(() => 
+    sampleInspectors.filter(i => zone === 'Todas las zonas' || i.zone === zone), 
+    [zone]
+  );
+  const filteredSectors = useMemo(() => 
+    sampleSectors.filter(s => zone === 'Todas las zonas' || s.zone === zone), 
+    [zone]
+  );
 
   const handleEditCollaborator = (company: CollaboratorCompany) => {
     setSelectedCollaborator(company);
@@ -148,7 +174,7 @@ export default function EntitiesPage() {
                           </TableRow>
                       </TableHeader>
                       <TableBody>
-                          {sampleCollaborators.map(item => (
+                          {filteredCollaborators.map(item => (
                                <TableRow key={item.id}>
                                   <TableCell className="font-mono">{item.id}</TableCell>
                                   <TableCell className="font-medium">{item.name}</TableCell>
@@ -211,17 +237,19 @@ export default function EntitiesPage() {
                         <TableHead>ID</TableHead>
                         <TableHead>Nombre Instalador</TableHead>
                         <TableHead>Empresa</TableHead>
+                        <TableHead>Zona</TableHead>
                         <TableHead>Cert. Fin</TableHead>
                         <TableHead>Estatus</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sampleInstallers.map(item => (
+                      {filteredInstallers.map(item => (
                         <TableRow key={item.id}>
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.collaboratorCompany}</TableCell>
+                          <TableCell>{item.zone}</TableCell>
                           <TableCell>{item.certEndDate}</TableCell>
                            <TableCell>
                             <Badge variant={
@@ -285,7 +313,7 @@ export default function EntitiesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sampleExpansionManagers.map(item => (
+                      {filteredExpansionManagers.map(item => (
                         <TableRow key={item.id}>
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
@@ -354,7 +382,7 @@ export default function EntitiesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sampleQualityControlCompanies.map(item => (
+                      {filteredQualityCompanies.map(item => (
                         <TableRow key={item.id}>
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
@@ -417,17 +445,19 @@ export default function EntitiesPage() {
                         <TableHead>ID</TableHead>
                         <TableHead>Nombre Inspector</TableHead>
                         <TableHead>Empresa</TableHead>
+                        <TableHead>Zona</TableHead>
                         <TableHead>Cert. Fin</TableHead>
                         <TableHead>Estatus</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sampleInspectors.map(item => (
+                      {filteredInspectors.map(item => (
                         <TableRow key={item.id}>
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.qualityCompany}</TableCell>
+                          <TableCell>{item.zone}</TableCell>
                           <TableCell>{item.certEndDate}</TableCell>
                            <TableCell>
                             <Badge variant={
@@ -492,7 +522,7 @@ export default function EntitiesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sampleSectors.map(item => (
+                      {filteredSectors.map(item => (
                         <TableRow key={item.id}>
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.sector}</TableCell>

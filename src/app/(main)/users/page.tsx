@@ -12,11 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ROLES, ZONES } from "@/lib/types";
 import { useAppContext } from "@/hooks/use-app-context";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function UsersPage() {
-    const { user } = useAppContext();
+    const { user, zone } = useAppContext();
     const router = useRouter();
     const [ newPassword, setNewPassword ] = useState('');
 
@@ -25,6 +25,11 @@ export default function UsersPage() {
             router.push('/');
         }
     }, [user, router]);
+
+    const filteredUsers = useMemo(() => 
+        mockUsers.filter(u => zone === 'Todas las zonas' || u.zone === zone),
+        [zone]
+    );
 
     const generatePassword = () => {
         const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
@@ -111,16 +116,18 @@ export default function UsersPage() {
                 <TableHead>Nombre</TableHead>
                 <TableHead>Usuario</TableHead>
                 <TableHead>Rol</TableHead>
+                <TableHead>Zona</TableHead>
                 <TableHead>Estatus</TableHead>
                 <TableHead><span className="sr-only">Acciones</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockUsers.map((userItem) => (
+              {filteredUsers.map((userItem) => (
                 <TableRow key={userItem.username}>
                   <TableCell className="font-medium">{userItem.name}</TableCell>
                   <TableCell>{userItem.username}</TableCell>
                   <TableCell>{userItem.role}</TableCell>
+                  <TableCell>{userItem.zone}</TableCell>
                   <TableCell><Badge variant="default">Activo</Badge></TableCell>
                   <TableCell>
                     <DropdownMenu>

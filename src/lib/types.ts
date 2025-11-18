@@ -23,6 +23,7 @@ export type User = {
   name: string;
   username: string;
   role: Role;
+  zone: Zone;
 };
 
 export const MODULES = {

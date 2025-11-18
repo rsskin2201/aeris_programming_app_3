@@ -1,13 +1,13 @@
 import { Role, ROLES, User, Zone, ZONES } from '@/lib/types';
 
 export const mockUsers: User[] = [
-  { name: 'Admin User', username: 'admin', role: ROLES.ADMIN },
-  { name: 'Gerardo Gestor', username: 'gestor', role: ROLES.GESTOR },
-  { name: 'Ana Colaboradora', username: 'colaboradora', role: ROLES.COLABORADOR },
-  { name: 'Sofia Soporte', username: 'soporte', role: ROLES.SOPORTE },
-  { name: 'Carla Calidad', username: 'calidad', role: ROLES.CALIDAD },
-  { name: 'Carlos Canales', username: 'canales', role: ROLES.CANALES },
-  { name: 'Victor Visual', username: 'visual', role: ROLES.VISUAL },
+  { name: 'Admin User', username: 'admin', role: ROLES.ADMIN, zone: 'Todas las zonas' },
+  { name: 'Gerardo Gestor', username: 'gestor', role: ROLES.GESTOR, zone: 'Zona Norte' },
+  { name: 'Ana Colaboradora', username: 'colaboradora', role: ROLES.COLABORADOR, zone: 'Bajio Norte' },
+  { name: 'Sofia Soporte', username: 'soporte', role: ROLES.SOPORTE, zone: 'Zona Centro' },
+  { name: 'Carla Calidad', username: 'calidad', role: ROLES.CALIDAD, zone: 'Bajio Sur' },
+  { name: 'Carlos Canales', username: 'canales', role: ROLES.CANALES, zone: 'Todas las zonas' },
+  { name: 'Victor Visual', username: 'visual', role: ROLES.VISUAL, zone: 'Todas las zonas' },
 ];
 
 export type InspectionRecord = {
@@ -18,14 +18,15 @@ export type InspectionRecord = {
   requestDate: string;
   status: 'Pendiente Aprobación' | 'Contemplado' | 'Aprobado' | 'Rechazado';
   inspector: string;
+  zone: Zone;
 };
 
 export const mockRecords: InspectionRecord[] = [
-  { id: 'INS-001', type: 'Individual PES', address: 'Av. Siempre Viva 742', client: 'Springfield Power Plant', requestDate: '2024-07-15', status: 'Aprobado', inspector: 'Juan Pérez' },
-  { id: 'INS-002', type: 'Especial', address: 'Calle Falsa 123', client: 'Kwik-E-Mart', requestDate: '2024-07-16', status: 'Contemplado', inspector: 'Maria Garcia' },
-  { id: 'INS-003', type: 'Masiva PES', address: 'Blvd. del Ocaso 450', client: 'Residencial Ocaso', requestDate: '2024-07-18', status: 'Pendiente Aprobación', inspector: 'N/A' },
-  { id: 'INS-004', type: 'Individual PES', address: 'Paseo de la Reforma 222', client: 'Torre Mayor Oficinas', requestDate: '2024-07-20', status: 'Rechazado', inspector: 'N/A' },
-  { id: 'INS-005', type: 'Individual PES', address: 'Insurgentes Sur 300', client: 'Comercial del Sur', requestDate: '2024-07-21', status: 'Aprobado', inspector: 'Juan Pérez' },
+  { id: 'INS-001', type: 'Individual PES', address: 'Av. Siempre Viva 742', client: 'Springfield Power Plant', requestDate: '2024-07-15', status: 'Aprobado', inspector: 'Juan Pérez', zone: 'Zona Norte' },
+  { id: 'INS-002', type: 'Especial', address: 'Calle Falsa 123', client: 'Kwik-E-Mart', requestDate: '2024-07-16', status: 'Contemplado', inspector: 'Maria Garcia', zone: 'Zona Centro' },
+  { id: 'INS-003', type: 'Masiva PES', address: 'Blvd. del Ocaso 450', client: 'Residencial Ocaso', requestDate: '2024-07-18', status: 'Pendiente Aprobación', inspector: 'N/A', zone: 'Bajio Norte' },
+  { id: 'INS-004', type: 'Individual PES', address: 'Paseo de la Reforma 222', client: 'Torre Mayor Oficinas', requestDate: '2024-07-20', status: 'Rechazado', inspector: 'N/A', zone: 'Bajio Sur' },
+  { id: 'INS-005', type: 'Individual PES', address: 'Insurgentes Sur 300', client: 'Comercial del Sur', requestDate: '2024-07-21', status: 'Aprobado', inspector: 'Juan Pérez', zone: 'Zona Norte' },
 ];
 
 export const mockInstallerCompanies = [
@@ -92,12 +93,13 @@ export type Inspector = {
     certEndDate: string;
     status: 'Activo' | 'Inactivo' | 'Deshabilitado';
     createdAt: string;
+    zone: Zone;
 };
 
 export const sampleInspectors: Inspector[] = [
-    { id: 'INSP-001', name: 'JUAN PÉREZ', position: 'Inspector', qualityCompany: 'VERIGAS CALIDAD TOTAL', certStartDate: '2024-01-01', certEndDate: '2025-01-01', status: 'Activo', createdAt: '2023-12-15' },
-    { id: 'INSP-002', name: 'MARÍA GARCÍA', position: 'Inspector', qualityCompany: 'INSPECCIONES PRECISAS S.C.', certStartDate: '2023-06-01', certEndDate: '2024-06-01', status: 'Activo', createdAt: '2023-05-20' },
-    { id: 'INSP-003', name: 'CARLOS SÁNCHEZ', position: 'Inspector', qualityCompany: 'VERIGAS CALIDAD TOTAL', certStartDate: '2024-03-15', certEndDate: '2025-03-15', status: 'Inactivo', createdAt: '2024-03-01' },
+    { id: 'INSP-001', name: 'JUAN PÉREZ', position: 'Inspector', qualityCompany: 'VERIGAS CALIDAD TOTAL', certStartDate: '2024-01-01', certEndDate: '2025-01-01', status: 'Activo', createdAt: '2023-12-15', zone: 'Zona Centro' },
+    { id: 'INSP-002', name: 'MARÍA GARCÍA', position: 'Inspector', qualityCompany: 'INSPECCIONES PRECISAS S.C.', certStartDate: '2023-06-01', certEndDate: '2024-06-01', status: 'Activo', createdAt: '2023-05-20', zone: 'Bajio Sur' },
+    { id: 'INSP-003', name: 'CARLOS SÁNCHEZ', position: 'Inspector', qualityCompany: 'VERIGAS CALIDAD TOTAL', certStartDate: '2024-03-15', certEndDate: '2025-03-15', status: 'Inactivo', createdAt: '2024-03-01', zone: 'Zona Norte' },
 ];
 
 
@@ -110,12 +112,13 @@ export type Installer = {
     certEndDate: string;
     status: 'Activo' | 'Inactivo' | 'Deshabilitado';
     createdAt: string;
+    zone: Zone;
 };
 
 export const sampleInstallers: Installer[] = [
-    { id: 'INST-001', name: 'PEDRO RAMIREZ', position: 'Instalador', collaboratorCompany: 'GASLINK S.A. DE C.V.', certStartDate: '2024-02-01', certEndDate: '2025-02-01', status: 'Activo', createdAt: '2024-01-15' },
-    { id: 'INST-002', name: 'LAURA JUAREZ', position: 'Instalador', collaboratorCompany: 'SERVIGAS DEL NORTE', certStartDate: '2023-08-01', certEndDate: '2024-08-01', status: 'Activo', createdAt: '2023-07-20' },
-    { id: 'INST-003', name: 'FERNANDO GONZALEZ', position: 'Instalador', collaboratorCompany: 'CONEXIONES SEGURAS', certStartDate: '2024-05-15', certEndDate: '2025-05-15', status: 'Inactivo', createdAt: '2024-05-01' },
+    { id: 'INST-001', name: 'PEDRO RAMIREZ', position: 'Instalador', collaboratorCompany: 'GASLINK S.A. DE C.V.', certStartDate: '2024-02-01', certEndDate: '2025-02-01', status: 'Activo', createdAt: '2024-01-15', zone: 'Zona Norte' },
+    { id: 'INST-002', name: 'LAURA JUAREZ', position: 'Instalador', collaboratorCompany: 'SERVIGAS DEL NORTE', certStartDate: '2023-08-01', certEndDate: '2024-08-01', status: 'Activo', createdAt: '2023-07-20', zone: 'Zona Norte' },
+    { id: 'INST-003', name: 'FERNANDO GONZALEZ', position: 'Instalador', collaboratorCompany: 'CONEXIONES SEGURAS', certStartDate: '2024-05-15', certEndDate: '2025-05-15', status: 'Inactivo', createdAt: '2024-05-01', zone: 'Bajio Norte' },
 ];
 
 export type ExpansionManager = {

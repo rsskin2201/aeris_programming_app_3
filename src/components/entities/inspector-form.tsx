@@ -18,12 +18,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
+import { ZONES } from '@/lib/types';
 
 const formSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'El nombre es requerido.'),
   position: z.string().min(1, 'El puesto es requerido.'),
   qualityCompany: z.string().min(1, 'La empresa es requerida.'),
+  zone: z.string().min(1, 'La zona es requerida.'),
   certStartDate: z.date({ required_error: "La fecha de inicio es requerida." }),
   certEndDate: z.date({ required_error: "La fecha de fin es requerida." }),
   status: z.string().min(1, 'El estatus es requerido.'),
@@ -47,6 +49,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
       name: inspector?.name || '',
       position: 'Inspector',
       qualityCompany: inspector?.qualityCompany || '',
+      zone: inspector?.zone || '',
       certStartDate: parseDate(inspector?.certStartDate),
       certEndDate: parseDate(inspector?.certEndDate),
       status: inspector?.status || 'Activo',
@@ -157,6 +160,19 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
                 </FormItem>
             )} />
            </div>
+
+             <FormField control={form.control} name="zone" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Zona</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una zona" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                        {ZONES.filter(z => z !== 'Todas las zonas').map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+            )} />
 
             <div className="grid grid-cols-2 gap-4">
                  <FormField control={form.control} name="certStartDate" render={({ field }) => (
