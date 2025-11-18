@@ -63,18 +63,16 @@ export function AppSidebar() {
         <SidebarMenu>
           {visibleModules.map((module) => (
             <SidebarMenuItem key={module.id}>
-              <Link href={module.path} passHref legacyBehavior>
-                <SidebarMenuButton
-                  isActive={pathname === module.path}
-                  tooltip={{ children: module.name, side: 'right' }}
-                  asChild
-                >
-                  <a>
-                    <module.icon />
-                    <span>{module.name}</span>
-                  </a>
-                </SidebarMenuButton>
-              </Link>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === module.path}
+                tooltip={{ children: module.name, side: 'right' }}
+              >
+                <Link href={module.path}>
+                  <module.icon />
+                  <span>{module.name}</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
