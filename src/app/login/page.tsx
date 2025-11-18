@@ -2,7 +2,6 @@ import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { LoginForm } from '@/components/auth/login-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Icons } from '@/components/icons';
 
 export default function LoginPage() {
   const loginBg = PlaceHolderImages.find(img => img.id === 'login-background');
@@ -22,7 +21,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex items-center gap-3">
-            <Icons.logo className="h-16 w-16 text-primary" />
+            <span className="text-5xl font-bold text-primary">⚡</span>
             <h1 className="font-headline text-5xl font-bold text-primary">AERIS</h1>
           </div>
           <CardTitle className="font-headline text-2xl">Bienvenido</CardTitle>

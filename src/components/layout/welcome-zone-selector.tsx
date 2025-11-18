@@ -15,7 +15,6 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Globe } from 'lucide-react';
-import { Icons } from '../icons';
 
 export function WelcomeZoneSelector() {
   const { zone, confirmZone, operatorName } = useAppContext();
@@ -31,7 +30,7 @@ export function WelcomeZoneSelector() {
         <DialogContent className="sm:max-w-[425px]" hideCloseButton={true}>
             <DialogHeader>
                  <div className="mx-auto mb-4 flex items-center gap-3">
-                    <Icons.logo className="h-12 w-12 text-primary" />
+                    <span className="text-5xl font-bold text-primary">⚡</span>
                     <h1 className="font-headline text-5xl font-bold text-primary">AERIS</h1>
                 </div>
                 <DialogTitle className="text-center text-2xl">¡Bienvenido, {operatorName}!</DialogTitle>
