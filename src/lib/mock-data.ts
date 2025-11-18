@@ -2,12 +2,12 @@ import { Role, ROLES, User } from '@/lib/types';
 
 export const mockUsers: User[] = [
   { name: 'Admin User', username: 'admin', role: ROLES.ADMIN },
-  { name: 'Ana Colaborador', username: 'ana.c', role: ROLES.COLABORADOR },
-  { name: 'Gerardo Gestor', username: 'gerardo.g', role: ROLES.GESTOR },
-  { name: 'Carla Calidad', username: 'carla.c', role: ROLES.CALIDAD },
-  { name: 'Sofia Soporte', username: 'sofia.s', role: ROLES.SOPORTE },
-  { name: 'Carlos Canales', username: 'carlos.c', role: ROLES.CANALES },
-  { name: 'Victor Visual', username: 'victor.v', role: ROLES.VISUAL },
+  { name: 'Gerardo Gestor', username: 'gestor', role: ROLES.GESTOR },
+  { name: 'Ana Colaboradora', username: 'colaboradora', role: ROLES.COLABORADOR },
+  { name: 'Sofia Soporte', username: 'soporte', role: ROLES.SOPORTE },
+  { name: 'Carla Calidad', username: 'calidad', role: ROLES.CALIDAD },
+  { name: 'Carlos Canales', username: 'canales', role: ROLES.CANALES },
+  { name: 'Victor Visual', username: 'visual', role: ROLES.VISUAL },
 ];
 
 export type InspectionRecord = {

@@ -1,11 +1,11 @@
 export const ROLES = {
   ADMIN: 'Administrador',
+  GESTOR: 'Gestor',
   COLABORADOR: 'Empresa Colaboradora',
-  GESTOR: 'Gestor de Expansión',
-  CALIDAD: 'Empresa de Control de Calidad',
   SOPORTE: 'Soporte a Procesos',
+  CALIDAD: 'Empresa Control de Calidad',
   CANALES: 'Canales',
-  VISUAL: 'Visual User',
+  VISUAL: 'Visual',
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];

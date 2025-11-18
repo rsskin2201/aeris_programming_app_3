@@ -28,7 +28,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return foundUser;
     }
     // For demo, allow login with any role name for testing
-    const roleKey = Object.keys(ROLES).find(key => ROLES[key as keyof typeof ROLES].toLowerCase() === username.toLowerCase());
+    const roleKey = Object.keys(ROLES).find(key => ROLES[key as keyof typeof ROLES].toLowerCase().split(' ')[0] === username.toLowerCase());
     if (roleKey) {
         const roleUser = mockUsers.find(u => u.role === ROLES[roleKey as keyof typeof ROLES]);
         if (roleUser) {

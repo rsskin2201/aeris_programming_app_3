@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/hooks/use-app-context';
 import { ROLES } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { mockUsers } from '@/lib/mock-data';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'El usuario es requerido.' }),
@@ -122,7 +123,7 @@ export function LoginForm() {
         </CardHeader>
         <CardContent>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-            {Object.values(ROLES).map(role => <li key={role}>- <span className="font-mono">{role.split(' ')[0].toLowerCase()}</span></li>)}
+            {mockUsers.map(user => <li key={user.username}>- <span className="font-mono">{user.username}</span></li>)}
           </ul>
         </CardContent>
       </Card>
