@@ -88,3 +88,20 @@ export const sampleQualityControlCompanies: QualityControlCompany[] = [
   { id: 'ECC-002', name: 'Inspecciones Precisas S.C.', rfc: 'IPE020202ABC', zone: 'Bajio Sur', status: 'Activa', created_at: '2023-05-18' },
   { id: 'ECC-003', name: 'Control y Seguridad Energética', rfc: 'CSE030303DEF', zone: 'Zona Norte', status: 'Inactiva', created_at: '2023-08-01' },
 ];
+
+export type Inspector = {
+    id: string;
+    name: string;
+    position: 'Inspector';
+    qualityCompany: string;
+    certStartDate: string;
+    certEndDate: string;
+    status: 'Activo' | 'Inactivo' | 'Deshabilitado';
+    createdAt: string;
+};
+
+export const sampleInspectors: Inspector[] = [
+    { id: 'INSP-001', name: 'Juan Pérez', position: 'Inspector', qualityCompany: 'VeriGas Calidad Total', certStartDate: '2024-01-01', certEndDate: '2025-01-01', status: 'Activo', createdAt: '2023-12-15' },
+    { id: 'INSP-002', name: 'María García', position: 'Inspector', qualityCompany: 'Inspecciones Precisas S.C.', certStartDate: '2023-06-01', certEndDate: '2024-06-01', status: 'Activo', createdAt: '2023-05-20' },
+    { id: 'INSP-003', name: 'Carlos Sánchez', position: 'Inspector', qualityCompany: 'VeriGas Calidad Total', certStartDate: '2024-03-15', certEndDate: '2025-03-15', status: 'Inactivo', createdAt: '2024-03-01' },
+];

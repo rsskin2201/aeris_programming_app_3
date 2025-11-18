@@ -10,9 +10,10 @@ import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CollaboratorCompanyForm } from "@/components/entities/collaborator-company-form";
 import { QualityControlCompanyForm } from "@/components/entities/quality-control-company-form";
+import { InspectorForm } from "@/components/entities/inspector-form";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { sampleCollaborators, sampleQualityControlCompanies } from "@/lib/mock-data";
-import type { CollaboratorCompany, QualityControlCompany } from "@/lib/mock-data";
+import { sampleCollaborators, sampleQualityControlCompanies, sampleInspectors } from "@/lib/mock-data";
+import type { CollaboratorCompany, QualityControlCompany, Inspector } from "@/lib/mock-data";
 
 
 const entities = [
@@ -23,9 +24,11 @@ const entities = [
 export default function EntitiesPage() {
   const [collaboratorDialogOpen, setCollaboratorDialogOpen] = useState(false);
   const [qualityDialogOpen, setQualityDialogOpen] = useState(false);
+  const [inspectorDialogOpen, setInspectorDialogOpen] = useState(false);
   
   const [selectedCollaborator, setSelectedCollaborator] = useState<CollaboratorCompany | null>(null);
   const [selectedQualityCompany, setSelectedQualityCompany] = useState<QualityControlCompany | null>(null);
+  const [selectedInspector, setSelectedInspector] = useState<Inspector | null>(null);
 
   const handleEditCollaborator = (company: CollaboratorCompany) => {
     setSelectedCollaborator(company);
@@ -47,6 +50,17 @@ export default function EntitiesPage() {
     setQualityDialogOpen(true);
   };
 
+  const handleEditInspector = (inspector: Inspector) => {
+    setSelectedInspector(inspector);
+    setInspectorDialogOpen(true);
+  };
+
+  const handleNewInspector = () => {
+    setSelectedInspector(null);
+    setInspectorDialogOpen(true);
+  };
+
+
   const handleStatusChange = (company: any, newStatus: string) => {
     // Logic to change status, maybe with a confirmation dialog
     alert(`Cambiando estatus de ${company.name} a ${newStatus}`);
@@ -61,7 +75,7 @@ export default function EntitiesPage() {
 
       
         <Tabs defaultValue={entities[0]}>
-          <TabsList>
+          <TabsList className="flex-wrap h-auto">
             {entities.map(entity => <TabsTrigger key={entity} value={entity}>{entity}</TabsTrigger>)}
           </TabsList>
 
@@ -204,8 +218,76 @@ export default function EntitiesPage() {
               <QualityControlCompanyForm company={selectedQualityCompany} onClose={() => setQualityDialogOpen(false)} />
             </Dialog>
           </TabsContent>
+
+          <TabsContent value="Inspector">
+            <Dialog open={inspectorDialogOpen} onOpenChange={setInspectorDialogOpen}>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Listado de: Inspectores</CardTitle>
+                    <CardDescription>Gestiona los inspectores de calidad.</CardDescription>
+                  </div>
+                  <DialogTrigger asChild>
+                    <Button onClick={handleNewInspector}>
+                      <PlusCircle className="mr-2" />
+                      Nuevo Registro
+                    </Button>
+                  </DialogTrigger>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Nombre Inspector</TableHead>
+                        <TableHead>Empresa</TableHead>
+                        <TableHead>Cert. Fin</TableHead>
+                        <TableHead>Estatus</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sampleInspectors.map(item => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-mono">{item.id}</TableCell>
+                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell>{item.qualityCompany}</TableCell>
+                          <TableCell>{item.certEndDate}</TableCell>
+                           <TableCell>
+                            <Badge variant={
+                                item.status === 'Activo' ? 'default' : 
+                                item.status === 'Inactivo' ? 'secondary' : 'destructive'
+                            }>{item.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Toggle menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleEditInspector(item)}>Editar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activo')} className="text-green-600">Activar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactivo')} className="text-yellow-600">Poner Inactivo</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {/* TODO: Add Pagination Controls */}
+                </CardContent>
+              </Card>
+              <InspectorForm inspector={selectedInspector} onClose={() => setInspectorDialogOpen(false)} />
+            </Dialog>
+          </TabsContent>
           
-          {entities.filter(e => e !== 'Empresa Colaboradora' && e !== 'Empresa de Control de Calidad').map(entity => (
+          {entities.filter(e => e !== 'Empresa Colaboradora' && e !== 'Empresa de Control de Calidad' && e !== 'Inspector').map(entity => (
             <TabsContent key={entity} value={entity}>
               <Card>
                 <CardHeader>
