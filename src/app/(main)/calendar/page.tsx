@@ -31,6 +31,7 @@ import {
   getDate,
   getDay,
   getISODay,
+  getHours,
   getMonth,
   getYear,
   isSameDay,
@@ -58,6 +59,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE];
 const adminRoles = [ROLES.ADMIN];
@@ -105,6 +107,24 @@ export default function CalendarPage() {
     });
     return inspections;
   }, [zone]);
+  
+   const inspectionsByTime = useMemo(() => {
+    const inspections: Record<string, typeof mockRecords> = {};
+    const filteredRecords = mockRecords.filter(
+      (record) => zone === 'Todas las zonas' || record.zone === zone
+    );
+
+    filteredRecords.forEach((record) => {
+      const recordDate = parseISO(record.requestDate);
+      const dateTimeKey = format(recordDate, 'yyyy-MM-dd-HH');
+      if (!inspections[dateTimeKey]) {
+        inspections[dateTimeKey] = [];
+      }
+      inspections[dateTimeKey].push(record);
+    });
+    return inspections;
+  }, [zone]);
+
 
   const firstDayOfMonth = startOfMonth(currentDate);
   const startingDayOfWeek = getISODay(firstDayOfMonth) - 1; // 0=Mon, 6=Sun
@@ -124,14 +144,20 @@ export default function CalendarPage() {
     if (view === 'day') setCurrentDate((prev) => addDays(prev, amount));
   };
   
-  const handleDateClick = (date: Date, hour?: string) => {
+  const handleDateClick = (date: Date) => {
     if (isSunday(date) && !weekendsEnabled) return;
-    
-    let url = `/inspections/individual?date=${format(date, 'yyyy-MM-dd')}`;
-    if (hour) {
-        url += `&time=${hour}`;
-    }
+    setCurrentDate(date);
+    setView('day');
+  }
+  
+  const handleTimeSlotDoubleClick = (date: Date, hour: string) => {
+    if (isSunday(date) && !weekendsEnabled) return;
+    const url = `/inspections/individual?date=${format(date, 'yyyy-MM-dd')}&time=${hour}`;
     router.push(url);
+  }
+  
+  const exportToCsv = () => {
+    alert('Funcionalidad de exportación pendiente de implementación.');
   }
 
   const renderMonthView = () => (
@@ -185,6 +211,35 @@ export default function CalendarPage() {
       </div>
     </>
   );
+  
+  const renderInspectionsForSlot = (day: Date, hour: string) => {
+    const hourNumber = parseInt(hour.split(':')[0]);
+    const slotKey = `${format(day, 'yyyy-MM-dd')}-${String(hourNumber).padStart(2, '0')}`;
+    const slotInspections = inspectionsByTime[slotKey] || [];
+
+    return slotInspections.map((inspection) => (
+      <TooltipProvider key={inspection.id}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="mb-1 rounded-md bg-primary/80 p-1 text-xs text-primary-foreground shadow-sm hover:bg-primary">
+              <p className="truncate font-medium">{inspection.client}</p>
+              <p className="truncate text-xs">{inspection.address}</p>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+             <div className="p-1 text-sm">
+                <p className="font-bold">{inspection.client}</p>
+                <p><strong>ID:</strong> {inspection.id}</p>
+                <p><strong>Dirección:</strong> {inspection.address}</p>
+                <p><strong>Inspector:</strong> {inspection.inspector}</p>
+                <p><strong>Estatus:</strong> <span className='font-semibold'>{inspection.status}</span></p>
+             </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ));
+  };
+
 
   const renderWeekView = () => (
     <div className="flex border-t">
@@ -192,7 +247,7 @@ export default function CalendarPage() {
         {hoursOfDay.map((hour) => (
           <div
             key={hour}
-            className="h-16 border-b pr-2 flex items-center justify-center text-muted-foreground"
+            className="h-20 border-b pr-2 flex items-center justify-center text-muted-foreground"
           >
             {hour}
           </div>
@@ -202,21 +257,21 @@ export default function CalendarPage() {
         {weekDays.map((day) => (
           <div
             key={day.toString()}
-            className={cn('border-l', isSameDay(day, new Date()) && 'bg-accent/50')}
+            className={cn('border-l relative', isSameDay(day, new Date()) && 'bg-accent/50')}
           >
             {hoursOfDay.map((hour) => (
               <div
                 key={`${day}-${hour}`}
-                onClick={() => handleDateClick(day, hour)}
+                onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
                 className={cn(
-                  'h-16 border-b transition-colors hover:bg-primary/10 cursor-pointer',
+                  'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer',
                   isSunday(day) &&
                     !weekendsEnabled &&
                     'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
-                  isSunday(day) && weekendsEnabled && 'bg-green-100'
+                  isSunday(day) && weekendsEnabled && 'bg-green-100/50'
                 )}
               >
-                {/* Event rendering logic here */}
+                 {renderInspectionsForSlot(day, hour)}
               </div>
             ))}
           </div>
@@ -231,7 +286,7 @@ export default function CalendarPage() {
         {hoursOfDay.map((hour) => (
           <div
             key={hour}
-            className="h-16 border-b pr-2 flex items-center justify-center text-muted-foreground"
+            className="h-20 border-b pr-2 flex items-center justify-center text-muted-foreground"
           >
             {hour}
           </div>
@@ -240,23 +295,23 @@ export default function CalendarPage() {
       <div className="flex-1">
         <div
           className={cn(
-            'border-l',
+            'border-l relative',
             isSameDay(currentDate, new Date()) && 'bg-accent/50'
           )}
         >
           {hoursOfDay.map((hour) => (
             <div
               key={`${currentDate}-${hour}`}
-              onClick={() => handleDateClick(currentDate, hour)}
+              onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
               className={cn(
-                'h-16 border-b transition-colors hover:bg-primary/10 cursor-pointer',
+                'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer',
                 isSunday(currentDate) &&
                   !weekendsEnabled &&
                   'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
-                isSunday(currentDate) && weekendsEnabled && 'bg-green-100'
+                isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50'
               )}
             >
-              {/* Event rendering logic here */}
+              {renderInspectionsForSlot(currentDate, hour)}
             </div>
           ))}
         </div>
@@ -320,7 +375,7 @@ export default function CalendarPage() {
                 </div>
               </CollapsibleContent>
             </Collapsible>
-          <Button variant="outline">
+          <Button variant="outline" onClick={exportToCsv}>
             <Download className="mr-2 h-4 w-4" /> Exportar .csv
           </Button>
           {canEnableWeekends && (
@@ -364,7 +419,7 @@ export default function CalendarPage() {
             <Button variant="outline" size="icon" onClick={() => changeDate(-1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="font-headline text-xl">
+            <CardTitle className="font-headline text-xl capitalize">
               {view === 'day' &&
                 format(currentDate, "eeee, dd 'de' MMMM", { locale: es })}
               {view === 'week' &&
@@ -422,7 +477,7 @@ export default function CalendarPage() {
                       key={day.toString()}
                       className="text-center py-2 font-medium"
                     >
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground capitalize">
                         {format(day, 'eee', { locale: es })}
                       </div>
                       <div className="text-lg">{format(day, 'd')}</div>
