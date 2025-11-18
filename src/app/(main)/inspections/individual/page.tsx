@@ -15,79 +15,122 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role } from "@/lib/types";
-import { mockInstallers, mockInstallerCompanies, mockSectors, mockMunicipalities } from "@/lib/mock-data";
+import { mockInstallers, sampleCollaborators, mockSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
+import { useMemo } from "react";
 
 const formSchema = z.object({
-  contractNumber: z.string().min(1, "El número de contrato es requerido."),
-  clientName: z.string().min(1, "El nombre del cliente es requerido."),
-  address: z.string().min(1, "La dirección es requerida."),
+  id: z.string().optional(),
+  poliza: z.string().optional(),
+  caso: z.string().optional().refine(val => !val || /^AT-\d{7}$/.test(val), {
+    message: 'El formato debe ser AT-XXXXXXX'
+  }),
   municipality: z.string().min(1, "El municipio es requerido."),
+  colonia: z.string().min(1, "La colonia es requerida."),
+  calle: z.string().min(1, "La calle es requerida."),
+  numero: z.string().min(1, "El número es requerido."),
+  portal: z.string().optional(),
+  escalera: z.string().optional(),
+  piso: z.string().optional(),
+  puerta: z.string().optional(),
+  
+  tipoInspeccion: z.string().min(1, "El tipo de inspección es requerido."),
+  tipoProgramacion: z.string().min(1, "El tipo de programación es requerido."),
+  tipoMdd: z.string().min(1, "El tipo de MDD es requerido."),
+  mercado: z.string().min(1, "El mercado es requerido."),
+  oferta: z.string().optional(),
+
+  empresaColaboradora: z.string().min(1, "La empresa colaboradora es requerida."),
+  fechaProgramacion: z.date({ required_error: "La fecha de programación es requerida." }),
+  horarioProgramacion: z.string().min(1, "El horario es requerido."),
+  instalador: z.string().min(1, "El instalador es requerido."),
+  gestor: z.string().min(1, "El gestor es requerido."),
   sector: z.string().min(1, "El sector es requerido."),
-  installerCompany: z.string().min(1, "La empresa instaladora es requerida."),
-  installerName: z.string().min(1, "El nombre del instalador es requerido."),
-  gasAppliances: z.coerce.number().min(1, "Debe haber al menos un aparato."),
-  serviceType: z.string().min(1, "El tipo de servicio es requerido."),
-  proposedDate: z.date({ required_error: "La fecha propuesta es requerida." }),
-  preferredTime: z.string().min(1, "El horario preferido es requerido."),
-  contactName: z.string().min(1, "El nombre de contacto es requerido."),
-  contactPhone: z.string().min(1, "El teléfono de contacto es requerido.").refine(phone => /^\d{10}$/.test(phone), { message: "El teléfono debe tener 10 dígitos."}),
-  observations: z.string().optional(),
+  
+  status: z.string(),
 });
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, zone } = useAppContext();
   const router = useRouter();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      contractNumber: "",
-      clientName: "",
-      address: "",
-      municipality: "",
-      sector: "",
-      installerCompany: "",
-      installerName: "",
-      gasAppliances: 1,
-      serviceType: "",
-      preferredTime: "",
-      contactName: "",
-      contactPhone: "",
-      observations: "",
-    },
-  });
-
-  const { isSubmitting } = form.formState;
 
   const getInitialStatus = (role: Role | undefined) => {
     switch (role) {
-      case ROLES.GESTOR: return "Contemplado";
-      case ROLES.CALIDAD: return "Aprobado";
+      case ROLES.GESTOR: return "CONFIRMADA POR GE";
       case ROLES.COLABORADOR:
-      default: return "Pendiente Aprobación";
+      default: return "REGISTRADA";
     }
-  }
+  };
+
+  const generateId = () => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+    return `INSP-PS-${timestamp}-${random}`;
+  };
+
+  const defaultValues = useMemo(() => ({
+    id: generateId(),
+    poliza: "",
+    caso: "",
+    municipality: "",
+    colonia: "",
+    calle: "",
+    numero: "",
+    portal: "",
+    escalera: "",
+    piso: "",
+    puerta: "",
+    tipoInspeccion: "Programacion PES",
+    tipoProgramacion: "",
+    tipoMdd: "",
+    mercado: "",
+    oferta: "",
+    empresaColaboradora: "",
+    horarioProgramacion: "",
+    instalador: "",
+    gestor: "",
+    sector: "",
+    status: getInitialStatus(user?.role),
+  }), [user?.role]);
+
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues,
+  });
+  
+  const { isSubmitting } = form.formState;
+
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const status = getInitialStatus(user?.role);
-    console.log({ ...values, status });
+    console.log({ ...values });
 
     toast({
       title: "Solicitud Enviada",
-      description: `La solicitud para ${values.clientName} se creó con estatus: ${status}.`,
+      description: `La solicitud con ID ${values.id} se creó con estatus: ${values.status}.`,
     });
     
     setTimeout(() => {
       router.push('/records');
     }, 1000);
+  }
+
+  const handleReset = () => {
+    const newId = generateId();
+    form.reset({
+        ...defaultValues,
+        id: newId,
+        status: getInitialStatus(user?.role)
+    });
+  }
+  
+  const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: any) => {
+      field.onChange(e.target.value.toUpperCase());
   }
 
   return (
@@ -106,33 +149,35 @@ export default function IndividualInspectionPage() {
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            
+            <FormField control={form.control} name="id" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>ID de Registro</FormLabel>
+                    <FormControl><Input {...field} readOnly disabled className="font-mono" /></FormControl>
+                </FormItem>
+            )} />
+
             <Card>
               <CardHeader>
-                <CardTitle>Información del Cliente y Servicio</CardTitle>
-                <CardDescription>Proporciona los datos del cliente final y la ubicación de la inspección.</CardDescription>
+                <CardTitle>Ubicación del Servicio</CardTitle>
+                <CardDescription>Dirección donde se realizará la inspección.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-6 md:grid-cols-2">
-                <FormField control={form.control} name="contractNumber" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número de Contrato</FormLabel>
-                    <FormControl><Input placeholder="Ej. 123456789" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
+                 <FormField control={form.control} name="poliza" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Póliza</FormLabel>
+                        <FormControl><Input placeholder="Opcional" {...field} type="number" /></FormControl>
+                        <FormMessage />
+                    </FormItem>
                 )} />
-                <FormField control={form.control} name="clientName" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre Completo del Cliente</FormLabel>
-                    <FormControl><Input placeholder="Ej. Juan Pérez" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
+                 <FormField control={form.control} name="caso" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Caso (AT)</FormLabel>
+                        <FormControl><Input placeholder="Ej. AT-1234567" {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
                 )} />
-                <FormField control={form.control} name="address" render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Dirección Completa</FormLabel>
-                    <FormControl><Input placeholder="Calle, Número, Colonia, C.P." {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+
                 <FormField control={form.control} name="municipality" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Municipio</FormLabel>
@@ -145,42 +190,145 @@ export default function IndividualInspectionPage() {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name="sector" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sector</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {mockSectors.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+                 <FormField control={form.control} name="colonia" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Colonia</FormLabel>
+                        <FormControl><Input placeholder="Colonia" {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <div className="md:col-span-2 grid md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="calle" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Calle</FormLabel>
+                            <FormControl><Input placeholder="Nombre de la calle" {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="numero" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Número</FormLabel>
+                            <FormControl><Input placeholder="Número exterior/interior" {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                </div>
+                 <FormField control={form.control} name="portal" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Portal (Opcional)</FormLabel>
+                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                 <FormField control={form.control} name="escalera" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Escalera (Opcional)</FormLabel>
+                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                 <FormField control={form.control} name="piso" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Piso (Opcional)</FormLabel>
+                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                 <FormField control={form.control} name="puerta" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Puerta (Opcional)</FormLabel>
+                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                        <FormMessage />
+                    </FormItem>
                 )} />
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Detalles de la Instalación</CardTitle>
-                <CardDescription>Especifica los detalles técnicos de la instalación de gas.</CardDescription>
+                <CardTitle>Detalles de la Programación</CardTitle>
+                <CardDescription>Información técnica y de clasificación del servicio.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-6 md:grid-cols-2">
-                <FormField control={form.control} name="installerCompany" render={({ field }) => (
+                 <FormField control={form.control} name="tipoInspeccion" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Empresa Instaladora</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
+                    <FormLabel>Tipo de Inspección</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {mockInstallerCompanies.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        <SelectItem value="Programacion PES">Programacion PES</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name="installerName" render={({ field }) => (
+                <FormField control={form.control} name="tipoProgramacion" render={({ field }) => (
+                   <FormItem>
+                    <FormLabel>Tipo de Programación</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {['SALESFORCE', 'PARRILLA', 'REPROGRAMACION', 'ESPONTANEA', 'PEC'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                 <FormField control={form.control} name="tipoMdd" render={({ field }) => (
+                   <FormItem>
+                    <FormLabel>Tipo MDD</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {['G-1,6', 'G-10', 'G-2,5', 'G-4', 'G-6', 'G-16', 'G-25', 'G-40'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                 <FormField control={form.control} name="mercado" render={({ field }) => (
+                   <FormItem>
+                    <FormLabel>Mercado</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un mercado" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {['ES-SV', 'CN', 'NE', 'SH', 'SP', 'SV'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="oferta" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Oferta/Campaña</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Asignación y Estatus</CardTitle>
+                <CardDescription>Asignación de responsables y fecha de ejecución.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6 md:grid-cols-2">
+                 <FormField control={form.control} name="empresaColaboradora" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre del Instalador</FormLabel>
+                    <FormLabel>Empresa Colaboradora</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {sampleCollaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                 <FormField control={form.control} name="instalador" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instalador</FormLabel>
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
                       <SelectContent>
@@ -190,39 +338,9 @@ export default function IndividualInspectionPage() {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name="gasAppliances" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número de aparatos a gas</FormLabel>
-                    <FormControl><Input type="number" min="1" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="serviceType" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Servicio</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        <SelectItem value="Doméstico">Doméstico</SelectItem>
-                        <SelectItem value="Comercial">Comercial</SelectItem>
-                         <SelectItem value="Industrial">Industrial</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Programación y Contacto</CardTitle>
-                <CardDescription>Sugiere una fecha y proporciona la información de contacto en el sitio.</CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-6 md:grid-cols-2">
-                <FormField control={form.control} name="proposedDate" render={({ field }) => (
+                <FormField control={form.control} name="fechaProgramacion" render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Fecha propuesta de inspección</FormLabel>
+                    <FormLabel>Fecha Programación</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -239,9 +357,9 @@ export default function IndividualInspectionPage() {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name="preferredTime" render={({ field }) => (
+                <FormField control={form.control} name="horarioProgramacion" render={({ field }) => (
                    <FormItem>
-                    <FormLabel>Horario Preferido</FormLabel>
+                    <FormLabel>Horario Programación</FormLabel>
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un horario" /></SelectTrigger></FormControl>
                       <SelectContent>
@@ -253,58 +371,49 @@ export default function IndividualInspectionPage() {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name="contactName" render={({ field }) => (
+                <FormField control={form.control} name="gestor" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre de Contacto en sitio</FormLabel>
-                    <FormControl><Input placeholder="Quien recibirá al inspector" {...field} /></FormControl>
+                    <FormLabel>Gestor</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un gestor" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {sampleExpansionManagers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name="contactPhone" render={({ field }) => (
+                 <FormField control={form.control} name="sector" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Teléfono de Contacto</FormLabel>
-                    <FormControl><Input type="tel" placeholder="Ej. 5512345678" {...field} /></FormControl>
+                    <FormLabel>Sector</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {mockSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )} />
-              </CardContent>
-            </Card>
+                 <FormField control={form.control} name="status" render={({ field }) => (
+                   <FormItem>
+                    <FormLabel>Status</FormLabel>
+                     <FormControl>
+                        <Input {...field} readOnly disabled />
+                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Documentación y Observaciones</CardTitle>
-                <CardDescription>Adjunta documentos necesarios y añade cualquier comentario relevante.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label>Carga de Dictamen Técnico (Opcional)</Label>
-                  <div className="flex w-full items-center justify-center">
-                    <Label htmlFor="dropzone-file" className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed bg-card hover:bg-muted">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <FileUp className="mb-4 h-8 w-8 text-muted-foreground" />
-                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click para subir</span> o arrastra y suelta</p>
-                        <p className="text-xs text-muted-foreground">PDF, PNG, JPG (MAX. 5MB)</p>
-                      </div>
-                      <Input id="dropzone-file" type="file" className="hidden" />
-                    </Label>
-                  </div>
-                  <FormDescription>Adjunta el dictamen técnico de la instalación si ya lo tienes.</FormDescription>
-                </div>
-                <FormField control={form.control} name="observations" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Observaciones</FormLabel>
-                    <FormControl><Textarea placeholder="Añade cualquier información adicional relevante para la inspección." className="resize-none" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
               </CardContent>
             </Card>
 
             <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
                 <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
                 <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Enviar Solicitud
+                    Guardar
                 </Button>
             </div>
         </form>

@@ -35,18 +35,12 @@ export const mockInstallerCompanies = [
 ];
 
 export const mockInstallers = [
-  { id: 'INST-001', name: 'Mario Hernández', companyId: 'IC-01' },
-  { id: 'INST-002', name: 'Luisa Fernández', companyId: 'IC-01' },
-  { id: 'INST-003', name: 'Roberto Díaz', companyId: 'IC-02' },
-  { id: 'INST-004', name: 'Patricia Alarcón', companyId: 'IC-03' },
+  { id: 'INST-001', name: 'Mario Hernández', companyId: 'IC-01', certEndDate: '2025-01-01', status: 'Activo' },
+  { id: 'INST-002', name: 'Luisa Fernández', companyId: 'IC-01', certEndDate: '2024-08-01', status: 'Activo' },
+  { id: 'INST-003', name: 'Roberto Díaz', companyId: 'IC-02', certEndDate: '2025-03-15', status: 'Activo' },
+  { id: 'INST-004', name: 'Patricia Alarcón', companyId: 'IC-03', certEndDate: '2024-12-01', status: 'Inactivo' },
 ];
 
-export const mockSectors = [
-  { id: 'SEC-01', name: 'Residencial A' },
-  { id: 'SEC-02', name: 'Comercial Centro' },
-  { id: 'SEC-03', name: 'Industrial Norte' },
-  { id: 'SEC-04', name: 'Residencial B-1' },
-];
 
 export const mockMunicipalities = [
     { id: 'MUN-01', name: 'Guadalajara' },
