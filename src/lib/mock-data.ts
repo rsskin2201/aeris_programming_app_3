@@ -1,4 +1,4 @@
-import { Role, ROLES, User, Zone } from '@/lib/types';
+import { Role, ROLES, User, Zone, ZONES } from '@/lib/types';
 
 export const mockUsers: User[] = [
   { name: 'Admin User', username: 'admin', role: ROLES.ADMIN },
@@ -68,10 +68,10 @@ export type CollaboratorCompany = {
 }
 
 export const sampleCollaborators: CollaboratorCompany[] = [
-    { id: 'EC-001', name: 'GasLink S.A. de C.V.', rfc: 'GLI010203AB4', zone: 'Zona Norte', status: 'Activa', created_at: '2023-01-15' },
-    { id: 'EC-002', name: 'ServiGas del Norte', rfc: 'SGN050607CD8', zone: 'Zona Norte', status: 'Activa', created_at: '2023-02-20' },
-    { id: 'EC-003', name: 'Conexiones Seguras', rfc: 'CSE101112EFG', zone: 'Bajio Norte', status: 'Inactiva', created_at: '2023-03-10' },
-    { id: 'EC-004', name: 'Energía Confiable', rfc: 'ECO151213HIJ', zone: 'Zona Centro', status: 'Deshabilitada', created_at: '2023-04-05' },
+    { id: 'EC-001', name: 'GASLINK S.A. DE C.V.', rfc: 'GLI010203AB4', zone: 'Zona Norte', status: 'Activa', created_at: '2023-01-15' },
+    { id: 'EC-002', name: 'SERVIGAS DEL NORTE', rfc: 'SGN050607CD8', zone: 'Zona Norte', status: 'Activa', created_at: '2023-02-20' },
+    { id: 'EC-003', name: 'CONEXIONES SEGURAS', rfc: 'CSE101112EFG', zone: 'Bajio Norte', status: 'Inactiva', created_at: '2023-03-10' },
+    { id: 'EC-004', name: 'ENERGÍA CONFIABLE', rfc: 'ECO151213HIJ', zone: 'Zona Centro', status: 'Deshabilitada', created_at: '2023-04-05' },
 ];
 
 export type QualityControlCompany = {
@@ -84,9 +84,9 @@ export type QualityControlCompany = {
 }
 
 export const sampleQualityControlCompanies: QualityControlCompany[] = [
-  { id: 'ECC-001', name: 'VeriGas Calidad Total', rfc: 'VGT010101XYZ', zone: 'Zona Centro', status: 'Activa', created_at: '2022-11-30' },
-  { id: 'ECC-002', name: 'Inspecciones Precisas S.C.', rfc: 'IPE020202ABC', zone: 'Bajio Sur', status: 'Activa', created_at: '2023-05-18' },
-  { id: 'ECC-003', name: 'Control y Seguridad Energética', rfc: 'CSE030303DEF', zone: 'Zona Norte', status: 'Inactiva', created_at: '2023-08-01' },
+  { id: 'ECC-001', name: 'VERIGAS CALIDAD TOTAL', rfc: 'VGT010101XYZ', zone: 'Zona Centro', status: 'Activa', created_at: '2022-11-30' },
+  { id: 'ECC-002', name: 'INSPECCIONES PRECISAS S.C.', rfc: 'IPE020202ABC', zone: 'Bajio Sur', status: 'Activa', created_at: '2023-05-18' },
+  { id: 'ECC-003', name: 'CONTROL Y SEGURIDAD ENERGÉTICA', rfc: 'CSE030303DEF', zone: 'Zona Norte', status: 'Inactiva', created_at: '2023-08-01' },
 ];
 
 export type Inspector = {
@@ -101,9 +101,9 @@ export type Inspector = {
 };
 
 export const sampleInspectors: Inspector[] = [
-    { id: 'INSP-001', name: 'Juan Pérez', position: 'Inspector', qualityCompany: 'VeriGas Calidad Total', certStartDate: '2024-01-01', certEndDate: '2025-01-01', status: 'Activo', createdAt: '2023-12-15' },
-    { id: 'INSP-002', name: 'María García', position: 'Inspector', qualityCompany: 'Inspecciones Precisas S.C.', certStartDate: '2023-06-01', certEndDate: '2024-06-01', status: 'Activo', createdAt: '2023-05-20' },
-    { id: 'INSP-003', name: 'Carlos Sánchez', position: 'Inspector', qualityCompany: 'VeriGas Calidad Total', certStartDate: '2024-03-15', certEndDate: '2025-03-15', status: 'Inactivo', createdAt: '2024-03-01' },
+    { id: 'INSP-001', name: 'JUAN PÉREZ', position: 'Inspector', qualityCompany: 'VERIGAS CALIDAD TOTAL', certStartDate: '2024-01-01', certEndDate: '2025-01-01', status: 'Activo', createdAt: '2023-12-15' },
+    { id: 'INSP-002', name: 'MARÍA GARCÍA', position: 'Inspector', qualityCompany: 'INSPECCIONES PRECISAS S.C.', certStartDate: '2023-06-01', certEndDate: '2024-06-01', status: 'Activo', createdAt: '2023-05-20' },
+    { id: 'INSP-003', name: 'CARLOS SÁNCHEZ', position: 'Inspector', qualityCompany: 'VERIGAS CALIDAD TOTAL', certStartDate: '2024-03-15', certEndDate: '2025-03-15', status: 'Inactivo', createdAt: '2024-03-01' },
 ];
 
 
@@ -119,9 +119,9 @@ export type Installer = {
 };
 
 export const sampleInstallers: Installer[] = [
-    { id: 'INST-001', name: 'Pedro Ramirez', position: 'Instalador', collaboratorCompany: 'GasLink S.A. de C.V.', certStartDate: '2024-02-01', certEndDate: '2025-02-01', status: 'Activo', createdAt: '2024-01-15' },
-    { id: 'INST-002', name: 'Laura Juarez', position: 'Instalador', collaboratorCompany: 'ServiGas del Norte', certStartDate: '2023-08-01', certEndDate: '2024-08-01', status: 'Activo', createdAt: '2023-07-20' },
-    { id: 'INST-003', name: 'Fernando Gonzalez', position: 'Instalador', collaboratorCompany: 'Conexiones Seguras', certStartDate: '2024-05-15', certEndDate: '2025-05-15', status: 'Inactivo', createdAt: '2024-05-01' },
+    { id: 'INST-001', name: 'PEDRO RAMIREZ', position: 'Instalador', collaboratorCompany: 'GASLINK S.A. DE C.V.', certStartDate: '2024-02-01', certEndDate: '2025-02-01', status: 'Activo', createdAt: '2024-01-15' },
+    { id: 'INST-002', name: 'LAURA JUAREZ', position: 'Instalador', collaboratorCompany: 'SERVIGAS DEL NORTE', certStartDate: '2023-08-01', certEndDate: '2024-08-01', status: 'Activo', createdAt: '2023-07-20' },
+    { id: 'INST-003', name: 'FERNANDO GONZALEZ', position: 'Instalador', collaboratorCompany: 'CONEXIONES SEGURAS', certStartDate: '2024-05-15', certEndDate: '2025-05-15', status: 'Inactivo', createdAt: '2024-05-01' },
 ];
 
 export type ExpansionManager = {
@@ -136,8 +136,25 @@ export type ExpansionManager = {
 }
 
 export const sampleExpansionManagers: ExpansionManager[] = [
-    { id: 'GE-001', name: 'Ricardo Mendoza', position: 'Gestor de Expansion', zone: 'Zona Norte', assignment: 'Expansión', subAssignment: 'Sector Residencial Norte', status: 'Activo', createdAt: '2023-01-20' },
-    { id: 'GE-002', name: 'Verónica Luna', position: 'Gestor de Expansion', zone: 'Zona Centro', assignment: 'Saturación', subAssignment: 'Comercial Centro Histórico', status: 'Activo', createdAt: '2023-02-25' },
-    { id: 'GE-003', name: 'Alejandro Solis', position: 'Gestor de Expansion', zone: 'Bajio Norte', assignment: 'Expansión', subAssignment: 'Parque Industrial Querétaro', status: 'Inactivo', createdAt: '2023-04-12' },
+    { id: 'GE-001', name: 'RICARDO MENDOZA', position: 'Gestor de Expansion', zone: 'Zona Norte', assignment: 'Expansión', subAssignment: 'SECTOR RESIDENCIAL NORTE', status: 'Activo', createdAt: '2023-01-20' },
+    { id: 'GE-002', name: 'VERÓNICA LUNA', position: 'Gestor de Expansion', zone: 'Zona Centro', assignment: 'Saturación', subAssignment: 'COMERCIAL CENTRO HISTÓRICO', status: 'Activo', createdAt: '2023-02-25' },
+    { id: 'GE-003', name: 'ALEJANDRO SOLIS', position: 'Gestor de Expansion', zone: 'Bajio Norte', assignment: 'Expansión', subAssignment: 'PARQUE INDUSTRIAL QUERÉTARO', status: 'Inactivo', createdAt: '2023-04-12' },
+];
+
+export type Sector = {
+    id: string;
+    zone: Zone;
+    assignment: 'Expansión' | 'Saturación';
+    subAssignment: string;
+    sector: string;
+    sectorKey: string;
+    status: 'Activo' | 'Inactivo' | 'Deshabilitado';
+    createdAt: string;
+};
+
+export const sampleSectors: Sector[] = [
+    { id: 'SEC-001', zone: 'Zona Norte', assignment: 'Expansión', subAssignment: 'RESIDENCIAL SANTA FE', sector: 'SANTA FE', sectorKey: 'SF01', status: 'Activo', createdAt: '2023-01-10' },
+    { id: 'SEC-002', zone: 'Zona Centro', assignment: 'Saturación', subAssignment: 'CENTRO HISTORICO', sector: 'CENTRO', sectorKey: 'CEN01', status: 'Activo', createdAt: '2023-02-15' },
+    { id: 'SEC-003', zone: 'Bajio Norte', assignment: 'Expansión', subAssignment: 'PARQUE INDUSTRIAL', sector: 'INDUSTRIAL QUERETARO', sectorKey: 'INDQRO', status: 'Inactivo', createdAt: '2023-03-20' },
 ];
     

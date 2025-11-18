@@ -13,9 +13,10 @@ import { QualityControlCompanyForm } from "@/components/entities/quality-control
 import { InspectorForm } from "@/components/entities/inspector-form";
 import { InstallerForm } from "@/components/entities/installer-form";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { sampleCollaborators, sampleQualityControlCompanies, sampleInspectors, sampleInstallers, sampleExpansionManagers } from "@/lib/mock-data";
-import type { CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager } from "@/lib/mock-data";
+import { sampleCollaborators, sampleQualityControlCompanies, sampleInspectors, sampleInstallers, sampleExpansionManagers, sampleSectors } from "@/lib/mock-data";
+import type { CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from "@/lib/mock-data";
 import { ExpansionManagerForm } from "@/components/entities/expansion-manager-form";
+import { SectorForm } from "@/components/entities/sector-form";
 
 
 const entities = [
@@ -29,12 +30,14 @@ export default function EntitiesPage() {
   const [inspectorDialogOpen, setInspectorDialogOpen] = useState(false);
   const [installerDialogOpen, setInstallerDialogOpen] = useState(false);
   const [managerDialogOpen, setManagerDialogOpen] = useState(false);
+  const [sectorDialogOpen, setSectorDialogOpen] = useState(false);
   
   const [selectedCollaborator, setSelectedCollaborator] = useState<CollaboratorCompany | null>(null);
   const [selectedQualityCompany, setSelectedQualityCompany] = useState<QualityControlCompany | null>(null);
   const [selectedInspector, setSelectedInspector] = useState<Inspector | null>(null);
   const [selectedInstaller, setSelectedInstaller] = useState<Installer | null>(null);
   const [selectedManager, setSelectedManager] = useState<ExpansionManager | null>(null);
+  const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
 
 
   const handleEditCollaborator = (company: CollaboratorCompany) => {
@@ -87,10 +90,20 @@ export default function EntitiesPage() {
     setManagerDialogOpen(true);
   };
 
+  const handleEditSector = (sector: Sector) => {
+    setSelectedSector(sector);
+    setSectorDialogOpen(true);
+  };
 
-  const handleStatusChange = (company: any, newStatus: string) => {
+  const handleNewSector = () => {
+    setSelectedSector(null);
+    setSectorDialogOpen(true);
+  };
+
+
+  const handleStatusChange = (item: any, newStatus: string) => {
     // Logic to change status, maybe with a confirmation dialog
-    alert(`Cambiando estatus de ${company.name} a ${newStatus}`);
+    alert(`Cambiando estatus de ${item.name || item.sector} a ${newStatus}`);
   };
 
 
@@ -450,22 +463,76 @@ export default function EntitiesPage() {
             </Dialog>
           </TabsContent>
           
-          {entities.filter(e => e !== 'Empresa Colaboradora' && e !== 'Empresa de Control de Calidad' && e !== 'Inspector' && e !== 'Instalador' && e !== 'Gestor de Expansión').map(entity => (
-            <TabsContent key={entity} value={entity}>
+          <TabsContent value="Sectores">
+            <Dialog open={sectorDialogOpen} onOpenChange={setSectorDialogOpen}>
               <Card>
-                <CardHeader>
-                  <CardTitle>Listado de: {entity}</CardTitle>
-                  <CardDescription>Próximamente...</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Listado de: Sectores</CardTitle>
+                    <CardDescription>Gestiona los sectores.</CardDescription>
+                  </div>
+                  <DialogTrigger asChild>
+                    <Button onClick={handleNewSector}>
+                      <PlusCircle className="mr-2" />
+                      Nuevo Registro
+                    </Button>
+                  </DialogTrigger>
                 </CardHeader>
                 <CardContent>
-                  <p>La funcionalidad para {entity} se implementará en una futura iteración.</p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Sector</TableHead>
+                        <TableHead>Clave</TableHead>
+                        <TableHead>Zona</TableHead>
+                        <TableHead>Asignación</TableHead>
+                        <TableHead>Estatus</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sampleSectors.map(item => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-mono">{item.id}</TableCell>
+                          <TableCell className="font-medium">{item.sector}</TableCell>
+                          <TableCell>{item.sectorKey}</TableCell>
+                          <TableCell>{item.zone}</TableCell>
+                          <TableCell>{item.assignment}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                                item.status === 'Activo' ? 'default' : 
+                                item.status === 'Inactivo' ? 'secondary' : 'destructive'
+                            }>{item.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Toggle menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleEditSector(item)}>Editar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activo')} className="text-green-600">Activar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactivo')} className="text-yellow-600">Poner Inactivo</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {/* TODO: Add Pagination Controls */}
                 </CardContent>
               </Card>
-            </TabsContent>
-          ))}
+              <SectorForm sector={selectedSector} onClose={() => setSectorDialogOpen(false)} />
+            </Dialog>
+          </TabsContent>
         </Tabs>
     </div>
   );
 }
-
-    
