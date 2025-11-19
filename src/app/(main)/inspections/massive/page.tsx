@@ -23,6 +23,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role } from "@/lib/types";
 import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO } from "@/lib/form-options";
 
 const inspectionDetailSchema = z.object({
   id: z.string(),
@@ -344,7 +345,7 @@ export default function MassiveInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {['SALESFORCE', 'PARRILLA', 'REPROGRAMACION', 'ESPONTANEA', 'PEC'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        {TIPO_PROGRAMACION_PES.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -356,7 +357,7 @@ export default function MassiveInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {['G-1,6', 'G-10', 'G-2,5', 'G-4', 'G-6', 'G-16', 'G-25', 'G-40'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        {TIPO_MDD.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -368,7 +369,7 @@ export default function MassiveInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un mercado" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {['ES-SV', 'CN', 'NE', 'SH', 'SP', 'SV'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        {MERCADO.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />

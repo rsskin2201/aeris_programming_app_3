@@ -23,6 +23,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role, STATUS } from "@/lib/types";
 import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers, InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO } from "@/lib/form-options";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -422,7 +423,7 @@ export default function IndividualInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('tipoProgramacion')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {['SALESFORCE', 'PARRILLA', 'REPROGRAMACION', 'ESPONTANEA', 'PEC'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        {TIPO_PROGRAMACION_PES.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -434,7 +435,7 @@ export default function IndividualInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('tipoMdd')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {['G-1,6', 'G-10', 'G-2,5', 'G-4', 'G-6', 'G-16', 'G-25', 'G-40'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        {TIPO_MDD.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -446,7 +447,7 @@ export default function IndividualInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('mercado')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un mercado" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {['ES-SV', 'CN', 'NE', 'SH', 'SP', 'SV'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        {MERCADO.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />

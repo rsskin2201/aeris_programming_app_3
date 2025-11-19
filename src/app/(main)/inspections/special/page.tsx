@@ -23,6 +23,7 @@ import { ROLES, Role } from "@/lib/types";
 import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
 import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO } from "@/lib/form-options";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -56,18 +57,6 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-const inspectionTypes = [
-    'Retiro de Cercha', 
-    'Reclamacion',
-    'Calibracion',
-    'Terminacion de Obra',
-    'Inspección de PH-IRC',
-    'PH Monoxido',
-    'Pre Inspección IRI',
-    'Pre Inspección IRC',
-    'Retiro de Termomanografo'
-];
 
 export default function SpecialInspectionPage() {
   const { toast } = useToast();
@@ -310,7 +299,7 @@ export default function SpecialInspectionPage() {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {inspectionTypes.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        {TIPO_INSPECCION_ESPECIAL.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -322,7 +311,7 @@ export default function SpecialInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {['PARRILLA', 'REPROGRAMACION', 'ESPONTANEA'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        {TIPO_PROGRAMACION_ESPECIAL.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -343,7 +332,7 @@ export default function SpecialInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un mercado" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {['ES-SV', 'CN', 'NE', 'SH', 'SP', 'SV'].map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        {MERCADO.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
