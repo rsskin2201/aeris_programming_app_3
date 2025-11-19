@@ -27,6 +27,8 @@ import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO } from "@/lib/form-options";
 
 const formSchema = z.object({
   id: z.string().optional(),
+  zone: z.string(),
+  sector: z.string().min(1, "El sector es requerido."),
   poliza: z.string().optional(),
   caso: z.string().max(11, 'El caso no debe exceder los 11 caracteres.').optional().refine(val => !val || /^AT-\d{7}$/.test(val), {
     message: 'El formato debe ser AT-XXXXXXX'
@@ -51,7 +53,6 @@ const formSchema = z.object({
   horarioProgramacion: z.string().min(1, "El horario es requerido."),
   instalador: z.string().min(1, "El instalador es requerido."),
   gestor: z.string().min(1, "El gestor es requerido."),
-  sector: z.string().min(1, "El sector es requerido."),
   
   status: z.string(),
 });
@@ -62,7 +63,7 @@ const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMAD
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, getRecordById, updateRecord } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, getRecordById, updateRecord, zone } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(false);
@@ -87,6 +88,7 @@ export default function IndividualInspectionPage() {
 
     return {
       id: generateId(),
+      zone: zone,
       poliza: "",
       caso: "",
       municipality: "",
@@ -110,7 +112,7 @@ export default function IndividualInspectionPage() {
       sector: "",
       status: getInitialStatus(user?.role),
     }
-  }, []);
+  }, [zone, user?.role]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -131,7 +133,8 @@ export default function IndividualInspectionPage() {
                 ...record,
                 fechaProgramacion: parse(record.requestDate, 'yyyy-MM-dd', new Date()),
                 // This is a simplification. A real app might need to parse time.
-                horarioProgramacion: '09:00', 
+                horarioProgramacion: '09:00',
+                zone: record.zone,
             });
         }
     } else {
@@ -139,10 +142,11 @@ export default function IndividualInspectionPage() {
         form.reset({
             ...defaultValues,
             id: generateId(),
-            status: getInitialStatus(user?.role)
+            status: getInitialStatus(user?.role),
+            zone: zone,
         });
     }
-}, [searchParams, getRecordById, form, user?.role, defaultValues]);
+}, [searchParams, getRecordById, form, user?.role, defaultValues, zone]);
 
 
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
@@ -191,6 +195,14 @@ export default function IndividualInspectionPage() {
   };
   
   const formData = form.watch();
+  
+  const availableSectors = useMemo(() => {
+    const currentZone = formData.zone;
+    if (currentZone === 'Todas las zonas') {
+        return sampleSectors;
+    }
+    return sampleSectors.filter(s => s.zone === currentZone);
+  }, [formData.zone]);
 
   const handlePreview = () => {
       form.trigger().then(isValid => {
@@ -220,7 +232,7 @@ export default function IndividualInspectionPage() {
             createdAt: currentRecord?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
             createdBy: currentRecord?.createdBy || user?.username || 'desconocido',
             inspector: currentRecord?.inspector || 'N/A', // Placeholder
-            zone: 'Zona Norte', // Placeholder
+            zone: values.zone,
         };
 
         if (pageMode === 'edit' && currentRecord) {
@@ -310,14 +322,30 @@ export default function IndividualInspectionPage() {
                 <CardDescription>Dirección donde se realizará la inspección.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-6 md:grid-cols-2">
-                <div className="md:col-span-2">
-                    <FormField control={form.control} name="id" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>ID de Registro</FormLabel>
-                            <FormControl><Input {...field} readOnly disabled className="font-mono" /></FormControl>
-                        </FormItem>
-                    )} />
-                </div>
+                 <FormField control={form.control} name="id" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>ID de Registro</FormLabel>
+                        <FormControl><Input {...field} readOnly disabled className="font-mono bg-muted/50" /></FormControl>
+                    </FormItem>
+                )} />
+                <FormField control={form.control} name="zone" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Zona</FormLabel>
+                        <FormControl><Input {...field} readOnly disabled className="bg-muted/50" /></FormControl>
+                    </FormItem>
+                )} />
+                 <FormField control={form.control} name="sector" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sector</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isFieldDisabled('sector')}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {availableSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                  <FormField control={form.control} name="poliza" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Póliza</FormLabel>
@@ -543,18 +571,6 @@ export default function IndividualInspectionPage() {
                     <FormMessage />
                   </FormItem>
                 )} />
-                 <FormField control={form.control} name="sector" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sector</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('sector')}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {sampleSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
                  <FormField control={form.control} name="status" render={({ field }) => (
                    <FormItem>
                     <FormLabel>Status</FormLabel>
@@ -593,6 +609,8 @@ export default function IndividualInspectionPage() {
                           <div className="max-h-[50vh] overflow-y-auto p-1 pr-4">
                               <h3 className="font-semibold text-lg mb-2">Ubicación del Servicio</h3>
                               {renderFieldWithFeedback('id', 'ID de Registro', formData.id)}
+                              {renderFieldWithFeedback('zone', 'Zona', formData.zone)}
+                              {renderFieldWithFeedback('sector', 'Sector', formData.sector)}
                               {renderFieldWithFeedback('poliza', 'Póliza', formData.poliza)}
                               {renderFieldWithFeedback('caso', 'Caso (AT)', formData.caso)}
                               {renderFieldWithFeedback('municipality', 'Municipio', formData.municipality)}
@@ -617,7 +635,6 @@ export default function IndividualInspectionPage() {
                               {renderFieldWithFeedback('fechaProgramacion', 'Fecha Programación', formData.fechaProgramacion)}
                               {renderFieldWithFeedback('horarioProgramacion', 'Horario', formData.horarioProgramacion)}
                               {renderFieldWithFeedback('gestor', 'Gestor', formData.gestor)}
-                              {renderFieldWithFeedback('sector', 'Sector', formData.sector)}
                               {renderFieldWithFeedback('status', 'Estatus', formData.status)}
                           </div>
                           <DialogFooter>

@@ -38,6 +38,8 @@ const inspectionDetailSchema = z.object({
 });
 
 const formSchema = z.object({
+  zone: z.string(),
+  sector: z.string().min(1, "El sector es requerido."),
   // Common fields
   municipality: z.string().min(1, "El municipio es requerido."),
   colonia: z.string().min(1, "La colonia es requerida."),
@@ -55,7 +57,6 @@ const formSchema = z.object({
   horarioProgramacion: z.string().min(1, "El horario es requerido."),
   instalador: z.string().min(1, "El instalador es requerido."),
   gestor: z.string().min(1, "El gestor es requerido."),
-  sector: z.string().min(1, "El sector es requerido."),
   status: z.string(),
   
   // Array of inspections
@@ -66,7 +67,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function MassiveInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, zone } = useAppContext();
   const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,6 +83,8 @@ export default function MassiveInspectionPage() {
   const generateId = () => `INSP-IM-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
   const defaultValues: FormValues = useMemo(() => ({
+    zone: zone,
+    sector: "",
     municipality: "",
     colonia: "",
     calle: "",
@@ -95,11 +98,10 @@ export default function MassiveInspectionPage() {
     horarioProgramacion: "",
     instalador: "",
     gestor: "",
-    sector: "",
     status: getInitialStatus(user?.role),
     inspections: [{ id: generateId(), poliza: "", caso: "", portal: "", escalera: "", piso: "", puerta: "" }],
     fechaProgramacion: undefined,
-  }), [user?.role]);
+  }), [user?.role, zone]);
 
 
   const form = useForm<FormValues>({
@@ -114,6 +116,14 @@ export default function MassiveInspectionPage() {
   });
 
   const formData = form.watch();
+
+  const availableSectors = useMemo(() => {
+    const currentZone = formData.zone;
+    if (currentZone === 'Todas las zonas') {
+        return sampleSectors;
+    }
+    return sampleSectors.filter(s => s.zone === currentZone);
+  }, [formData.zone]);
 
   const handlePreview = () => {
     form.trigger().then(isValid => {
@@ -203,6 +213,24 @@ export default function MassiveInspectionPage() {
                 <CardDescription>Dirección principal donde se realizarán las inspecciones.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-6 md:grid-cols-2">
+                <FormField control={form.control} name="zone" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Zona</FormLabel>
+                        <FormControl><Input {...field} readOnly disabled className="bg-muted/50" /></FormControl>
+                    </FormItem>
+                )} />
+                 <FormField control={form.control} name="sector" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sector</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {availableSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                 <FormField control={form.control} name="municipality" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Municipio</FormLabel>
@@ -465,18 +493,6 @@ export default function MassiveInspectionPage() {
                     <FormMessage />
                   </FormItem>
                 )} />
-                 <FormField control={form.control} name="sector" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sector</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {sampleSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
                  <FormField control={form.control} name="status" render={({ field }) => (
                    <FormItem>
                     <FormLabel>Status</FormLabel>
@@ -508,6 +524,8 @@ export default function MassiveInspectionPage() {
                         <div className="max-h-[60vh] overflow-y-auto p-1 pr-4 space-y-6">
                            <div>
                                 <h3 className="font-semibold text-lg mb-2">Datos Comunes</h3>
+                                {renderFieldWithFeedback('zone', 'Zona', formData.zone)}
+                                {renderFieldWithFeedback('sector', 'Sector', formData.sector)}
                                 {renderFieldWithFeedback('municipality', 'Municipio', formData.municipality)}
                                 {renderFieldWithFeedback('colonia', 'Colonia', formData.colonia)}
                                 {renderFieldWithFeedback('calle', 'Calle', formData.calle)}
@@ -526,7 +544,6 @@ export default function MassiveInspectionPage() {
                                 {renderFieldWithFeedback('fechaProgramacion', 'Fecha Programación', formData.fechaProgramacion)}
                                 {renderFieldWithFeedback('horarioProgramacion', 'Horario', formData.horarioProgramacion)}
                                 {renderFieldWithFeedback('gestor', 'Gestor', formData.gestor)}
-                                {renderFieldWithFeedback('sector', 'Sector', formData.sector)}
                                 {renderFieldWithFeedback('status', 'Estatus', formData.status)}
                            </div>
                            <div>
