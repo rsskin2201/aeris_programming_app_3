@@ -6,7 +6,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { PERMISSIONS } from "@/lib/permissions";
 import { MODULES, ROLES } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Power, PowerOff } from "lucide-react";
+import { Power, PowerOff, Upload } from "lucide-react";
 
 const inspectionTypes = [
     {
@@ -14,7 +14,7 @@ const inspectionTypes = [
         title: 'Programación Individual de PES',
         description: 'Para solicitudes de una Puesta en Servicio en campo.',
         href: '/inspections/individual',
-        requiredModule: MODULES.INSPECTIONS, // Assuming this is the correct module
+        requiredModule: MODULES.INSPECTIONS,
     },
     {
         id: 'masiva',
@@ -29,6 +29,14 @@ const inspectionTypes = [
         description: 'Otras inspecciones que no son Puesta en Servicio.',
         href: '/inspections/special',
         requiredModule: MODULES.INSPECTIONS,
+    },
+    {
+        id: 'salesforce',
+        title: 'Carga Masiva Salesforce',
+        description: 'Cargar registros desde un archivo .csv de Salesforce.',
+        href: '/inspections/salesforce',
+        requiredModule: MODULES.SALESFORCE_UPLOAD, // Custom module for this
+        icon: Upload,
     }
 ];
 
@@ -45,7 +53,7 @@ export default function InspectionsPage() {
     const isFormCreationRestricted = restrictedRoles.includes(user.role) && !formsEnabled;
 
     const userPermissions = PERMISSIONS[user.role] || [];
-    const visibleCards = inspectionTypes.filter(it => userPermissions.includes(it.requiredModule));
+    const visibleCards = inspectionTypes.filter(it => userPermissions.includes(it.requiredModule as any));
 
     const handleCardClick = (e: React.MouseEvent, cardHref: string) => {
         if (!formsEnabled) {
@@ -76,14 +84,17 @@ export default function InspectionsPage() {
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {visibleCards.map(card => (
-             <Card key={card.id} className={!formsEnabled ? 'bg-muted/50' : ''}>
+             <Card key={card.id} className={!formsEnabled && card.id !== 'salesforce' ? 'bg-muted/50' : ''}>
                 <CardHeader>
-                    <CardTitle>{card.title}</CardTitle>
+                    <CardTitle className='flex items-center gap-2'>
+                        {card.icon && <card.icon className="h-5 w-5 text-primary"/>}
+                        {card.title}
+                    </CardTitle>
                     <CardDescription>{card.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button asChild disabled={!formsEnabled} onClick={(e) => handleCardClick(e, card.href)}>
-                        <Link href={card.href}>Iniciar Solicitud</Link>
+                    <Button asChild disabled={!formsEnabled && card.id !== 'salesforce'} onClick={(e) => handleCardClick(e, card.href)}>
+                        <Link href={card.href}>Iniciar Carga</Link>
                     </Button>
                 </CardContent>
             </Card>

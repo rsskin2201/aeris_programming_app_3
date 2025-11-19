@@ -34,6 +34,7 @@ export const MODULES = {
   ENTITIES: 'entities',
   STATISTICS: 'statistics',
   USERS: 'users',
+  SALESFORCE_UPLOAD: 'salesforce_upload',
 } as const;
 
 export type Module = (typeof MODULES)[keyof typeof MODULES];
