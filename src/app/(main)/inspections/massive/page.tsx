@@ -212,45 +212,49 @@ export default function MassiveInspectionPage() {
                 <CardTitle>Ubicación Común del Servicio</CardTitle>
                 <CardDescription>Dirección principal donde se realizarán las inspecciones.</CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-6 md:grid-cols-2">
-                <FormField control={form.control} name="zone" render={({ field }) => (
+              <CardContent className="grid gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="zone" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Zona</FormLabel>
+                            <FormControl><Input {...field} readOnly disabled className="bg-muted/50" /></FormControl>
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="sector" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Zona</FormLabel>
-                        <FormControl><Input {...field} readOnly disabled className="bg-muted/50" /></FormControl>
-                    </FormItem>
-                )} />
-                 <FormField control={form.control} name="sector" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sector</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {availableSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="municipality" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Municipio</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un municipio" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {mockMunicipalities.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                 <FormField control={form.control} name="colonia" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Colonia</FormLabel>
-                        <FormControl><Input placeholder="Colonia" {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl>
+                        <FormLabel>Sector</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {availableSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                        </SelectContent>
+                        </Select>
                         <FormMessage />
                     </FormItem>
-                )} />
-                <div className="md:col-span-2 grid md:grid-cols-2 gap-6">
+                    )} />
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="municipality" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Municipio</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un municipio" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {mockMunicipalities.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )} />
+                    <FormField control={form.control} name="colonia" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Colonia</FormLabel>
+                            <FormControl><Input placeholder="Colonia" {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="calle" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Calle</FormLabel>
@@ -579,3 +583,5 @@ export default function MassiveInspectionPage() {
     </div>
   );
 }
+
+    

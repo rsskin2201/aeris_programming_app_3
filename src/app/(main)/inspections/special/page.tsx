@@ -207,66 +207,72 @@ export default function SpecialInspectionPage() {
                 <CardTitle>Ubicación del Servicio</CardTitle>
                 <CardDescription>Dirección donde se realizará la inspección.</CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-6 md:grid-cols-2">
+              <CardContent className="grid gap-6">
                  <FormField control={form.control} name="id" render={({ field }) => (
                     <FormItem>
                         <FormLabel>ID de Registro</FormLabel>
                         <FormControl><Input {...field} readOnly disabled className="font-mono bg-muted/50" /></FormControl>
                     </FormItem>
                 )} />
-                 <FormField control={form.control} name="zone" render={({ field }) => (
+                <div className="grid md:grid-cols-2 gap-6">
+                  <FormField control={form.control} name="zone" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Zona</FormLabel>
+                          <FormControl><Input {...field} readOnly disabled className="bg-muted/50" /></FormControl>
+                      </FormItem>
+                  )} />
+                  <FormField control={form.control} name="sector" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Zona</FormLabel>
-                        <FormControl><Input {...field} readOnly disabled className="bg-muted/50" /></FormControl>
+                      <FormLabel>Sector</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          {availableSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
                     </FormItem>
-                )} />
-                 <FormField control={form.control} name="sector" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sector</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {availableSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                 <FormField control={form.control} name="poliza" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Póliza</FormLabel>
-                        <FormControl><Input placeholder="Opcional" {...field} type="text" /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-                 <FormField control={form.control} name="caso" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Caso (AT)</FormLabel>
-                        <FormControl><Input placeholder="Ej. AT-1234567" {...field} maxLength={11} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
+                  )} />
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <FormField control={form.control} name="poliza" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Póliza</FormLabel>
+                          <FormControl><Input placeholder="Opcional" {...field} type="text" /></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )} />
+                  <FormField control={form.control} name="caso" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Caso (AT)</FormLabel>
+                          <FormControl><Input placeholder="Ej. AT-1234567" {...field} maxLength={11} /></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )} />
+                </div>
 
-                <FormField control={form.control} name="municipality" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Municipio</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un municipio" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {mockMunicipalities.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                 <FormField control={form.control} name="colonia" render={({ field }) => (
+                <div className="grid md:grid-cols-2 gap-6">
+                  <FormField control={form.control} name="municipality" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Colonia</FormLabel>
-                        <FormControl><Input placeholder="Colonia" {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl>
-                        <FormMessage />
+                      <FormLabel>Municipio</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un municipio" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          {mockMunicipalities.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
                     </FormItem>
-                )} />
-                <div className="md:col-span-2 grid md:grid-cols-2 gap-6">
+                  )} />
+                  <FormField control={form.control} name="colonia" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Colonia</FormLabel>
+                          <FormControl><Input placeholder="Colonia" {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )} />
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="calle" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Calle</FormLabel>
@@ -282,34 +288,36 @@ export default function SpecialInspectionPage() {
                         </FormItem>
                     )} />
                 </div>
-                 <FormField control={form.control} name="portal" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Portal (Opcional)</FormLabel>
-                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-                 <FormField control={form.control} name="escalera" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Escalera (Opcional)</FormLabel>
-                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-                 <FormField control={form.control} name="piso" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Piso (Opcional)</FormLabel>
-                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-                 <FormField control={form.control} name="puerta" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Puerta (Opcional)</FormLabel>
-                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
+                <div className="grid md:grid-cols-4 gap-6">
+                  <FormField control={form.control} name="portal" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Portal (Opcional)</FormLabel>
+                          <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )} />
+                  <FormField control={form.control} name="escalera" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Escalera (Opcional)</FormLabel>
+                          <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )} />
+                  <FormField control={form.control} name="piso" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Piso (Opcional)</FormLabel>
+                          <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )} />
+                  <FormField control={form.control} name="puerta" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Puerta (Opcional)</FormLabel>
+                          <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )} />
+                </div>
               </CardContent>
             </Card>
 
@@ -531,3 +539,5 @@ export default function SpecialInspectionPage() {
     </div>
   );
 }
+
+    
