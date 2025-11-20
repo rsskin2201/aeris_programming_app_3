@@ -18,12 +18,21 @@ import type { CollaboratorCompany, QualityControlCompany, Inspector, Installer, 
 import { ExpansionManagerForm } from "@/components/entities/expansion-manager-form";
 import { SectorForm } from "@/components/entities/sector-form";
 import { useAppContext } from "@/hooks/use-app-context";
+import { cn } from "@/lib/utils";
 
 
 const entities = [
   "Empresa Colaboradora", "Instalador", "Gestor de Expansión", "Empresa de Control de Calidad", "Inspector", "Sectores"
 ];
 
+const statusColors = {
+  'Activa': 'bg-green-600/80 border-green-700 text-white',
+  'Inactiva': 'bg-yellow-500/80 border-yellow-600 text-white',
+  'Deshabilitada': 'bg-red-600/80 border-red-700 text-white',
+  'Activo': 'bg-green-600/80 border-green-700 text-white',
+  'Inactivo': 'bg-yellow-500/80 border-yellow-600 text-white',
+  'Deshabilitado': 'bg-red-600/80 border-red-700 text-white',
+};
 
 export default function EntitiesPage() {
   const { zone } = useAppContext();
@@ -175,16 +184,13 @@ export default function EntitiesPage() {
                       </TableHeader>
                       <TableBody>
                           {filteredCollaborators.map(item => (
-                               <TableRow key={item.id}>
+                               <TableRow key={item.id} className="hover:bg-muted">
                                   <TableCell className="font-mono">{item.id}</TableCell>
                                   <TableCell className="font-medium">{item.name}</TableCell>
                                   <TableCell>{item.rfc}</TableCell>
                                    <TableCell>{item.zone}</TableCell>
                                   <TableCell>
-                                      <Badge variant={
-                                          item.status === 'Activa' ? 'default' : 
-                                          item.status === 'Inactiva' ? 'secondary' : 'destructive'
-                                      }>{item.status}</Badge>
+                                      <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                                   </TableCell>
                                   <TableCell>{item.created_at}</TableCell>
                                   <TableCell className="text-right">
@@ -245,17 +251,14 @@ export default function EntitiesPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredInstallers.map(item => (
-                        <TableRow key={item.id}>
+                        <TableRow key={item.id} className="hover:bg-muted">
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.collaboratorCompany}</TableCell>
                           <TableCell>{item.zone}</TableCell>
                           <TableCell>{item.certEndDate}</TableCell>
                            <TableCell>
-                            <Badge variant={
-                                item.status === 'Activo' ? 'default' : 
-                                item.status === 'Inactivo' ? 'secondary' : 'destructive'
-                            }>{item.status}</Badge>
+                            <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -314,16 +317,13 @@ export default function EntitiesPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredExpansionManagers.map(item => (
-                        <TableRow key={item.id}>
+                        <TableRow key={item.id} className="hover:bg-muted">
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.zone}</TableCell>
                           <TableCell>{item.assignment}</TableCell>
                            <TableCell>
-                            <Badge variant={
-                                item.status === 'Activo' ? 'default' : 
-                                item.status === 'Inactivo' ? 'secondary' : 'destructive'
-                            }>{item.status}</Badge>
+                            <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -383,16 +383,13 @@ export default function EntitiesPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredQualityCompanies.map(item => (
-                        <TableRow key={item.id}>
+                        <TableRow key={item.id} className="hover:bg-muted">
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.rfc}</TableCell>
                           <TableCell>{item.zone}</TableCell>
                           <TableCell>
-                            <Badge variant={
-                                item.status === 'Activa' ? 'default' : 
-                                item.status === 'Inactiva' ? 'secondary' : 'destructive'
-                            }>{item.status}</Badge>
+                            <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell>{item.created_at}</TableCell>
                           <TableCell className="text-right">
@@ -453,17 +450,14 @@ export default function EntitiesPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredInspectors.map(item => (
-                        <TableRow key={item.id}>
+                        <TableRow key={item.id} className="hover:bg-muted">
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.qualityCompany}</TableCell>
                           <TableCell>{item.zone}</TableCell>
                           <TableCell>{item.certEndDate}</TableCell>
                            <TableCell>
-                            <Badge variant={
-                                item.status === 'Activo' ? 'default' : 
-                                item.status === 'Inactivo' ? 'secondary' : 'destructive'
-                            }>{item.status}</Badge>
+                            <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -523,17 +517,14 @@ export default function EntitiesPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredSectors.map(item => (
-                        <TableRow key={item.id}>
+                        <TableRow key={item.id} className="hover:bg-muted">
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.sector}</TableCell>
                           <TableCell>{item.sectorKey}</TableCell>
                           <TableCell>{item.zone}</TableCell>
                           <TableCell>{item.assignment}</TableCell>
                           <TableCell>
-                            <Badge variant={
-                                item.status === 'Activo' ? 'default' : 
-                                item.status === 'Inactivo' ? 'secondary' : 'destructive'
-                            }>{item.status}</Badge>
+                            <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
