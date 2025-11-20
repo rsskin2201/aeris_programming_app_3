@@ -36,7 +36,7 @@ const statusVariant: Record<InspectionRecord['status'], 'default' | 'secondary' 
   'PENDIENTE INFORMAR DATOS': 'outline',
 };
 
-const allInspectionTypes = ['Individual PES', ...TIPO_INSPECCION_MASIVA, ...TIPO_INSPECCION_ESPECIAL];
+const allInspectionTypes = [...new Set(['Individual PES', ...TIPO_INSPECCION_MASIVA, ...TIPO_INSPECCION_ESPECIAL])];
 
 const initialFilters = {
     gestor: '',
