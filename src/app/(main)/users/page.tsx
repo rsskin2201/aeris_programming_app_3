@@ -141,13 +141,13 @@ export default function UsersPage() {
             </TableHeader>
             <TableBody>
               {filteredUsers.map((userItem) => (
-                <TableRow key={userItem.username}>
-                  <TableCell className="font-medium">{userItem.name}</TableCell>
-                  <TableCell>{userItem.username}</TableCell>
-                  <TableCell>{userItem.role}</TableCell>
-                  <TableCell>{userItem.zone}</TableCell>
-                  <TableCell><Badge variant="default">Activo</Badge></TableCell>
-                  <TableCell className="text-right">
+                <TableRow key={userItem.username} className="hover:bg-muted/60">
+                  <TableCell className="py-2 px-4 font-medium">{userItem.name}</TableCell>
+                  <TableCell className="py-2 px-4">{userItem.username}</TableCell>
+                  <TableCell className="py-2 px-4">{userItem.role}</TableCell>
+                  <TableCell className="py-2 px-4">{userItem.zone}</TableCell>
+                  <TableCell className="py-2 px-4"><Badge variant="default">Activo</Badge></TableCell>
+                  <TableCell className="py-2 px-4 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
