@@ -202,7 +202,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
                           selected={field.value} 
                           onSelect={field.onChange} 
                           initialFocus 
-                          captionLayout="dropdown-nav"
+                          captionLayout="dropdown"
                           fromYear={currentYear - 10}
                           toYear={currentYear + 10}
                         />
@@ -229,7 +229,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
                           selected={field.value} 
                           onSelect={field.onChange} 
                           initialFocus 
-                          captionLayout="dropdown-nav"
+                          captionLayout="dropdown"
                           fromYear={currentYear - 10}
                           toYear={currentYear + 10}
                         />
