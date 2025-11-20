@@ -2,8 +2,8 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback } from 'react';
-import type { User, Role, Zone, BlockedDay, PasswordResetRequest } from '@/lib/types';
-import { ROLES, ZONES } from '@/lib/types';
+import type { User, Role, Zone, BlockedDay, PasswordResetRequest, UserStatus } from '@/lib/types';
+import { ROLES, ZONES, USER_STATUS } from '@/lib/types';
 import { mockUsers as initialMockUsers, mockRecords as initialMockRecords, InspectionRecord, sampleCollaborators as initialCollaborators, sampleQualityControlCompanies as initialQualityCompanies, sampleInspectors as initialInspectors, sampleInstallers as initialInstallers, sampleExpansionManagers as initialManagers, sampleSectors as initialSectors, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from '@/lib/mock-data';
 
 interface AppContextType {

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/hooks/use-app-context';
 import type { User } from '@/lib/types';
-import { ROLES, ZONES } from '@/lib/types';
+import { ROLES, ZONES, USER_STATUS } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RotateCcw, ShieldAlert } from 'lucide-react';
 
@@ -21,6 +21,7 @@ const formSchema = z.object({
   username: z.string().min(1, 'El nombre de usuario es requerido.'),
   role: z.nativeEnum(ROLES),
   zone: z.nativeEnum(ZONES),
+  status: z.nativeEnum(USER_STATUS),
   password: z.string().optional(),
 });
 
@@ -43,6 +44,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
     username: user?.username || '',
     role: user?.role || ROLES.GESTOR,
     zone: user?.zone || ZONES[0],
+    status: user?.status || USER_STATUS.ACTIVO,
     password: '',
   }), [user]);
 
@@ -84,6 +86,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
         username: values.username,
         role: values.role,
         zone: values.zone,
+        status: values.status,
     };
     
     if (isEditMode) {
@@ -155,6 +158,19 @@ export function UserForm({ user, onClose }: UserFormProps) {
                     </FormItem>
                 )} />
             </div>
+
+            <FormField control={form.control} name="status" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Estatus</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un estatus" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {Object.values(USER_STATUS).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+            )} />
 
             {!isEditMode && (
                 <>

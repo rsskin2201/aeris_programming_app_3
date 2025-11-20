@@ -1,13 +1,13 @@
-import { Role, ROLES, User, Zone, ZONES, Status, STATUS } from '@/lib/types';
+import { Role, ROLES, User, Zone, ZONES, Status, STATUS, UserStatus, USER_STATUS } from '@/lib/types';
 
 export const mockUsers: User[] = [
-  { name: 'Admin User', username: 'admin', role: ROLES.ADMIN, zone: 'Todas las zonas' },
-  { name: 'Gerardo Gestor', username: 'gestor', role: ROLES.GESTOR, zone: 'Zona Norte' },
-  { name: 'Ana Colaboradora', username: 'colaboradora', role: ROLES.COLABORADOR, zone: 'Bajio Norte' },
-  { name: 'Sofia Soporte', username: 'soporte', role: ROLES.SOPORTE, zone: 'Zona Centro' },
-  { name: 'Carla Calidad', username: 'calidad', role: ROLES.CALIDAD, zone: 'Bajio Sur' },
-  { name: 'Carlos Canales', username: 'canales', role: ROLES.CANALES, zone: 'Todas las zonas' },
-  { name: 'Victor Visual', username: 'visual', role: ROLES.VISUAL, zone: 'Todas las zonas' },
+  { name: 'Admin User', username: 'admin', role: ROLES.ADMIN, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { name: 'Gerardo Gestor', username: 'gestor', role: ROLES.GESTOR, zone: 'Zona Norte', status: USER_STATUS.ACTIVO },
+  { name: 'Ana Colaboradora', username: 'colaboradora', role: ROLES.COLABORADOR, zone: 'Bajio Norte', status: USER_STATUS.ACTIVO },
+  { name: 'Sofia Soporte', username: 'soporte', role: ROLES.SOPORTE, zone: 'Zona Centro', status: USER_STATUS.ACTIVO },
+  { name: 'Carla Calidad', username: 'calidad', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
+  { name: 'Carlos Canales', username: 'canales', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { name: 'Victor Visual', username: 'visual', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.INACTIVO },
 ];
 
 export type InspectionRecord = {

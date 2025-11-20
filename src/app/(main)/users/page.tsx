@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, UserPlus, Pencil, KeyRound, Ban, Trash2, ShieldAlert, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { ROLES, ZONES } from "@/lib/types";
+import { ROLES, ZONES, USER_STATUS } from "@/lib/types";
 import { useAppContext } from "@/hooks/use-app-context";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 const initialFilters = {
     name: '',
@@ -25,6 +26,11 @@ const initialFilters = {
     role: '',
     zone: '',
     status: '',
+};
+
+const statusColors: Record<string, string> = {
+  [USER_STATUS.ACTIVO]: 'bg-green-600/80 border-green-700 text-white',
+  [USER_STATUS.INACTIVO]: 'bg-yellow-500/80 border-yellow-600 text-white',
 };
 
 export default function UsersPage() {
@@ -68,7 +74,7 @@ export default function UsersPage() {
             if (filters.username && !u.username.toLowerCase().includes(filters.username.toLowerCase())) return false;
             if (filters.role && u.role !== filters.role) return false;
             if (filters.zone && u.zone !== filters.zone) return false;
-            // Status filter not implemented as there's no status field in User model
+            if (filters.status && u.status !== filters.status) return false;
             return true;
         });
     }, [users, filters]);
@@ -209,7 +215,7 @@ export default function UsersPage() {
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="status">Estatus</Label>
-                            <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)} disabled>
+                            <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
                                 <SelectTrigger id="status"><SelectValue placeholder="Todos" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Activo">Activo</SelectItem>
@@ -250,7 +256,9 @@ export default function UsersPage() {
                     <TableCell className="py-2 px-4">{userItem.username}</TableCell>
                     <TableCell className="py-2 px-4">{userItem.role}</TableCell>
                     <TableCell className="py-2 px-4">{userItem.zone}</TableCell>
-                    <TableCell className="py-2 px-4"><Badge variant="default">Activo</Badge></TableCell>
+                    <TableCell className="py-2 px-4">
+                        <Badge className={cn('whitespace-nowrap', statusColors[userItem.status] || 'bg-gray-400')}>{userItem.status}</Badge>
+                    </TableCell>
                     <TableCell className="py-2 px-4 text-right">
                         <DropdownMenu>
                         <DropdownMenuTrigger asChild>

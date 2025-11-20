@@ -19,11 +19,18 @@ export const ZONES = [
 ] as const;
 export type Zone = (typeof ZONES)[number];
 
+export const USER_STATUS = {
+    ACTIVO: 'Activo',
+    INACTIVO: 'Inactivo',
+} as const;
+export type UserStatus = (typeof USER_STATUS)[keyof typeof USER_STATUS];
+
 export type User = {
   name: string;
   username: string;
   role: Role;
   zone: Zone;
+  status: UserStatus;
 };
 
 export const MODULES = {
