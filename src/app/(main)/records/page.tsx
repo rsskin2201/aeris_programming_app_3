@@ -24,19 +24,19 @@ import { cn } from '@/lib/utils';
 import { STATUS } from '@/lib/types';
 import { TIPO_INSPECCION_ESPECIAL, TIPO_INSPECCION_MASIVA, MERCADO } from '@/lib/form-options';
 
-const statusVariant: Record<InspectionRecord['status'], 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  'REGISTRADA': 'outline',
-  'CONFIRMADA POR GE': 'default',
-  'PROGRAMADA': 'default',
-  'EN PROCESO': 'secondary',
-  'APROBADA': 'default',
-  'NO APROBADA': 'destructive',
-  'CANCELADA': 'destructive',
-  'RESULTADO REGISTRADO': 'default',
-  'PENDIENTE INFORMAR DATOS': 'outline',
+const statusColors: Record<InspectionRecord['status'], string> = {
+  [STATUS.REGISTRADA]: 'bg-gray-500/80 border-gray-600 text-white',
+  [STATUS.CONFIRMADA_POR_GE]: 'bg-cyan-600/80 border-cyan-700 text-white',
+  [STATUS.PROGRAMADA]: 'bg-blue-600/80 border-blue-700 text-white',
+  [STATUS.EN_PROCESO]: 'bg-orange-500/80 border-orange-600 text-white',
+  [STATUS.PENDIENTE_INFORMAR_DATOS]: 'bg-yellow-500/80 border-yellow-600 text-white',
+  [STATUS.APROBADA]: 'bg-green-600/80 border-green-700 text-white',
+  [STATUS.NO_APROBADA]: 'bg-red-600/80 border-red-700 text-white',
+  [STATUS.CANCELADA]: 'bg-red-800/80 border-red-900 text-white',
+  [STATUS.RESULTADO_REGISTRADO]: 'bg-purple-600/80 border-purple-700 text-white',
 };
 
-const allInspectionTypes = [...new Set(['Individual PES', ...TIPO_INSPECCION_MASIVA, ...TIPO_INSPECCION_ESPECIAL])];
+const allInspectionTypes = [...new Set(['Individual PES', 'Masiva PES', ...TIPO_INSPECCION_MASIVA, ...TIPO_INSPECCION_ESPECIAL])];
 
 const initialFilters = {
     gestor: '',
@@ -262,10 +262,10 @@ export default function RecordsPage() {
             </TableHeader>
             <TableBody>
               {paginatedRecords.map((record) => (
-                <TableRow key={record.id} className="h-auto">
+                <TableRow key={record.id} className="h-auto transition-colors hover:bg-muted data-[state=selected]:bg-muted">
                   <TableCell className="py-2 px-4 font-mono text-xs">{record.id}</TableCell>
                    <TableCell className="py-2 px-4">
-                    <Badge variant={statusVariant[record.status] || 'secondary'}>{record.status}</Badge>
+                    <Badge className={cn('whitespace-nowrap', statusColors[record.status] || 'bg-gray-400')}>{record.status}</Badge>
                   </TableCell>
                   <TableCell className="py-2 px-4">{record.type}</TableCell>
                   <TableCell className="py-2 px-4">{record.address}</TableCell>
@@ -323,5 +323,3 @@ export default function RecordsPage() {
     </div>
   );
 }
-
-    
