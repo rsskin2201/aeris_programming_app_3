@@ -171,8 +171,10 @@ export function UserForm({ user, onClose }: UserFormProps) {
                      {newPassword && (
                          <Alert>
                             <ShieldAlert className="h-4 w-4" />
-                            <AlertTitle>Contraseña Temporal</AlertTitle>
-                            <AlertDescription>Guarda esta contraseña. El usuario deberá cambiarla en su primer inicio de sesión.</AlertDescription>
+                            <AlertTitle>Contraseña Generada</AlertTitle>
+                            <AlertDescription>
+                                Copia y guarda esta contraseña para el nuevo usuario.
+                            </AlertDescription>
                         </Alert>
                     )}
                 </>
