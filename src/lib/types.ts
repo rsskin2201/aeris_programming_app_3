@@ -61,11 +61,6 @@ export const STATUS = {
     NO_APROBADA: 'NO APROBADA',
     CANCELADA: 'CANCELADA',
     RESULTADO_REGISTRADO: 'RESULTADO REGISTRADO',
-    // Old statuses for compatibility - can be removed later
-    Aprobado: 'APROBADA',
-    Contemplado: 'PROGRAMADA',
-    Pendiente_Aprobacion: 'CONFIRMADA POR GE',
-    Rechazado: 'NO APROBADA',
 } as const;
 
 export type Status = (typeof STATUS)[keyof typeof STATUS];
