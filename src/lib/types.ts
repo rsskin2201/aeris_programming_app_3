@@ -56,15 +56,16 @@ export const STATUS = {
     CONFIRMADA_POR_GE: 'CONFIRMADA POR GE',
     PROGRAMADA: 'PROGRAMADA',
     EN_PROCESO: 'EN PROCESO',
+    PENDIENTE_INFORMAR_DATOS: 'PENDIENTE INFORMAR DATOS',
     APROBADA: 'APROBADA',
     NO_APROBADA: 'NO APROBADA',
     CANCELADA: 'CANCELADA',
     RESULTADO_REGISTRADO: 'RESULTADO REGISTRADO',
-    // Old statuses for compatibility
-    Aprobado: 'Aprobado',
-    Contemplado: 'Contemplado',
-    Pendiente_Aprobacion: 'Pendiente Aprobación',
-    Rechazado: 'Rechazado',
+    // Old statuses for compatibility - can be removed later
+    Aprobado: 'APROBADA',
+    Contemplado: 'PROGRAMADA',
+    Pendiente_Aprobacion: 'CONFIRMADA POR GE',
+    Rechazado: 'NO APROBADA',
 } as const;
 
 export type Status = (typeof STATUS)[keyof typeof STATUS];

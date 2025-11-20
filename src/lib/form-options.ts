@@ -24,3 +24,31 @@ export const TIPO_INSPECCION_ESPECIAL = [
 ] as const;
 
 export const TIPO_PROGRAMACION_ESPECIAL = ['PARRILLA', 'REPROGRAMACION', 'ESPONTANEA'] as const;
+
+// Opciones para el formulario de Checklist
+export const MARCA_MDD = ['ELSTER', 'ITRON', 'METREX', 'HONEYWELL', 'GOLDCARD'] as const;
+export const SI_NO = ['Si', 'No'] as const;
+export const MATERIAL_TUBERIA = [
+    'COBRE',
+    'MULTICAPA',
+    'COBRE Y MULTICAPA',
+    'TUBERIA EXISTENTE',
+    'GALVANIZADO',
+    'COBRE Y GALVANIZADO',
+    'MULTICAPA Y GALVANIZADO',
+    'GALVANIZADO Y ACERO'
+] as const;
+export const EQUIPO = [
+    'BOILER DE ACUMULACION',
+    'BOILER DE PASO',
+    'CALDERA',
+    'ESTUFA',
+    'ESTUFA/PARRILLA',
+    'FREIDORA',
+    'HORNO',
+    'OTRO',
+    'PARRILLA',
+    'PLANTA DE LUZ',
+    'SECADORA'
+] as const;
+export const FORMA_PAGO = ['PAGO A EC', 'PENDIENTE', 'IACEPTA', 'PAGO POR LOTE', 'OXXO', 'TRANSFERENCIA'] as const;

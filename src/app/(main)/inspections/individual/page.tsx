@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon, ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle, CalendarIcon, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse, isBefore, set, endOfDay } from "date-fns";
@@ -24,6 +24,7 @@ import { ROLES, Role, STATUS } from "@/lib/types";
 import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers, InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO } from "@/lib/form-options";
+import { ChecklistForm } from "@/components/inspections/checklist-form";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -60,6 +61,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMADA_POR_GE, STATUS.REGISTRADA];
+const checklistRoles = [ROLES.CALIDAD, ROLES.SOPORTE, ROLES.ADMIN];
+const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RESULTADO_REGISTRADO];
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
@@ -68,6 +71,7 @@ export default function IndividualInspectionPage() {
   const searchParams = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [pageMode, setPageMode] = useState<'new' | 'view' | 'edit'>('new');
   const [currentRecord, setCurrentRecord] = useState<InspectionRecord | null>(null);
 
@@ -132,8 +136,7 @@ export default function IndividualInspectionPage() {
             form.reset({
                 ...record,
                 fechaProgramacion: parse(record.requestDate, 'yyyy-MM-dd', new Date()),
-                // This is a simplification. A real app might need to parse time.
-                horarioProgramacion: '09:00',
+                horarioProgramacion: record.horarioProgramacion || '09:00', // Ensure this exists
                 zone: record.zone,
             });
         }
@@ -152,11 +155,11 @@ export default function IndividualInspectionPage() {
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
     if (pageMode === 'view') return true;
     if (pageMode === 'edit' && currentRecord) {
-        const canEdit = editableStatuses.includes(currentRecord.status as any);
-        if (!canEdit) return true;
+        const isClosed = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.CANCELADA, STATUS.RESULTADO_REGISTRADO].includes(currentRecord.status as any);
+        if (isClosed && user?.role !== ROLES.ADMIN) return true;
 
         const now = new Date();
-        const eighteenHoursBefore = set(parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()), { hours: -6 }); // 18:00 prev day
+        const eighteenHoursBefore = set(parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()), { hours: -6 });
 
         switch (fieldName) {
             case 'status':
@@ -172,10 +175,6 @@ export default function IndividualInspectionPage() {
                 return !currentRecord.id.startsWith("INSP-PS");
             case 'fechaProgramacion':
             case 'horarioProgramacion':
-                if (user?.role === ROLES.COLABORADOR) {
-                    return isBefore(now, eighteenHoursBefore);
-                }
-                return false; // Gestor y Admin pueden modificar
             case 'municipality':
             case 'colonia':
             case 'calle':
@@ -186,13 +185,20 @@ export default function IndividualInspectionPage() {
                 return false;
              case 'sector':
              case 'instalador':
-                return false; // Modificable si el status lo permite
+                return false;
             default:
-                return false; // Por defecto no se bloquea si el status es editable
+                return false;
         }
     }
     return false; // Modo 'new'
   };
+
+  const showChecklistButton = useMemo(() => {
+    if (pageMode !== 'edit' || !user || !currentRecord) return false;
+    const canAccess = checklistRoles.includes(user.role);
+    const isValidStatus = canViewChecklistStatuses.includes(currentRecord.status as any);
+    return canAccess && isValidStatus;
+  }, [pageMode, user, currentRecord]);
   
   const formData = form.watch();
   
@@ -225,13 +231,14 @@ export default function IndividualInspectionPage() {
     setTimeout(() => {
         const recordToSave = {
             ...values,
-            client: 'Cliente (TBD)', // Placeholder
+            client: 'Cliente (TBD)',
             address: `${values.calle} ${values.numero}, ${values.colonia}`,
             requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
             type: 'Individual PES' as const,
             createdAt: currentRecord?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
             createdBy: currentRecord?.createdBy || user?.username || 'desconocido',
-            inspector: currentRecord?.inspector || 'N/A', // Placeholder
+            inspector: currentRecord?.inspector || 'N/A',
+            horarioProgramacion: values.horarioProgramacion,
             zone: values.zone,
         };
 
@@ -293,24 +300,37 @@ export default function IndividualInspectionPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" asChild>
-          <Link href="/records">
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="font-headline text-3xl font-semibold">
-            {pageMode === 'new' && 'Programación Individual de PES'}
-            {pageMode === 'view' && 'Visualizar Inspección Individual'}
-            {pageMode === 'edit' && 'Modificar Inspección Individual'}
-          </h1>
-          <p className="text-muted-foreground">
-             {pageMode === 'new' && 'Formulario para una Puesta en Servicio en campo.'}
-             {pageMode === 'view' && 'Consulta de los detalles de una inspección registrada.'}
-             {pageMode === 'edit' && 'Modificación de los detalles de una inspección.'}
-          </p>
-        </div>
+       <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" asChild>
+                <Link href="/records">
+                    <ChevronLeft className="h-4 w-4" />
+                </Link>
+                </Button>
+                <div>
+                <h1 className="font-headline text-3xl font-semibold">
+                    {pageMode === 'new' && 'Programación Individual de PES'}
+                    {pageMode === 'view' && 'Visualizar Inspección Individual'}
+                    {pageMode === 'edit' && 'Modificar Inspección Individual'}
+                </h1>
+                <p className="text-muted-foreground">
+                    {pageMode === 'new' && 'Formulario para una Puesta en Servicio en campo.'}
+                    {pageMode === 'view' && 'Consulta de los detalles de una inspección registrada.'}
+                    {pageMode === 'edit' && 'Modificación de los detalles de una inspección.'}
+                </p>
+                </div>
+            </div>
+            {showChecklistButton && (
+                 <Dialog open={isChecklistOpen} onOpenChange={setIsChecklistOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="secondary">
+                            <ListChecks className="mr-2 h-4 w-4"/>
+                            Check List
+                        </Button>
+                    </DialogTrigger>
+                    <ChecklistForm record={currentRecord} onClose={() => setIsChecklistOpen(false)} />
+                 </Dialog>
+            )}
       </div>
       
       <Form {...form}>
@@ -664,5 +684,3 @@ export default function IndividualInspectionPage() {
     </div>
   );
 }
-
-    
