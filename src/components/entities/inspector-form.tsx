@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/hooks/use-app-context';
-import { sampleQualityControlCompanies, type Inspector } from '@/lib/mock-data';
+import { type Inspector } from '@/lib/mock-data';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
@@ -31,6 +31,8 @@ const formSchema = z.object({
   status: z.string().min(1, 'El estatus es requerido.'),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 interface InspectorFormProps {
   inspector: Inspector | null;
   onClose: () => void;
@@ -38,7 +40,7 @@ interface InspectorFormProps {
 
 export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, qualityCompanies, addInspector, updateInspector } = useAppContext();
 
   const isEditMode = !!inspector;
 
@@ -56,7 +58,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
     }
   }, [inspector]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
@@ -71,17 +73,20 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
     field.onChange(e.target.value.toUpperCase());
   }
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log({
+  function onSubmit(values: FormValues) {
+    const dataToSave: Inspector = {
         ...values,
+        id: values.id!,
         certStartDate: format(values.certStartDate, 'yyyy-MM-dd'),
         certEndDate: format(values.certEndDate, 'yyyy-MM-dd'),
-        fecha_alta: isEditMode ? inspector?.createdAt : format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_alta: isEditMode ? 'N/A (edición)' : user?.username,
-        fecha_mod: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_last_mod: user?.username,
-        cambio_realizado: isEditMode ? `Edición de registro` : 'Creación de registro',
-    });
+        createdAt: inspector?.createdAt || format(new Date(), 'yyyy-MM-dd'),
+    };
+    
+    if (isEditMode) {
+        updateInspector(dataToSave);
+    } else {
+        addInspector(dataToSave);
+    }
 
     toast({
       title: isEditMode ? 'Inspector Actualizado' : 'Inspector Creado',
@@ -156,7 +161,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
-                        {sampleQualityControlCompanies.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        {qualityCompanies.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -228,7 +233,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
            )}
 
           <DialogFooter className="pt-4">
-            <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Guardar</Button>
+            <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
             <DialogClose asChild>
                 <Button type="button" variant="outline">Cancelar</Button>
             </DialogClose>

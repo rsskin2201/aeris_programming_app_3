@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/hooks/use-app-context';
-import { sampleCollaborators, type Installer } from '@/lib/mock-data';
+import { type Installer } from '@/lib/mock-data';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
@@ -31,6 +31,8 @@ const formSchema = z.object({
   status: z.string().min(1, 'El estatus es requerido.'),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 interface InstallerFormProps {
   installer: Installer | null;
   onClose: () => void;
@@ -38,7 +40,7 @@ interface InstallerFormProps {
 
 export function InstallerForm({ installer, onClose }: InstallerFormProps) {
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, collaborators, addInstaller, updateInstaller } = useAppContext();
 
   const isEditMode = !!installer;
 
@@ -56,7 +58,7 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
     }
   }, [installer]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
@@ -71,18 +73,21 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
     field.onChange(e.target.value.toUpperCase());
   }
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log({
+  function onSubmit(values: FormValues) {
+    const dataToSave: Installer = {
         ...values,
+        id: values.id!,
         certStartDate: format(values.certStartDate, 'yyyy-MM-dd'),
         certEndDate: format(values.certEndDate, 'yyyy-MM-dd'),
-        fecha_alta: isEditMode ? installer?.createdAt : format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_alta: isEditMode ? 'N/A (edición)' : user?.username,
-        fecha_mod: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_last_mod: user?.username,
-        cambio_realizado: isEditMode ? `Edición de registro` : 'Creación de registro',
-    });
-
+        createdAt: installer?.createdAt || format(new Date(), 'yyyy-MM-dd'),
+    };
+    
+    if (isEditMode) {
+        updateInstaller(dataToSave);
+    } else {
+        addInstaller(dataToSave);
+    }
+    
     toast({
       title: isEditMode ? 'Instalador Actualizado' : 'Instalador Creado',
       description: `Los datos de "${values.name}" se han guardado correctamente.`,
@@ -156,7 +161,7 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
-                        {sampleCollaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -228,7 +233,7 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
            )}
 
           <DialogFooter className="pt-4">
-            <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Guardar</Button>
+            <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
             <DialogClose asChild>
                 <Button type="button" variant="outline">Cancelar</Button>
             </DialogClose>
@@ -239,5 +244,3 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
     </DialogContent>
   );
 }
-
-    

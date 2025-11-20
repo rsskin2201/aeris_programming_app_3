@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ZONES, Zone, ROLES } from '@/lib/types';
+import { ZONES, ROLES } from '@/lib/types';
 import { useAppContext } from '@/hooks/use-app-context';
 import type { ExpansionManager } from '@/lib/mock-data';
 
@@ -24,6 +24,8 @@ const formSchema = z.object({
   subAssignment: z.string().min(1, 'La sub-asignación es requerida.'),
   status: z.string().min(1, 'El estatus es requerido.'),
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface ExpansionManagerFormProps {
   manager: ExpansionManager | null;
@@ -39,7 +41,7 @@ const restrictedRoles = [
 
 export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormProps) {
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, addExpansionManager, updateExpansionManager } = useAppContext();
 
   const isEditMode = !!manager;
 
@@ -53,7 +55,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
     status: manager?.status || 'Activo',
   }), [manager]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
@@ -75,15 +77,18 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
     field.onChange(e.target.value.toUpperCase());
   }
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log({
+  function onSubmit(values: FormValues) {
+    const dataToSave: ExpansionManager = {
         ...values,
-        fecha_alta: isEditMode ? manager?.createdAt : format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_alta: isEditMode ? 'N/A (edición)' : user?.username,
-        fecha_mod: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_last_mod: user?.username,
-        cambio_realizado: isEditMode ? `Edición de registro` : 'Creación de registro',
-    });
+        id: values.id!,
+        createdAt: manager?.createdAt || format(new Date(), 'yyyy-MM-dd'),
+    };
+
+    if (isEditMode) {
+        updateExpansionManager(dataToSave);
+    } else {
+        addExpansionManager(dataToSave);
+    }
 
     toast({
       title: isEditMode ? 'Gestor Actualizado' : 'Gestor Creado',

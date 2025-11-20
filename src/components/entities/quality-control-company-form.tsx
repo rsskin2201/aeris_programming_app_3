@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ZONES, Zone, ROLES } from '@/lib/types';
+import { ZONES, ROLES } from '@/lib/types';
 import { useAppContext } from '@/hooks/use-app-context';
 import type { QualityControlCompany } from '@/lib/mock-data';
 
@@ -22,6 +22,8 @@ const formSchema = z.object({
   zone: z.string().min(1, 'La zona es requerida.'),
   status: z.string().min(1, 'El estatus es requerido.'),
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface QualityControlCompanyFormProps {
   company: QualityControlCompany | null;
@@ -37,7 +39,7 @@ const restrictedRoles = [
 
 export function QualityControlCompanyForm({ company, onClose }: QualityControlCompanyFormProps) {
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, addQualityCompany, updateQualityCompany } = useAppContext();
 
   const isEditMode = !!company;
 
@@ -49,7 +51,7 @@ export function QualityControlCompanyForm({ company, onClose }: QualityControlCo
     status: company?.status || 'Activa',
   }), [company]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
@@ -71,15 +73,18 @@ export function QualityControlCompanyForm({ company, onClose }: QualityControlCo
     field.onChange(e.target.value.toUpperCase());
   }
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log({
+  function onSubmit(values: FormValues) {
+    const dataToSave: QualityControlCompany = {
         ...values,
-        fecha_alta: isEditMode ? company?.created_at : format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_alta: isEditMode ? 'N/A (edición)' : user?.username,
-        fecha_mod: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_last_mod: user?.username,
-        cambio_realizado: isEditMode ? `Edición de registro` : 'Creación de registro',
-    });
+        id: values.id!,
+        created_at: company?.created_at || format(new Date(), 'yyyy-MM-dd'),
+    };
+    
+    if (isEditMode) {
+        updateQualityCompany(dataToSave);
+    } else {
+        addQualityCompany(dataToSave);
+    }
 
     toast({
       title: isEditMode ? 'Empresa Actualizada' : 'Empresa Creada',

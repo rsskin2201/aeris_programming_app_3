@@ -25,6 +25,8 @@ const formSchema = z.object({
   status: z.string().min(1, 'El estatus es requerido.'),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 interface SectorFormProps {
   sector: Sector | null;
   onClose: () => void;
@@ -39,7 +41,7 @@ const restrictedRoles = [
 
 export function SectorForm({ sector, onClose }: SectorFormProps) {
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, addSector, updateSector } = useAppContext();
 
   const isEditMode = !!sector;
 
@@ -53,7 +55,7 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
     status: sector?.status || 'Activo',
   }), [sector]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
@@ -75,15 +77,18 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
     field.onChange(e.target.value.toUpperCase());
   }
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log({
+  function onSubmit(values: FormValues) {
+    const dataToSave: Sector = {
         ...values,
-        fecha_alta: isEditMode ? sector?.createdAt : format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_alta: isEditMode ? 'N/A (edición)' : user?.username,
-        fecha_mod: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_last_mod: user?.username,
-        cambio_realizado: isEditMode ? `Edición de registro` : 'Creación de registro',
-    });
+        id: values.id!,
+        createdAt: sector?.createdAt || format(new Date(), 'yyyy-MM-dd'),
+    };
+    
+    if (isEditMode) {
+        updateSector(dataToSave);
+    } else {
+        addSector(dataToSave);
+    }
 
     toast({
       title: isEditMode ? 'Sector Actualizado' : 'Sector Creado',

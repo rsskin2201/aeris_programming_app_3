@@ -11,8 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ZONES, Zone, ROLES } from '@/lib/types';
+import { ZONES, ROLES } from '@/lib/types';
 import { useAppContext } from '@/hooks/use-app-context';
+import type { CollaboratorCompany } from '@/lib/mock-data';
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -22,14 +23,7 @@ const formSchema = z.object({
   status: z.string().min(1, 'El estatus es requerido.'),
 });
 
-type CollaboratorCompany = {
-    id: string;
-    name: string;
-    rfc: string;
-    zone: string;
-    status: string;
-    created_at: string;
-}
+type FormValues = z.infer<typeof formSchema>;
 
 interface CollaboratorCompanyFormProps {
   company: CollaboratorCompany | null;
@@ -45,7 +39,7 @@ const restrictedRoles = [
 
 export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompanyFormProps) {
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, addCollaborator, updateCollaborator } = useAppContext();
 
   const isEditMode = !!company;
 
@@ -57,7 +51,7 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
     status: company?.status || 'Activa',
   }), [company]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
@@ -79,16 +73,19 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
     field.onChange(e.target.value.toUpperCase());
   }
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log({
+  function onSubmit(values: FormValues) {
+    const dataToSave: CollaboratorCompany = {
         ...values,
-        fecha_alta: isEditMode ? company?.created_at : format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_alta: isEditMode ? 'N/A (edición)' : user?.username,
-        fecha_mod: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        usuario_last_mod: user?.username,
-        cambio_realizado: isEditMode ? `Edición de registro` : 'Creación de registro',
-    });
-
+        id: values.id!,
+        created_at: company?.created_at || format(new Date(), 'yyyy-MM-dd'),
+    };
+    
+    if (isEditMode) {
+        updateCollaborator(dataToSave);
+    } else {
+        addCollaborator(dataToSave);
+    }
+    
     toast({
       title: isEditMode ? 'Empresa Actualizada' : 'Empresa Creada',
       description: `Los datos de "${values.name}" se han guardado correctamente.`,

@@ -13,7 +13,6 @@ import { QualityControlCompanyForm } from "@/components/entities/quality-control
 import { InspectorForm } from "@/components/entities/inspector-form";
 import { InstallerForm } from "@/components/entities/installer-form";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { sampleCollaborators, sampleQualityControlCompanies, sampleInspectors, sampleInstallers, sampleExpansionManagers, sampleSectors } from "@/lib/mock-data";
 import type { CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from "@/lib/mock-data";
 import { ExpansionManagerForm } from "@/components/entities/expansion-manager-form";
 import { SectorForm } from "@/components/entities/sector-form";
@@ -25,7 +24,7 @@ const entities = [
   "Empresa Colaboradora", "Instalador", "Gestor de Expansión", "Empresa de Control de Calidad", "Inspector", "Sectores"
 ];
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   'Activa': 'bg-green-600/80 border-green-700 text-white',
   'Inactiva': 'bg-yellow-500/80 border-yellow-600 text-white',
   'Deshabilitada': 'bg-red-600/80 border-red-700 text-white',
@@ -35,7 +34,16 @@ const statusColors = {
 };
 
 export default function EntitiesPage() {
-  const { zone } = useAppContext();
+  const { 
+    zone, 
+    collaborators, 
+    installers, 
+    expansionManagers, 
+    qualityCompanies, 
+    inspectors, 
+    sectors 
+  } = useAppContext();
+  
   const [collaboratorDialogOpen, setCollaboratorDialogOpen] = useState(false);
   const [qualityDialogOpen, setQualityDialogOpen] = useState(false);
   const [inspectorDialogOpen, setInspectorDialogOpen] = useState(false);
@@ -51,28 +59,28 @@ export default function EntitiesPage() {
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
 
   const filteredCollaborators = useMemo(() => 
-    sampleCollaborators.filter(c => zone === 'Todas las zonas' || c.zone === zone), 
-    [zone]
+    collaborators.filter(c => zone === 'Todas las zonas' || c.zone === zone), 
+    [zone, collaborators]
   );
   const filteredInstallers = useMemo(() => 
-    sampleInstallers.filter(i => zone === 'Todas las zonas' || i.zone === zone), 
-    [zone]
+    installers.filter(i => zone === 'Todas las zonas' || i.zone === zone), 
+    [zone, installers]
   );
   const filteredExpansionManagers = useMemo(() => 
-    sampleExpansionManagers.filter(m => zone === 'Todas las zonas' || m.zone === zone), 
-    [zone]
+    expansionManagers.filter(m => zone === 'Todas las zonas' || m.zone === zone), 
+    [zone, expansionManagers]
   );
   const filteredQualityCompanies = useMemo(() => 
-    sampleQualityControlCompanies.filter(c => zone === 'Todas las zonas' || c.zone === zone), 
-    [zone]
+    qualityCompanies.filter(c => zone === 'Todas las zonas' || c.zone === zone), 
+    [zone, qualityCompanies]
   );
   const filteredInspectors = useMemo(() => 
-    sampleInspectors.filter(i => zone === 'Todas las zonas' || i.zone === zone), 
-    [zone]
+    inspectors.filter(i => zone === 'Todas las zonas' || i.zone === zone), 
+    [zone, inspectors]
   );
   const filteredSectors = useMemo(() => 
-    sampleSectors.filter(s => zone === 'Todas las zonas' || s.zone === zone), 
-    [zone]
+    sectors.filter(s => zone === 'Todas las zonas' || s.zone === zone), 
+    [zone, sectors]
   );
 
   const handleEditCollaborator = (company: CollaboratorCompany) => {
@@ -184,7 +192,7 @@ export default function EntitiesPage() {
                       </TableHeader>
                       <TableBody>
                           {filteredCollaborators.map(item => (
-                               <TableRow key={item.id} className="hover:bg-muted">
+                               <TableRow key={item.id} className="hover:bg-muted/60">
                                   <TableCell className="font-mono">{item.id}</TableCell>
                                   <TableCell className="font-medium">{item.name}</TableCell>
                                   <TableCell>{item.rfc}</TableCell>
@@ -251,7 +259,7 @@ export default function EntitiesPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredInstallers.map(item => (
-                        <TableRow key={item.id} className="hover:bg-muted">
+                        <TableRow key={item.id} className="hover:bg-muted/60">
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.collaboratorCompany}</TableCell>
@@ -317,7 +325,7 @@ export default function EntitiesPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredExpansionManagers.map(item => (
-                        <TableRow key={item.id} className="hover:bg-muted">
+                        <TableRow key={item.id} className="hover:bg-muted/60">
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.zone}</TableCell>
@@ -383,7 +391,7 @@ export default function EntitiesPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredQualityCompanies.map(item => (
-                        <TableRow key={item.id} className="hover:bg-muted">
+                        <TableRow key={item.id} className="hover:bg-muted/60">
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.rfc}</TableCell>
@@ -450,7 +458,7 @@ export default function EntitiesPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredInspectors.map(item => (
-                        <TableRow key={item.id} className="hover:bg-muted">
+                        <TableRow key={item.id} className="hover:bg-muted/60">
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.qualityCompany}</TableCell>
@@ -517,7 +525,7 @@ export default function EntitiesPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredSectors.map(item => (
-                        <TableRow key={item.id} className="hover:bg-muted">
+                        <TableRow key={item.id} className="hover:bg-muted/60">
                           <TableCell className="font-mono">{item.id}</TableCell>
                           <TableCell className="font-medium">{item.sector}</TableCell>
                           <TableCell>{item.sectorKey}</TableCell>
