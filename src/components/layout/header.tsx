@@ -182,21 +182,25 @@ export default function Header() {
             <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Mi Cuenta ({user.role})</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Cambiar Rol (Demo)</DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                        <DropdownMenuRadioGroup value={user?.role} onValueChange={(value) => switchRole(value as any)}>
-                            {Object.values(ROLES).map((role) => (
-                                <DropdownMenuRadioItem key={role} value={role}>
-                                    {role}
-                                </DropdownMenuRadioItem>
-                            ))}
-                        </DropdownMenuRadioGroup>
-                    </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator />
+                {user.role === ROLES.ADMIN && (
+                  <>
+                    <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>Cambiar Rol (Demo)</DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                            <DropdownMenuRadioGroup value={user?.role} onValueChange={(value) => switchRole(value as any)}>
+                                {Object.values(ROLES).map((role) => (
+                                    <DropdownMenuRadioItem key={role} value={role}>
+                                        {role}
+                                    </DropdownMenuRadioItem>
+                                ))}
+                            </DropdownMenuRadioGroup>
+                        </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={logout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Cerrar sesión</span>
