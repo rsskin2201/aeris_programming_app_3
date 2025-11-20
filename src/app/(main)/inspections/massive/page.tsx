@@ -23,7 +23,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role } from "@/lib/types";
 import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO } from "@/lib/form-options";
+import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA } from "@/lib/form-options";
 
 const inspectionDetailSchema = z.object({
   id: z.string(),
@@ -365,7 +365,7 @@ export default function MassiveInspectionPage() {
                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        <SelectItem value="Programacion PES">Programacion PES</SelectItem>
+                        {TIPO_INSPECCION_MASIVA.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -583,5 +583,3 @@ export default function MassiveInspectionPage() {
     </div>
   );
 }
-
-    
