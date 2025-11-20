@@ -102,6 +102,7 @@ export default function CalendarPage() {
   } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
   const [blockReason, setBlockReason] = useState('');
   const router = useRouter();
@@ -401,58 +402,13 @@ export default function CalendarPage() {
           Calendario de Inspecciones
         </h1>
         <div className="flex flex-wrap items-center gap-2">
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                  <Button variant="outline">
-                      <Filter className="mr-2 h-4 w-4" /> Filtros
-                  </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent asChild>
-                  <div className='fixed right-8 mt-2 w-64 z-10'>
-                    <Card className="p-4">
-                        <div className="grid gap-4">
-                            <h4 className="font-medium">Opciones de Filtro</h4>
-                            <div className="space-y-2">
-                                <Label htmlFor="filter-type">Tipo de Inspección</Label>
-                                <Select>
-                                    <SelectTrigger id="filter-type">
-                                        <SelectValue placeholder="Todos" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos</SelectItem>
-                                        <SelectItem value="pes-individual">PES Individual</SelectItem>
-                                        <SelectItem value="pes-masiva">PES Masiva</SelectItem>
-                                        <SelectItem value="especial">Especial</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="filter-status">Estado</Label>
-                                <Select>
-                                    <SelectTrigger id="filter-status">
-                                        <SelectValue placeholder="Todos" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos</SelectItem>
-                                        <SelectItem value="Aprobado">Aprobado</SelectItem>
-                                        <SelectItem value="Contemplado">Contemplado</SelectItem>
-                                        <SelectItem value="Pendiente">Pendiente Aprobación</SelectItem>
-                                        <SelectItem value="Rechazado">Rechazado</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                             <div className="flex gap-2">
-                                <Button className="flex-1">Aplicar</Button>
-                                <Button variant="ghost" className="flex-1">Limpiar</Button>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          <Button variant="outline" onClick={exportToCsv}>
-            <Download className="mr-2 h-4 w-4" /> Exportar .csv
-          </Button>
+            <Button 
+                variant="outline"
+                className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700"
+                onClick={exportToCsv}
+            >
+                <Download className="mr-2 h-4 w-4" /> Exportar .csv
+            </Button>
           {canEnableWeekends && (
             <Button
               variant={weekendsEnabled ? 'secondary' : 'destructive'}
@@ -487,6 +443,57 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+      
+        <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen} className='w-full'>
+            <div className="flex items-center justify-end">
+                <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                        <Filter className="mr-2 h-4 w-4" />
+                        {filtersOpen ? 'Ocultar' : 'Mostrar'} Filtros
+                    </Button>
+                </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent asChild>
+                 <Card className="mt-2 p-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="filter-type">Tipo de Inspección</Label>
+                            <Select>
+                                <SelectTrigger id="filter-type">
+                                    <SelectValue placeholder="Todos" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos</SelectItem>
+                                    <SelectItem value="pes-individual">PES Individual</SelectItem>
+                                    <SelectItem value="pes-masiva">PES Masiva</SelectItem>
+                                    <SelectItem value="especial">Especial</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                            <div className="space-y-2">
+                            <Label htmlFor="filter-status">Estado</Label>
+                            <Select>
+                                <SelectTrigger id="filter-status">
+                                    <SelectValue placeholder="Todos" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos</SelectItem>
+                                    <SelectItem value="Aprobado">Aprobado</SelectItem>
+                                    <SelectItem value="Contemplado">Contemplado</SelectItem>
+                                    <SelectItem value="Pendiente">Pendiente Aprobación</SelectItem>
+                                    <SelectItem value="Rechazado">Rechazado</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                            <div className="flex items-end gap-2 lg:col-start-4">
+                            <Button className="flex-1">Aplicar</Button>
+                            <Button variant="ghost" className="flex-1">Limpiar</Button>
+                        </div>
+                    </div>
+                </Card>
+            </CollapsibleContent>
+        </Collapsible>
+
 
        {canBlockDays && (
         <Dialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>

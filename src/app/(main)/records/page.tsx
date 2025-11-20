@@ -107,7 +107,12 @@ export default function RecordsPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-headline text-3xl font-semibold">Gestión de Registros</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Exportar .csv</Button>
+            <Button
+                variant="outline"
+                className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700"
+            >
+                <Download className="mr-2 h-4 w-4" /> Exportar .csv
+            </Button>
         </div>
       </div>
 
