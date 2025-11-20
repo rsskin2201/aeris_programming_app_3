@@ -39,6 +39,8 @@ import {
   Menu,
   Copy,
   Clock,
+  Bell,
+  Check,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -61,6 +63,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const moduleIcons = {
   [MODULES.INSPECTIONS]: Briefcase,
@@ -74,7 +79,7 @@ const moduleIcons = {
 
 export default function Header() {
   const pathname = usePathname();
-  const { user, operatorName, switchRole, logout } = useAppContext();
+  const { user, operatorName, switchRole, logout, passwordRequests, resolvePasswordRequest } = useAppContext();
   const { toast } = useToast();
 
   if (!user) return null;
@@ -82,6 +87,47 @@ export default function Header() {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: 'Copiado', description: 'El correo electrónico se ha copiado al portapapeles.' });
+  }
+
+  const NotificationBell = () => {
+    if (user.role !== ROLES.ADMIN || passwordRequests.length === 0) {
+      return null;
+    }
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="outline" size="icon" className="relative h-9 w-9">
+                    <Bell className="h-4 w-4" />
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
+                        {passwordRequests.length}
+                    </span>
+                    <span className="sr-only">Notificaciones</span>
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80">
+                <div className="flex items-center justify-between">
+                    <p className="font-medium">Solicitudes de Contraseña</p>
+                    <Badge variant="secondary">{passwordRequests.length}</Badge>
+                </div>
+                <div className="mt-4 space-y-4">
+                    {passwordRequests.map(req => (
+                         <div key={req.id} className="text-sm">
+                            <p>Usuario: <span className="font-semibold">{req.username}</span></p>
+                            <p>Correo: <span className="font-semibold">{req.email}</span></p>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                                <span>hace {formatDistanceToNow(req.date, { locale: es })}</span>
+                                <Button size="sm" variant="ghost" className="h-auto px-2 py-1 text-primary hover:text-primary" onClick={() => resolvePasswordRequest(req.id)}>
+                                    <Check className="mr-1 h-3 w-3"/>
+                                    Marcar resuelto
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
   }
 
   return (
@@ -133,6 +179,8 @@ export default function Header() {
             </Badge>
 
             <ZoneSelector />
+
+            <NotificationBell />
             
             <Dialog>
                 <DialogTrigger asChild>

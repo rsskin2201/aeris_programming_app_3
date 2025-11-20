@@ -23,6 +23,7 @@ const formSchema = z.object({
 
 const forgotPasswordSchema = z.object({
     username: z.string().min(1, { message: 'Por favor, ingresa tu nombre de usuario.' }),
+    email: z.string().email({ message: 'Por favor, ingresa un correo electrónico válido.' }),
 });
 
 export function LoginForm() {
@@ -30,8 +31,9 @@ export function LoginForm() {
   const [isForgotPassOpen, setIsForgotPassOpen] = useState(false);
   const [isSubmittingForgot, setIsSubmittingForgot] = useState(false);
   const [forgotUsername, setForgotUsername] = useState('');
+  const [forgotEmail, setForgotEmail] = useState('');
   const router = useRouter();
-  const { login } = useAppContext();
+  const { login, addPasswordRequest } = useAppContext();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -66,17 +68,21 @@ export function LoginForm() {
   }
 
   const handleForgotPasswordSubmit = () => {
-    if (!forgotUsername) {
+    const result = forgotPasswordSchema.safeParse({ username: forgotUsername, email: forgotEmail });
+
+    if (!result.success) {
+        const errors = result.error.format();
         toast({
             variant: 'destructive',
-            title: 'Campo requerido',
-            description: 'Por favor, ingresa tu nombre de usuario.'
+            title: 'Campos inválidos',
+            description: errors.username?._errors[0] || errors.email?._errors[0] || 'Por favor revisa los campos.',
         });
         return;
     }
 
     setIsSubmittingForgot(true);
     setTimeout(() => {
+        addPasswordRequest({ username: forgotUsername, email: forgotEmail });
         toast({
             title: 'Solicitud Enviada',
             description: 'Se ha enviado una notificación al administrador. Se pondrá en contacto contigo en breve.'
@@ -84,6 +90,7 @@ export function LoginForm() {
         setIsSubmittingForgot(false);
         setIsForgotPassOpen(false);
         setForgotUsername('');
+        setForgotEmail('');
     }, 1500);
   }
 
@@ -153,18 +160,31 @@ export function LoginForm() {
                 <DialogHeader>
                     <DialogTitle>Recuperar Contraseña</DialogTitle>
                     <DialogDescription>
-                        Ingresa tu nombre de usuario para solicitar un reseteo de contraseña. Se enviará una notificación al administrador.
+                        Ingresa tus datos para solicitar un reseteo. Se enviará una notificación al administrador.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
-                    <Label htmlFor="forgot-username">Nombre de Usuario</Label>
-                    <Input 
-                        id="forgot-username" 
-                        value={forgotUsername}
-                        onChange={(e) => setForgotUsername(e.target.value)}
-                        placeholder="tu.usuario"
-                        className="mt-2"
-                    />
+                <div className="py-4 space-y-4">
+                    <div>
+                        <Label htmlFor="forgot-username">Nombre de Usuario</Label>
+                        <Input 
+                            id="forgot-username" 
+                            value={forgotUsername}
+                            onChange={(e) => setForgotUsername(e.target.value)}
+                            placeholder="tu.usuario"
+                            className="mt-2"
+                        />
+                    </div>
+                     <div>
+                        <Label htmlFor="forgot-email">Correo Electrónico</Label>
+                        <Input 
+                            id="forgot-email" 
+                            type="email"
+                            value={forgotEmail}
+                            onChange={(e) => setForgotEmail(e.target.value)}
+                            placeholder="tu@correo.com"
+                            className="mt-2"
+                        />
+                    </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsForgotPassOpen(false)}>Cancelar</Button>

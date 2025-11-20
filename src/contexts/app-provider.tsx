@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback } from 'react';
-import type { User, Role, Zone, BlockedDay } from '@/lib/types';
+import type { User, Role, Zone, BlockedDay, PasswordResetRequest } from '@/lib/types';
 import { ROLES, ZONES } from '@/lib/types';
 import { mockUsers as initialMockUsers, mockRecords as initialMockRecords, InspectionRecord, sampleCollaborators as initialCollaborators, sampleQualityControlCompanies as initialQualityCompanies, sampleInspectors as initialInspectors, sampleInstallers as initialInstallers, sampleExpansionManagers as initialManagers, sampleSectors as initialSectors, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from '@/lib/mock-data';
 
@@ -14,6 +14,7 @@ interface AppContextType {
   formsEnabled: boolean;
   weekendsEnabled: boolean;
   blockedDays: Record<string, BlockedDay>;
+  passwordRequests: PasswordResetRequest[];
   
   // Records
   records: InspectionRecord[];
@@ -56,6 +57,8 @@ interface AppContextType {
   toggleWeekends: () => void;
   addBlockedDay: (date: string, reason: string) => void;
   removeBlockedDay: (date: string) => void;
+  addPasswordRequest: (request: Omit<PasswordResetRequest, 'id' | 'date'>) => void;
+  resolvePasswordRequest: (id: string) => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -68,6 +71,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isZoneConfirmed, setIsZoneConfirmed] = useState(false);
   const [formsEnabled, setFormsEnabled] = useState(true);
   const [weekendsEnabled, setWeekendsEnabled] = useState(false);
+  const [passwordRequests, setPasswordRequests] = useState<PasswordResetRequest[]>([]);
   
   // Data State
   const [records, setRecords] = useState<InspectionRecord[]>(initialMockRecords);
@@ -136,6 +140,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return newBlockedDays;
     });
   }, []);
+
+  const addPasswordRequest = useCallback((request: Omit<PasswordResetRequest, 'id' | 'date'>) => {
+    const newRequest: PasswordResetRequest = {
+        ...request,
+        id: `req-${Date.now()}`,
+        date: new Date(),
+    };
+    setPasswordRequests(prev => [newRequest, ...prev]);
+  }, []);
+
+  const resolvePasswordRequest = useCallback((id: string) => {
+      setPasswordRequests(prev => prev.filter(req => req.id !== id));
+  }, []);
   
   // Records Callbacks
   const getRecordById = useCallback((id: string) => records.find(record => record.id === id), [records]);
@@ -177,6 +194,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       formsEnabled,
       weekendsEnabled,
       blockedDays,
+      passwordRequests,
       records,
       collaborators,
       qualityCompanies,
@@ -211,10 +229,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleWeekends,
       addBlockedDay,
       removeBlockedDay,
+      addPasswordRequest,
+      resolvePasswordRequest,
     }),
     [
-      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
-      getRecordById, addRecord, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole,
+      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
+      getRecordById, addRecord, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest
     ]
   );
 

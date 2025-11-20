@@ -64,3 +64,10 @@ export const STATUS = {
 } as const;
 
 export type Status = (typeof STATUS)[keyof typeof STATUS];
+
+export type PasswordResetRequest = {
+    id: string;
+    username: string;
+    email: string;
+    date: Date;
+};
