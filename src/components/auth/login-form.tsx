@@ -115,19 +115,6 @@ export function LoginForm() {
           </Button>
         </form>
       </Form>
-      <Card className="mt-4 bg-muted/50">
-        <CardHeader>
-          <CardTitle className="text-sm font-semibold">Usuarios de prueba</CardTitle>
-          <CardDescription className="text-xs">
-            Puedes usar los siguientes alias para probar los diferentes roles:
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-            {mockUsers.map(user => <li key={user.username}>- <span className="font-mono">{user.username}</span></li>)}
-          </ul>
-        </CardContent>
-      </Card>
     </>
   );
 }
