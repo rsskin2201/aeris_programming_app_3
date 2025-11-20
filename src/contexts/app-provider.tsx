@@ -16,6 +16,7 @@ interface AppContextType {
   blockedDays: Record<string, BlockedDay>;
   records: InspectionRecord[];
   getRecordById: (id: string) => InspectionRecord | undefined;
+  addRecord: (newRecord: InspectionRecord) => void;
   updateRecord: (updatedRecord: InspectionRecord) => void;
   login: (username: string, operatorName?: string) => User | null;
   logout: () => void;
@@ -107,6 +108,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return records.find(record => record.id === id);
   }, [records]);
 
+  const addRecord = useCallback((newRecord: InspectionRecord) => {
+    setRecords(prevRecords => [newRecord, ...prevRecords]);
+  }, []);
+
   const updateRecord = useCallback((updatedRecord: InspectionRecord) => {
     setRecords(prevRecords => 
         prevRecords.map(record => record.id === updatedRecord.id ? updatedRecord : record)
@@ -125,6 +130,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       blockedDays,
       records,
       getRecordById,
+      addRecord,
       updateRecord,
       login,
       logout,
@@ -136,7 +142,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addBlockedDay,
       removeBlockedDay,
     }),
-    [user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, records, getRecordById, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay]
+    [user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, records, getRecordById, addRecord, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay]
   );
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

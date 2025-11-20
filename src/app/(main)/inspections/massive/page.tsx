@@ -20,8 +20,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { ROLES, Role } from "@/lib/types";
-import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
+import { ROLES, Role, STATUS } from "@/lib/types";
+import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers, InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA } from "@/lib/form-options";
 
@@ -67,16 +67,16 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function MassiveInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, zone } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, addRecord, zone } = useAppContext();
   const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getInitialStatus = (role: Role | undefined) => {
     switch (role) {
-      case ROLES.GESTOR: return "CONFIRMADA POR GE";
+      case ROLES.GESTOR: return STATUS.CONFIRMADA_POR_GE;
       case ROLES.COLABORADOR:
-      default: return "REGISTRADA";
+      default: return STATUS.REGISTRADA;
     }
   };
 
@@ -141,14 +141,32 @@ export default function MassiveInspectionPage() {
 
   function onFinalSubmit(values: FormValues) {
     setIsSubmitting(true);
-    console.log({ ...values });
-
-    toast({
-      title: "Solicitudes Enviadas",
-      description: `Se crearon ${values.inspections.length} solicitudes masivas con estatus: ${values.status}.`,
-    });
     
     setTimeout(() => {
+        values.inspections.forEach(detail => {
+            const recordToSave: InspectionRecord = {
+                ...values,
+                ...detail,
+                client: 'Cliente (TBD)',
+                address: `${values.calle} ${values.numero}, ${values.colonia}, ${detail.puerta || ''}`,
+                requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
+                type: 'Masiva PES',
+                createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+                createdBy: user?.username || 'desconocido',
+                inspector: 'N/A',
+                horarioProgramacion: values.horarioProgramacion,
+                zone: values.zone,
+                id: detail.id,
+                serieMdd: undefined,
+            };
+            addRecord(recordToSave);
+        });
+
+        toast({
+            title: "Solicitudes Enviadas",
+            description: `Se crearon ${values.inspections.length} solicitudes masivas con estatus: ${values.status}.`,
+        });
+
       setIsSubmitting(false);
       setIsConfirming(false);
       router.push('/records');

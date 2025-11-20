@@ -66,7 +66,7 @@ const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.A
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, getRecordById, updateRecord, zone } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, getRecordById, addRecord, updateRecord, zone } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(false);
@@ -116,7 +116,7 @@ export default function IndividualInspectionPage() {
       sector: "",
       status: getInitialStatus(user?.role),
     }
-  }, [zone, user?.role]);
+  }, [zone, user?.role, searchParams]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -229,29 +229,31 @@ export default function IndividualInspectionPage() {
     
     // Simulate API call
     setTimeout(() => {
-        const recordToSave = {
+        const recordToSave: InspectionRecord = {
             ...values,
             client: 'Cliente (TBD)',
             address: `${values.calle} ${values.numero}, ${values.colonia}`,
             requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
-            type: 'Individual PES' as const,
+            type: 'Individual PES',
             createdAt: currentRecord?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
             createdBy: currentRecord?.createdBy || user?.username || 'desconocido',
             inspector: currentRecord?.inspector || 'N/A',
             horarioProgramacion: values.horarioProgramacion,
             zone: values.zone,
+            id: values.id || generateId(),
+            serieMdd: currentRecord?.serieMdd,
+            mercado: values.mercado,
         };
 
         if (pageMode === 'edit' && currentRecord) {
-            updateRecord(recordToSave as InspectionRecord);
+            updateRecord(recordToSave);
         } else {
-            // Here you would call a function to add a new record to the context
-            console.log("Creating new record:", recordToSave);
+            addRecord(recordToSave);
         }
 
         toast({
           title: pageMode === 'edit' ? "Solicitud Actualizada" : "Solicitud Enviada",
-          description: `La solicitud con ID ${values.id} se ${pageMode === 'edit' ? 'actualizó' : 'creó'} con estatus: ${values.status}.`,
+          description: `La solicitud con ID ${recordToSave.id} se ${pageMode === 'edit' ? 'actualizó' : 'creó'} con estatus: ${values.status}.`,
         });
 
         setIsSubmitting(false);
@@ -608,7 +610,7 @@ export default function IndividualInspectionPage() {
                           <SelectTrigger><SelectValue placeholder="Selecciona un estado" /></SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(STATUS).filter(s => typeof s === 'string').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        {Object.values(STATUS).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                       </SelectContent>
                      </Select>
                     <FormMessage />

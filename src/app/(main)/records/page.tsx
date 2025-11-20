@@ -17,10 +17,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { addDays, format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { STATUS } from '@/lib/types';
+import { TIPO_INSPECCION_ESPECIAL, TIPO_INSPECCION_MASIVA, MERCADO } from '@/lib/form-options';
 
 const statusVariant: Record<InspectionRecord['status'], 'default' | 'secondary' | 'destructive' | 'outline'> = {
   'REGISTRADA': 'outline',
@@ -31,26 +33,57 @@ const statusVariant: Record<InspectionRecord['status'], 'default' | 'secondary' 
   'NO APROBADA': 'destructive',
   'CANCELADA': 'destructive',
   'RESULTADO REGISTRADO': 'default',
-  // Old statuses for compatibility
-  'Aprobado': 'default',
-  'Contemplado': 'secondary',
-  'Pendiente Aprobación': 'outline',
-  'Rechazado': 'destructive',
+  'PENDIENTE INFORMAR DATOS': 'outline',
 };
 
+const allInspectionTypes = ['Individual PES', ...TIPO_INSPECCION_MASIVA, ...TIPO_INSPECCION_ESPECIAL];
+
+const initialFilters = {
+    gestor: '',
+    empresa: '',
+    sector: '',
+    poliza: '',
+    caso: '',
+    serieMdd: '',
+    status: '',
+    tipoInspeccion: '',
+    mercado: '',
+    date: undefined as DateRange | undefined,
+};
 
 export default function RecordsPage() {
   const { zone, records } = useAppContext();
   const router = useRouter();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [date, setDate] = useState<DateRange | undefined>();
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [filters, setFilters] = useState(initialFilters);
 
-  const filteredRecords = useMemo(() =>
-    records.filter(record => zone === 'Todas las zonas' || record.zone === zone),
-    [zone, records]
-  );
+  const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }
+
+  const clearFilters = () => {
+    setFilters(initialFilters);
+  }
+
+  const filteredRecords = useMemo(() => {
+    return records.filter(record => {
+      if (zone !== 'Todas las zonas' && record.zone !== zone) return false;
+      if (filters.gestor && record.gestor !== filters.gestor) return false;
+      if (filters.empresa && record.collaboratorCompany !== filters.empresa) return false;
+      if (filters.sector && record.sector !== filters.sector) return false;
+      if (filters.poliza && !record.poliza.includes(filters.poliza)) return false;
+      if (filters.caso && !record.caso.includes(filters.caso)) return false;
+      if (filters.serieMdd && record.serieMdd !== filters.serieMdd) return false;
+      if (filters.status && record.status !== filters.status) return false;
+      if (filters.tipoInspeccion && record.type !== filters.tipoInspeccion) return false;
+      if (filters.mercado && record.mercado !== filters.mercado) return false;
+      if (filters.date?.from && parse(record.requestDate, 'yyyy-MM-dd', new Date()) < filters.date.from) return false;
+      if (filters.date?.to && parse(record.requestDate, 'yyyy-MM-dd', new Date()) > addDays(filters.date.to, 1)) return false;
+      return true;
+    });
+  }, [zone, records, filters]);
   
   const paginatedRecords = useMemo(() => {
     const startIndex = (page - 1) * rowsPerPage;
@@ -67,12 +100,8 @@ export default function RecordsPage() {
   }
 
   const handleAction = (recordId: string, mode: 'view' | 'edit') => {
-    // This is a simplification. In a real app, you'd check the record type 
-    // and navigate to the correct form (individual, massive, special).
-    // For now, we'll assume all are individual.
     router.push(`/inspections/individual?id=${recordId}&mode=${mode}`);
   }
-
 
   return (
     <div className="flex flex-col gap-6">
@@ -98,38 +127,75 @@ export default function RecordsPage() {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                      <div className="space-y-2">
                         <Label htmlFor="gestor">Gestor Asignado</Label>
-                        <Select>
+                        <Select value={filters.gestor} onValueChange={(v) => handleFilterChange('gestor', v)}>
                             <SelectTrigger id="gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="">Todos</SelectItem>
                                 {sampleExpansionManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="empresa">Empresa Colaboradora</Label>
-                        <Select>
+                        <Select value={filters.empresa} onValueChange={(v) => handleFilterChange('empresa', v)}>
                             <SelectTrigger id="empresa"><SelectValue placeholder="Todas" /></SelectTrigger>
                             <SelectContent>
+                                 <SelectItem value="">Todas</SelectItem>
                                  {sampleCollaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="sector">Sector</Label>
-                         <Select>
+                         <Select value={filters.sector} onValueChange={(v) => handleFilterChange('sector', v)}>
                             <SelectTrigger id="sector"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="">Todos</SelectItem>
                                 {sampleSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="poliza">Póliza</Label>
-                        <Input id="poliza" placeholder="Buscar por póliza..." />
+                        <Input id="poliza" placeholder="Buscar por póliza..." value={filters.poliza} onChange={(e) => handleFilterChange('poliza', e.target.value)} />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="caso">Caso</Label>
-                        <Input id="caso" placeholder="Buscar por caso AT..." />
+                        <Input id="caso" placeholder="Buscar por caso AT..." value={filters.caso} onChange={(e) => handleFilterChange('caso', e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="serieMdd">Serie MDD</Label>
+                        <Input id="serieMdd" placeholder="Buscar por serie..." value={filters.serieMdd} onChange={(e) => handleFilterChange('serieMdd', e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="status">Status</Label>
+                         <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
+                            <SelectTrigger id="status"><SelectValue placeholder="Todos" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">Todos</SelectItem>
+                                {Object.values(STATUS).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="tipoInspeccion">Tipo de Inspección</Label>
+                         <Select value={filters.tipoInspeccion} onValueChange={(v) => handleFilterChange('tipoInspeccion', v)}>
+                            <SelectTrigger id="tipoInspeccion"><SelectValue placeholder="Todos" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">Todos</SelectItem>
+                                {allInspectionTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="mercado">Mercado</Label>
+                         <Select value={filters.mercado} onValueChange={(v) => handleFilterChange('mercado', v)}>
+                            <SelectTrigger id="mercado"><SelectValue placeholder="Todos" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">Todos</SelectItem>
+                                {MERCADO.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="date-range">Rango de Fechas</Label>
@@ -140,18 +206,18 @@ export default function RecordsPage() {
                                 variant={"outline"}
                                 className={cn(
                                     "w-full justify-start text-left font-normal",
-                                    !date && "text-muted-foreground"
+                                    !filters.date && "text-muted-foreground"
                                 )}
                                 >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {date?.from ? (
-                                    date.to ? (
+                                {filters.date?.from ? (
+                                    filters.date.to ? (
                                     <>
-                                        {format(date.from, "LLL dd, y", { locale: es })} -{" "}
-                                        {format(date.to, "LLL dd, y", { locale: es })}
+                                        {format(filters.date.from, "LLL dd, y", { locale: es })} -{" "}
+                                        {format(filters.date.to, "LLL dd, y", { locale: es })}
                                     </>
                                     ) : (
-                                    format(date.from, "LLL dd, y")
+                                    format(filters.date.from, "LLL dd, y")
                                     )
                                 ) : (
                                     <span>Selecciona un rango</span>
@@ -162,18 +228,17 @@ export default function RecordsPage() {
                                 <Calendar
                                 initialFocus
                                 mode="range"
-                                defaultMonth={date?.from}
-                                selected={date}
-                                onSelect={setDate}
+                                defaultMonth={filters.date?.from}
+                                selected={filters.date}
+                                onSelect={(d) => handleFilterChange('date', d)}
                                 numberOfMonths={2}
                                 locale={es}
                                 />
                             </PopoverContent>
                         </Popover>
                     </div>
-                    <div className="flex items-end gap-2">
-                        <Button className="w-full">Aplicar Filtros</Button>
-                        <Button variant="ghost" className="w-full">Limpiar</Button>
+                    <div className="flex items-end gap-2 lg:col-start-4">
+                        <Button variant="ghost" className="w-full" onClick={clearFilters}>Limpiar</Button>
                     </div>
                 </div>
             </Card>
@@ -190,15 +255,13 @@ export default function RecordsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">ID</TableHead>
+                <TableHead className="w-[150px]">ID</TableHead>
                 <TableHead>Estatus</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Dirección</TableHead>
-                <TableHead>Cliente</TableHead>
                 <TableHead>Fecha Sol.</TableHead>
                 <TableHead>Fecha Alta</TableHead>
                 <TableHead>Usuario Alta</TableHead>
-                <TableHead>Inspector</TableHead>
                 <TableHead>Zona</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
@@ -206,17 +269,15 @@ export default function RecordsPage() {
             <TableBody>
               {paginatedRecords.map((record) => (
                 <TableRow key={record.id} className="h-auto">
-                  <TableCell className="py-2 px-4 font-medium">{record.id}</TableCell>
+                  <TableCell className="py-2 px-4 font-mono text-xs">{record.id}</TableCell>
                    <TableCell className="py-2 px-4">
-                    <Badge variant={statusVariant[record.status]}>{record.status}</Badge>
+                    <Badge variant={statusVariant[record.status] || 'secondary'}>{record.status}</Badge>
                   </TableCell>
                   <TableCell className="py-2 px-4">{record.type}</TableCell>
                   <TableCell className="py-2 px-4">{record.address}</TableCell>
-                  <TableCell className="py-2 px-4">{record.client}</TableCell>
                   <TableCell className="py-2 px-4">{record.requestDate}</TableCell>
                   <TableCell className="py-2 px-4">{record.createdAt}</TableCell>
                   <TableCell className="py-2 px-4">{record.createdBy}</TableCell>
-                  <TableCell className="py-2 px-4">{record.inspector}</TableCell>
                   <TableCell className="py-2 px-4">{record.zone}</TableCell>
                   <TableCell className="py-2 px-4 text-right">
                     <DropdownMenu>

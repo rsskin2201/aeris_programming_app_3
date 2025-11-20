@@ -19,8 +19,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { ROLES, Role } from "@/lib/types";
-import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers } from "@/lib/mock-data";
+import { ROLES, Role, STATUS } from "@/lib/types";
+import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers, InspectionRecord } from "@/lib/mock-data";
 import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO } from "@/lib/form-options";
@@ -61,16 +61,16 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function SpecialInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, zone } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, addRecord, zone } = useAppContext();
   const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getInitialStatus = (role: Role | undefined) => {
     switch (role) {
-      case ROLES.GESTOR: return "CONFIRMADA POR GE";
+      case ROLES.GESTOR: return STATUS.CONFIRMADA_POR_GE;
       case ROLES.COLABORADOR:
-      default: return "REGISTRADA";
+      default: return STATUS.REGISTRADA;
     }
   };
 
@@ -136,14 +136,30 @@ export default function SpecialInspectionPage() {
 
   function onFinalSubmit(values: FormValues) {
     setIsSubmitting(true);
-    console.log({ ...values });
-
-    toast({
-      title: "Solicitud Enviada",
-      description: `La solicitud especial con ID ${values.id} se creó con estatus: ${values.status}.`,
-    });
     
     setTimeout(() => {
+        const recordToSave: InspectionRecord = {
+            ...values,
+            client: 'Cliente (TBD)',
+            address: `${values.calle} ${values.numero}, ${values.colonia}`,
+            requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
+            type: 'Especial',
+            createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+            createdBy: user?.username || 'desconocido',
+            inspector: 'N/A',
+            horarioProgramacion: values.horarioProgramacion,
+            zone: values.zone,
+            id: values.id || generateId(),
+            serieMdd: undefined,
+            mercado: values.mercado,
+        };
+        addRecord(recordToSave);
+
+        toast({
+        title: "Solicitud Enviada",
+        description: `La solicitud especial con ID ${recordToSave.id} se creó con estatus: ${values.status}.`,
+        });
+
       setIsSubmitting(false);
       setIsConfirming(false);
       router.push('/records');
@@ -539,5 +555,3 @@ export default function SpecialInspectionPage() {
     </div>
   );
 }
-
-    
