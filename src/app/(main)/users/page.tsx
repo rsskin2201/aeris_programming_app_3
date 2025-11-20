@@ -3,23 +3,33 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { mockUsers } from "@/lib/mock-data";
-import { MoreHorizontal, UserPlus, Pencil, KeyRound, Ban, Trash2, X, RotateCcw } from "lucide-react";
+import { MoreHorizontal, UserPlus, Pencil, KeyRound, Ban, Trash2, ShieldAlert } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ROLES, ZONES } from "@/lib/types";
+import { ROLES } from "@/lib/types";
 import { useAppContext } from "@/hooks/use-app-context";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { UserForm } from "@/components/users/user-form";
+import type { User } from '@/lib/types';
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 export default function UsersPage() {
-    const { user, zone } = useAppContext();
+    const { user, zone, users, deleteUser } = useAppContext();
     const router = useRouter();
-    const [ newPassword, setNewPassword ] = useState('');
-    const [isCreateUserOpen, setCreateUserOpen] = useState(false);
+    const { toast } = useToast();
+
+    const [dialogState, setDialogState] = useState({
+        isCreateOpen: false,
+        isEditOpen: false,
+        isResetOpen: false,
+        isDeleteOpen: false,
+        isDisableOpen: false,
+    });
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [newPassword, setNewPassword] = useState('');
 
     useEffect(() => {
         if (user && user.role !== ROLES.ADMIN) {
@@ -28,11 +38,21 @@ export default function UsersPage() {
     }, [user, router]);
 
     const filteredUsers = useMemo(() => 
-        mockUsers.filter(u => zone === 'Todas las zonas' || u.zone === zone),
-        [zone]
+        users.filter(u => zone === 'Todas las zonas' || u.zone === zone),
+        [zone, users]
     );
 
-    const generatePassword = () => {
+    const handleOpenDialog = (dialog: keyof typeof dialogState, user?: User) => {
+        if (user) setSelectedUser(user);
+        setDialogState(prev => ({...prev, [dialog]: true}));
+    }
+
+    const handleCloseDialog = (dialog: keyof typeof dialogState) => {
+        setDialogState(prev => ({...prev, [dialog]: false}));
+        setSelectedUser(null);
+    }
+    
+    const handleGeneratePassword = () => {
         const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
         let password = "";
         for (let i = 0; i < 12; i++) {
@@ -41,10 +61,37 @@ export default function UsersPage() {
         setNewPassword(password);
     }
     
-    const handleCleanForm = () => {
-        // This is a simplification. A real form would use react-hook-form's reset method.
+    const handleConfirmPasswordReset = () => {
+        // Here you would typically call an API to update the user's password.
+        toast({
+            title: "Contraseña Restablecida",
+            description: `Se ha generado una nueva contraseña para ${selectedUser?.name}.`,
+        });
         setNewPassword('');
-        // Here you would reset other form inputs
+        handleCloseDialog('isResetOpen');
+    }
+
+    const handleConfirmDelete = () => {
+        if (selectedUser) {
+            deleteUser(selectedUser.username);
+            toast({
+                variant: 'destructive',
+                title: "Usuario Eliminado",
+                description: `El usuario ${selectedUser.name} ha sido eliminado.`,
+            });
+            handleCloseDialog('isDeleteOpen');
+        }
+    }
+    
+    const handleConfirmDisable = () => {
+        if (selectedUser) {
+            // Logic to disable user would go here. For now, just a toast.
+            toast({
+                title: "Usuario Deshabilitado",
+                description: `El usuario ${selectedUser.name} ha sido deshabilitado.`,
+            });
+            handleCloseDialog('isDisableOpen');
+        }
     }
 
 
@@ -57,68 +104,22 @@ export default function UsersPage() {
        <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-headline text-3xl font-semibold">Gestión de Usuarios</h1>
         
-        <Dialog open={isCreateUserOpen} onOpenChange={setCreateUserOpen}>
+        <Dialog open={dialogState.isCreateOpen || dialogState.isEditOpen} onOpenChange={(isOpen) => {
+            if (!isOpen) {
+                handleCloseDialog('isCreateOpen');
+                handleCloseDialog('isEditOpen');
+            }
+        }}>
             <DialogTrigger asChild>
-                <Button><UserPlus className="mr-2 h-4 w-4" /> Crear Usuario</Button>
+                <Button onClick={() => handleOpenDialog('isCreateOpen')}><UserPlus className="mr-2 h-4 w-4" /> Crear Usuario</Button>
             </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Crear Nuevo Usuario</DialogTitle>
-                    <DialogDescription>Completa el formulario para dar de alta un nuevo usuario en el sistema.</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="name" className="text-right">Nombre</Label>
-                        <Input id="name" placeholder="Nombre completo" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="username" className="text-right">Usuario</Label>
-                        <Input id="username" placeholder="alias.de.usuario" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="role" className="text-right">Rol</Label>
-                        <Select>
-                            <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Selecciona un rol" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {Object.values(ROLES).map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="zone" className="text-right">Zona</Label>
-                        <Select>
-                            <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Selecciona una zona" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ZONES.map(zone => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="password" className="text-right">Contraseña</Label>
-                         <div className="col-span-3 flex gap-2">
-                             <Input id="password" value={newPassword} readOnly placeholder="Generada automáticamente" />
-                             <Button variant="secondary" onClick={generatePassword}>Generar</Button>
-                         </div>
-                    </div>
-                </div>
-                 <DialogFooter>
-                    <Button type="button" variant="ghost" onClick={handleCleanForm}>
-                        <RotateCcw className="mr-2" />
-                        Limpiar
-                    </Button>
-                    <DialogClose asChild>
-                         <Button type="button" variant="outline">
-                            <X className="mr-2" />
-                            Cancelar
-                        </Button>
-                    </DialogClose>
-                    <Button type="submit">Guardar Usuario</Button>
-                </DialogFooter>
-            </DialogContent>
+            <UserForm 
+                user={selectedUser} 
+                onClose={() => {
+                    handleCloseDialog('isCreateOpen');
+                    handleCloseDialog('isEditOpen');
+                }} 
+            />
         </Dialog>
       </div>
 
@@ -158,21 +159,21 @@ export default function UsersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <Pencil className="mr-2" />
+                        <DropdownMenuItem onClick={() => handleOpenDialog('isEditOpen', userItem)}>
+                            <Pencil className="mr-2 h-4 w-4" />
                             Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <KeyRound className="mr-2" />
+                        <DropdownMenuItem onClick={() => handleOpenDialog('isResetOpen', userItem)}>
+                            <KeyRound className="mr-2 h-4 w-4" />
                             Resetear Contraseña
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Ban className="mr-2" />
+                        <DropdownMenuItem onClick={() => handleOpenDialog('isDisableOpen', userItem)}>
+                            <Ban className="mr-2 h-4 w-4" />
                             Deshabilitar
                         </DropdownMenuItem>
                          <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                            <Trash2 className="mr-2" />
+                        <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive" onClick={() => handleOpenDialog('isDeleteOpen', userItem)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
                             Eliminar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -184,6 +185,65 @@ export default function UsersPage() {
           </Table>
         </CardContent>
       </Card>
+      
+        {/* Password Reset Dialog */}
+        <Dialog open={dialogState.isResetOpen} onOpenChange={() => handleCloseDialog('isResetOpen')}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Resetear Contraseña</DialogTitle>
+                    <DialogDescription>
+                        Se generará una nueva contraseña para el usuario <strong>{selectedUser?.name}</strong>. Esta acción es irreversible.
+                    </DialogDescription>
+                </DialogHeader>
+                 <div className="py-4 space-y-4">
+                    <Button type="button" onClick={handleGeneratePassword}>Generar Nueva Contraseña</Button>
+                    {newPassword && (
+                         <Alert>
+                            <ShieldAlert className="h-4 w-4" />
+                            <AlertTitle>¡Contraseña Generada!</AlertTitle>
+                            <AlertDescription className="font-mono break-all">{newPassword}</AlertDescription>
+                        </Alert>
+                    )}
+                 </div>
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => handleCloseDialog('isResetOpen')}>Cancelar</Button>
+                    <Button onClick={handleConfirmPasswordReset} disabled={!newPassword}>Confirmar y Resetear</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        
+        {/* Disable User Dialog */}
+        <Dialog open={dialogState.isDisableOpen} onOpenChange={() => handleCloseDialog('isDisableOpen')}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Confirmar Deshabilitación</DialogTitle>
+                    <DialogDescription>
+                       ¿Estás seguro de que quieres deshabilitar al usuario <strong>{selectedUser?.name}</strong>? Podrá ser habilitado nuevamente más tarde.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => handleCloseDialog('isDisableOpen')}>Cancelar</Button>
+                    <Button variant="destructive" onClick={handleConfirmDisable}>Sí, Deshabilitar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        
+        {/* Delete User Dialog */}
+        <Dialog open={dialogState.isDeleteOpen} onOpenChange={() => handleCloseDialog('isDeleteOpen')}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>¿Estás absolutamente seguro?</DialogTitle>
+                    <DialogDescription>
+                       Esta acción no se puede deshacer. Esto eliminará permanentemente al usuario <strong>{selectedUser?.name}</strong> y sus datos del sistema.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => handleCloseDialog('isDeleteOpen')}>Cancelar</Button>
+                    <Button variant="destructive" onClick={handleConfirmDelete}>Sí, Eliminar Usuario</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
     </div>
   );
 }

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback } from 'react';
 import type { User, Role, Zone, BlockedDay } from '@/lib/types';
 import { ROLES, ZONES } from '@/lib/types';
-import { mockUsers, mockRecords as initialMockRecords, InspectionRecord, sampleCollaborators as initialCollaborators, sampleQualityControlCompanies as initialQualityCompanies, sampleInspectors as initialInspectors, sampleInstallers as initialInstallers, sampleExpansionManagers as initialManagers, sampleSectors as initialSectors, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from '@/lib/mock-data';
+import { mockUsers as initialMockUsers, mockRecords as initialMockRecords, InspectionRecord, sampleCollaborators as initialCollaborators, sampleQualityControlCompanies as initialQualityCompanies, sampleInspectors as initialInspectors, sampleInstallers as initialInstallers, sampleExpansionManagers as initialManagers, sampleSectors as initialSectors, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from '@/lib/mock-data';
 
 interface AppContextType {
   user: User | null;
@@ -28,6 +28,7 @@ interface AppContextType {
   installers: Installer[];
   expansionManagers: ExpansionManager[];
   sectors: Sector[];
+  users: User[];
   addCollaborator: (newCollaborator: CollaboratorCompany) => void;
   updateCollaborator: (updatedCollaborator: CollaboratorCompany) => void;
   addQualityCompany: (newCompany: QualityControlCompany) => void;
@@ -40,6 +41,10 @@ interface AppContextType {
   updateExpansionManager: (updatedManager: ExpansionManager) => void;
   addSector: (newSector: Sector) => void;
   updateSector: (updatedSector: Sector) => void;
+  addUser: (newUser: User) => void;
+  updateUser: (updatedUser: User) => void;
+  deleteUser: (username: string) => void;
+
 
   // Auth & Settings
   login: (username: string, operatorName?: string) => User | null;
@@ -72,6 +77,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [installers, setInstallers] = useState<Installer[]>(initialInstallers);
   const [expansionManagers, setExpansionManagers] = useState<ExpansionManager[]>(initialManagers);
   const [sectors, setSectors] = useState<Sector[]>(initialSectors);
+  const [users, setUsers] = useState<User[]>(initialMockUsers);
   const [blockedDays, setBlockedDays] = useState<Record<string, BlockedDay>>({
       "2024-09-16": { reason: "Día de la Independencia" },
       "2024-11-18": { reason: "Revolución Mexicana" },
@@ -79,11 +85,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Auth & Settings Callbacks
   const login = (username: string, opName?: string): User | null => {
-    const foundUser = mockUsers.find((u) => u.username.toLowerCase() === username.toLowerCase());
+    const foundUser = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
     
     const userToLogin = foundUser || (() => {
         const roleKey = Object.keys(ROLES).find(key => ROLES[key as keyof typeof ROLES].toLowerCase().split(' ')[0] === username.toLowerCase());
-        return roleKey ? mockUsers.find(u => u.role === ROLES[key as keyof typeof ROLES]) : undefined;
+        return roleKey ? users.find(u => u.role === ROLES[key as keyof typeof ROLES]) : undefined;
     })();
 
     if (userToLogin) {
@@ -103,7 +109,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
   
   const switchRole = (role: Role) => {
-    const newUser = mockUsers.find(u => u.role === role);
+    const newUser = users.find(u => u.role === role);
     if (newUser) {
       setUser(newUser);
       setOperatorName(currentOpName => currentOpName || newUser.name);
@@ -156,6 +162,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addSector = useCallback((item: Sector) => setSectors(prev => [item, ...prev]), []);
   const updateSector = useCallback((item: Sector) => setSectors(prev => prev.map(s => s.id === item.id ? item : s)), []);
+  
+  const addUser = useCallback((item: User) => setUsers(prev => [item, ...prev]), []);
+  const updateUser = useCallback((item: User) => setUsers(prev => prev.map(u => u.username === item.username ? item : u)), []);
+  const deleteUser = useCallback((username: string) => setUsers(prev => prev.filter(u => u.username !== username)), []);
 
   const contextValue = useMemo(
     () => ({
@@ -174,6 +184,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       installers,
       expansionManagers,
       sectors,
+      users,
       getRecordById,
       addRecord,
       updateRecord,
@@ -189,6 +200,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateExpansionManager,
       addSector,
       updateSector,
+      addUser,
+      updateUser,
+      deleteUser,
       login,
       logout,
       switchRole,
@@ -199,8 +213,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removeBlockedDay,
     }),
     [
-      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors,
-      getRecordById, addRecord, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector
+      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
+      getRecordById, addRecord, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole,
     ]
   );
 

@@ -1,0 +1,195 @@
+'use client';
+
+import { useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useAppContext } from '@/hooks/use-app-context';
+import type { User } from '@/lib/types';
+import { ROLES, ZONES } from '@/lib/types';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { RotateCcw, ShieldAlert } from 'lucide-react';
+
+const formSchema = z.object({
+  name: z.string().min(1, 'El nombre es requerido.'),
+  username: z.string().min(1, 'El nombre de usuario es requerido.'),
+  role: z.nativeEnum(ROLES),
+  zone: z.nativeEnum(ZONES),
+  password: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+interface UserFormProps {
+  user: User | null;
+  onClose: () => void;
+}
+
+export function UserForm({ user, onClose }: UserFormProps) {
+  const { toast } = useToast();
+  const { addUser, updateUser, users } = useAppContext();
+  const [newPassword, setNewPassword] = useState('');
+
+  const isEditMode = !!user;
+
+  const defaultValues = useMemo(() => ({
+    name: user?.name || '',
+    username: user?.username || '',
+    role: user?.role || ROLES.GESTOR,
+    zone: user?.zone || ZONES[0],
+    password: '',
+  }), [user]);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues,
+  });
+  
+  useEffect(() => {
+    form.reset(defaultValues);
+    setNewPassword('');
+  }, [user, defaultValues, form]);
+  
+  const { isSubmitting } = form.formState;
+
+  const generatePassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+    let password = "";
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPassword(password);
+    form.setValue('password', password, { shouldValidate: true });
+  }
+  
+  function onSubmit(values: FormValues) {
+    if (!isEditMode && users.some(u => u.username === values.username)) {
+      form.setError('username', { type: 'manual', message: 'Este nombre de usuario ya existe.' });
+      return;
+    }
+    
+    if (!isEditMode && !values.password) {
+        form.setError('password', { type: 'manual', message: 'La contraseña es requerida para nuevos usuarios.' });
+        return;
+    }
+
+    const dataToSave: User = {
+        name: values.name,
+        username: values.username,
+        role: values.role,
+        zone: values.zone,
+    };
+    
+    if (isEditMode) {
+        updateUser(dataToSave);
+    } else {
+        addUser(dataToSave);
+    }
+    
+    toast({
+      title: isEditMode ? 'Usuario Actualizado' : 'Usuario Creado',
+      description: `Los datos de "${values.name}" se han guardado correctamente.`,
+    });
+
+    onClose();
+  }
+  
+  const handleReset = () => {
+      form.reset(defaultValues);
+      setNewPassword('');
+  }
+
+  return (
+    <DialogContent className="sm:max-w-[480px]">
+      <DialogHeader>
+        <DialogTitle>{isEditMode ? 'Editar' : 'Crear'} Usuario</DialogTitle>
+        <DialogDescription>
+            {isEditMode ? 'Modifica los datos del usuario.' : 'Completa el formulario para dar de alta un nuevo usuario.'}
+        </DialogDescription>
+      </DialogHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+            <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Nombre Completo</FormLabel>
+                    <FormControl><Input {...field} placeholder="Nombre del usuario" /></FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
+            <FormField control={form.control} name="username" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Nombre de Usuario</FormLabel>
+                    <FormControl><Input {...field} placeholder="alias.de.usuario" disabled={isEditMode} /></FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
+            <div className='grid grid-cols-2 gap-4'>
+                <FormField control={form.control} name="role" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Rol</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un rol" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {Object.values(ROLES).map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <FormField control={form.control} name="zone" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Zona</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una zona" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {Object.values(ZONES).map(zone => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+            </div>
+
+            {!isEditMode && (
+                <>
+                     <FormField control={form.control} name="password" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Contraseña</FormLabel>
+                             <div className="flex gap-2">
+                                <FormControl><Input {...field} value={newPassword} readOnly placeholder="Generada automáticamente" /></FormControl>
+                                <Button type="button" variant="secondary" onClick={generatePassword}>Generar</Button>
+                             </div>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                     {newPassword && (
+                         <Alert>
+                            <ShieldAlert className="h-4 w-4" />
+                            <AlertTitle>Contraseña Temporal</AlertTitle>
+                            <AlertDescription>Guarda esta contraseña. El usuario deberá cambiarla en su primer inicio de sesión.</AlertDescription>
+                        </Alert>
+                    )}
+                </>
+            )}
+
+          <DialogFooter className="pt-4">
+            <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>
+                <RotateCcw className="mr-2 h-4 w-4"/>
+                Limpiar
+            </Button>
+            <DialogClose asChild>
+                <Button type="button" variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button type="submit" disabled={isSubmitting}>Guardar</Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </DialogContent>
+  );
+}
