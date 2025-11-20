@@ -66,6 +66,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const moduleIcons = {
   [MODULES.INSPECTIONS]: Briefcase,
@@ -81,6 +83,7 @@ export default function Header() {
   const pathname = usePathname();
   const { user, operatorName, switchRole, logout, passwordRequests, resolvePasswordRequest } = useAppContext();
   const { toast } = useToast();
+  const supportAvatar = PlaceHolderImages.find(img => img.id === 'support-avatar');
 
   if (!user) return null;
 
@@ -190,29 +193,49 @@ export default function Header() {
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Soporte Técnico</DialogTitle>
-                        <DialogDescription>
-                            Para dudas o aclaraciones, contacta al administrador.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between rounded-md border bg-muted px-3 py-2">
-                            <a href="mailto:jorge.ricardo.seichi.gonzalez.garcia@nttdata.com" className="truncate text-sm font-medium text-primary hover:underline">
-                                jorge.ricardo.seichi.gonzalez.garcia@nttdata.com
-                            </a>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy('jorge.ricardo.seichi.gonzalez.garcia@nttdata.com')}>
-                                <Copy className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <div>
-                            <h4 className="mb-2 font-medium text-sm">Horarios de Atención</h4>
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                                <p className="flex items-center"><Clock className="mr-2 h-4 w-4" /> Lunes a Viernes: 09:00 a.m. - 06:00 p.m.</p>
-                                <p className="flex items-center"><Clock className="mr-2 h-4 w-4" /> Sábados: 09:00 a.m. - 01:00 p.m.</p>
-                            </div>
-                        </div>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-xl">
+                      <HelpCircle className="text-primary"/>
+                      Soporte Técnico
+                    </DialogTitle>
+                    <DialogDescription>
+                      Para dudas, aclaraciones o problemas con la plataforma, no dudes en contactarnos.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-6 pt-4">
+                    <div className="flex items-center gap-4">
+                      {supportAvatar && (
+                        <Avatar className="h-16 w-16">
+                          <AvatarImage src={supportAvatar.imageUrl} alt={supportAvatar.description} data-ai-hint={supportAvatar.imageHint} />
+                          <AvatarFallback>ST</AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div>
+                        <h4 className="font-semibold">Ricardo González</h4>
+                        <p className="text-sm text-muted-foreground">Administrador de la Plataforma</p>
+                      </div>
                     </div>
+                    <div className="space-y-4">
+                      <div>
+                        <h5 className="mb-2 font-medium text-sm">Correo de Contacto</h5>
+                        <div className="flex items-center justify-between rounded-md border bg-muted px-3 py-2">
+                          <a href="mailto:jorge.ricardo.seichi.gonzalez.garcia@nttdata.com" className="truncate text-sm font-medium text-primary hover:underline">
+                            jorge.ricardo.seichi.gonzalez.garcia@nttdata.com
+                          </a>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy('jorge.ricardo.seichi.gonzalez.garcia@nttdata.com')}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <h5 className="mb-2 font-medium text-sm">Horarios de Atención</h5>
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                          <p className="flex items-center"><Clock className="mr-2 h-4 w-4 flex-shrink-0" /> Lunes a Viernes: 09:00 a.m. - 06:00 p.m.</p>
+                          <p className="flex items-center"><Clock className="mr-2 h-4 w-4 flex-shrink-0" /> Sábados: 09:00 a.m. - 01:00 p.m. <span className='ml-1 font-semibold'>(Solo Emergencias)</span></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </DialogContent>
             </Dialog>
 
