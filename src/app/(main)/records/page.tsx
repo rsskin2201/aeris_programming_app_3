@@ -60,7 +60,7 @@ export default function RecordsPage() {
   const [filters, setFilters] = useState(initialFilters);
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters(prev => ({ ...prev, [key]: value || '' }));
   }
 
   const clearFilters = () => {
@@ -130,7 +130,6 @@ export default function RecordsPage() {
                         <Select value={filters.gestor} onValueChange={(v) => handleFilterChange('gestor', v)}>
                             <SelectTrigger id="gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Todos</SelectItem>
                                 {sampleExpansionManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -140,7 +139,6 @@ export default function RecordsPage() {
                         <Select value={filters.empresa} onValueChange={(v) => handleFilterChange('empresa', v)}>
                             <SelectTrigger id="empresa"><SelectValue placeholder="Todas" /></SelectTrigger>
                             <SelectContent>
-                                 <SelectItem value="">Todas</SelectItem>
                                  {sampleCollaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -150,7 +148,6 @@ export default function RecordsPage() {
                          <Select value={filters.sector} onValueChange={(v) => handleFilterChange('sector', v)}>
                             <SelectTrigger id="sector"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Todos</SelectItem>
                                 {sampleSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -172,7 +169,6 @@ export default function RecordsPage() {
                          <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
                             <SelectTrigger id="status"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Todos</SelectItem>
                                 {Object.values(STATUS).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -182,7 +178,6 @@ export default function RecordsPage() {
                          <Select value={filters.tipoInspeccion} onValueChange={(v) => handleFilterChange('tipoInspeccion', v)}>
                             <SelectTrigger id="tipoInspeccion"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Todos</SelectItem>
                                 {allInspectionTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -192,7 +187,6 @@ export default function RecordsPage() {
                          <Select value={filters.mercado} onValueChange={(v) => handleFilterChange('mercado', v)}>
                             <SelectTrigger id="mercado"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Todos</SelectItem>
                                 {MERCADO.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -329,3 +323,5 @@ export default function RecordsPage() {
     </div>
   );
 }
+
+    
