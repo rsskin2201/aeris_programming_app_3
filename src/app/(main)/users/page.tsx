@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, UserPlus, Pencil, KeyRound, Ban, Trash2, ShieldAlert, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { MoreHorizontal, UserPlus, Pencil, KeyRound, Ban, Trash2, ShieldAlert, Filter, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { ROLES, ZONES, USER_STATUS } from "@/lib/types";
@@ -154,24 +154,31 @@ export default function UsersPage() {
     <div className="flex flex-col gap-6">
        <div className="flex flex-wrap items-center justify-between gap-4">
             <h1 className="font-headline text-3xl font-semibold">Gestión de Usuarios</h1>
-            
-            <Dialog open={dialogState.isCreateOpen || dialogState.isEditOpen} onOpenChange={(isOpen) => {
-                if (!isOpen) {
-                    handleCloseDialog('isCreateOpen');
-                    handleCloseDialog('isEditOpen');
-                }
-            }}>
-                <DialogTrigger asChild>
-                    <Button onClick={() => handleOpenDialog('isCreateOpen')}><UserPlus className="mr-2 h-4 w-4" /> Crear Usuario</Button>
-                </DialogTrigger>
-                <UserForm 
-                    user={selectedUser} 
-                    onClose={() => {
+            <div className='flex items-center gap-2'>
+                <Button
+                    variant="outline"
+                    className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700"
+                >
+                    <Download className="mr-2 h-4 w-4" /> Exportar .csv
+                </Button>
+                <Dialog open={dialogState.isCreateOpen || dialogState.isEditOpen} onOpenChange={(isOpen) => {
+                    if (!isOpen) {
                         handleCloseDialog('isCreateOpen');
                         handleCloseDialog('isEditOpen');
-                    }} 
-                />
-            </Dialog>
+                    }
+                }}>
+                    <DialogTrigger asChild>
+                        <Button onClick={() => handleOpenDialog('isCreateOpen')}><UserPlus className="mr-2 h-4 w-4" /> Crear Usuario</Button>
+                    </DialogTrigger>
+                    <UserForm 
+                        user={selectedUser} 
+                        onClose={() => {
+                            handleCloseDialog('isCreateOpen');
+                            handleCloseDialog('isEditOpen');
+                        }} 
+                    />
+                </Dialog>
+            </div>
         </div>
 
         <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
