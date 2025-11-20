@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
-import { ZONES, Zone } from '@/lib/types';
+import { ZONES, Zone, ROLES } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,10 +15,25 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Globe } from 'lucide-react';
+import { useMemo } from 'react';
+
+const restrictedRoles = [
+  ROLES.COLABORADOR,
+  ROLES.GESTOR,
+  ROLES.SOPORTE,
+  ROLES.CALIDAD
+];
 
 export function WelcomeZoneSelector() {
-  const { zone, confirmZone, operatorName } = useAppContext();
+  const { user, zone, confirmZone, operatorName } = useAppContext();
   const [selectedZone, setSelectedZone] = useState<Zone>(zone);
+  
+  const availableZones = useMemo(() => {
+    if (user && restrictedRoles.includes(user.role)) {
+      return ZONES.filter(z => z !== 'Todas las zonas');
+    }
+    return ZONES;
+  }, [user]);
 
   const handleSave = () => {
     confirmZone(selectedZone);
@@ -41,7 +56,7 @@ export function WelcomeZoneSelector() {
             <div className="py-4">
             <RadioGroup value={selectedZone} onValueChange={(value) => setSelectedZone(value as Zone)}>
                 <div className="grid gap-2">
-                {ZONES.map((z) => (
+                {availableZones.map((z) => (
                     <Label
                     key={z}
                     htmlFor={`zone-${z}`}

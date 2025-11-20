@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ZONES, Zone } from '@/lib/types';
+import { ZONES, Zone, ROLES } from '@/lib/types';
 import { useAppContext } from '@/hooks/use-app-context';
 import type { ExpansionManager } from '@/lib/mock-data';
 
@@ -29,6 +29,13 @@ interface ExpansionManagerFormProps {
   manager: ExpansionManager | null;
   onClose: () => void;
 }
+
+const restrictedRoles = [
+  ROLES.COLABORADOR,
+  ROLES.GESTOR,
+  ROLES.SOPORTE,
+  ROLES.CALIDAD
+];
 
 export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormProps) {
   const { toast } = useToast();
@@ -57,6 +64,13 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
   
   const { isSubmitting } = form.formState;
   
+  const availableZones = useMemo(() => {
+    if (user && restrictedRoles.includes(user.role)) {
+      return ZONES.filter(z => z !== 'Todas las zonas');
+    }
+    return ZONES;
+  }, [user]);
+
   const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
     field.onChange(e.target.value.toUpperCase());
   }
@@ -144,7 +158,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una zona" /></SelectTrigger></FormControl>
                         <SelectContent>
-                        {ZONES.map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}
+                        {availableZones.map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}
                         </SelectContent>
                     </Select>
                     <FormMessage />

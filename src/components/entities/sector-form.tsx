@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ZONES } from '@/lib/types';
+import { ZONES, ROLES } from '@/lib/types';
 import { useAppContext } from '@/hooks/use-app-context';
 import type { Sector } from '@/lib/mock-data';
 
@@ -29,6 +29,13 @@ interface SectorFormProps {
   sector: Sector | null;
   onClose: () => void;
 }
+
+const restrictedRoles = [
+  ROLES.COLABORADOR,
+  ROLES.GESTOR,
+  ROLES.SOPORTE,
+  ROLES.CALIDAD
+];
 
 export function SectorForm({ sector, onClose }: SectorFormProps) {
   const { toast } = useToast();
@@ -56,6 +63,13 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
   }, [sector, defaultValues, form]);
   
   const { isSubmitting } = form.formState;
+
+  const availableZones = useMemo(() => {
+    if (user && restrictedRoles.includes(user.role)) {
+      return ZONES.filter(z => z !== 'Todas las zonas');
+    }
+    return ZONES;
+  }, [user]);
 
   const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
     field.onChange(e.target.value.toUpperCase());
@@ -124,7 +138,7 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una zona" /></SelectTrigger></FormControl>
                             <SelectContent>
-                            {ZONES.map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}
+                            {availableZones.map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <FormMessage />
