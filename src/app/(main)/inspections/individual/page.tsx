@@ -74,6 +74,9 @@ export default function IndividualInspectionPage() {
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [pageMode, setPageMode] = useState<'new' | 'view' | 'edit'>('new');
   const [currentRecord, setCurrentRecord] = useState<InspectionRecord | null>(null);
+  
+  const isCollaborator = user?.role === ROLES.COLABORADOR;
+  const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption: user.name is company name for collaborator
 
   const getInitialStatus = (role: Role | undefined) => {
     if (pageMode !== 'new') return currentRecord?.status || '';
@@ -108,7 +111,7 @@ export default function IndividualInspectionPage() {
       tipoMdd: "",
       mercado: "",
       oferta: "",
-      empresaColaboradora: "",
+      empresaColaboradora: isCollaborator ? collaboratorCompany : "",
       fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : undefined,
       horarioProgramacion: timeParam || "",
       instalador: "",
@@ -116,7 +119,7 @@ export default function IndividualInspectionPage() {
       sector: "",
       status: getInitialStatus(user?.role),
     }
-  }, [zone, user?.role, searchParams]);
+  }, [zone, user?.role, searchParams, isCollaborator, collaboratorCompany]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -147,27 +150,37 @@ export default function IndividualInspectionPage() {
             id: generateId(),
             status: getInitialStatus(user?.role),
             zone: zone,
+            empresaColaboradora: isCollaborator ? user.name : '', // Assuming user.name is the company name
         });
     }
-}, [searchParams, getRecordById, form, user?.role, defaultValues, zone]);
+}, [searchParams, getRecordById, form, user, defaultValues, zone, isCollaborator]);
 
 
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
     if (pageMode === 'view') return true;
+    
+    if (isCollaborator && fieldName === 'empresaColaboradora') {
+        return true;
+    }
+
     if (pageMode === 'edit' && currentRecord) {
         const isClosed = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.CANCELADA, STATUS.RESULTADO_REGISTRADO].includes(currentRecord.status as any);
         if (isClosed && user?.role !== ROLES.ADMIN) return true;
+
+        if (isCollaborator && fieldName === 'status') {
+            return true; // Can only change to CANCELADA via special action, not direct selection
+        }
 
         const now = new Date();
         const eighteenHoursBefore = set(parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()), { hours: -6 });
 
         switch (fieldName) {
             case 'status':
-                return ![ROLES.ADMIN, ROLES.SOPORTE, ROLES.CALIDAD].includes(user!.role);
+                return ![ROLES.ADMIN, ROLES.SOPORTE, ROLES.CALIDAD, ROLES.GESTOR].includes(user!.role);
             case 'gestor':
-                return ![ROLES.ADMIN, ROLES.SOPORTE].includes(user!.role);
+                return ![ROLES.ADMIN, ROLES.SOPORTE].includes(user!.role) && !isCollaborator;
             case 'empresaColaboradora':
-                return ![ROLES.GESTOR, ROLES.ADMIN, ROLES.SOPORTE].includes(user!.role);
+                return ![ROLES.GESTOR, ROLES.ADMIN, ROLESSOPORTE].includes(user!.role);
             case 'poliza':
             case 'caso':
                 return ![ROLES.COLABORADOR, ROLES.GESTOR, ROLES.SOPORTE, ROLES.ADMIN].includes(user!.role);
@@ -210,6 +223,28 @@ export default function IndividualInspectionPage() {
     return sampleSectors.filter(s => s.zone === currentZone);
   }, [formData.zone]);
 
+    const availableInstallers = useMemo(() => {
+        if (!isCollaborator) return sampleInstallers.filter(i => i.status === 'Activo');
+        return sampleInstallers.filter(i => 
+            i.collaboratorCompany === collaboratorCompany && i.status === 'Activo'
+        );
+    }, [isCollaborator, collaboratorCompany]);
+    
+    const availableManagers = useMemo(() => {
+        return sampleExpansionManagers.filter(m => 
+            (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
+            m.status === 'Activo'
+        );
+    }, [formData.zone]);
+
+    const availableStatusOptions = useMemo(() => {
+        if (isCollaborator && pageMode === 'edit') {
+            return [currentRecord?.status, STATUS.CANCELADA].filter(Boolean) as string[];
+        }
+        return Object.values(STATUS);
+    }, [isCollaborator, pageMode, currentRecord?.status]);
+
+
   const handlePreview = () => {
       form.trigger().then(isValid => {
           if (isValid) {
@@ -227,7 +262,6 @@ export default function IndividualInspectionPage() {
   function onFinalSubmit(values: FormValues) {
     setIsSubmitting(true);
     
-    // Simulate API call
     setTimeout(() => {
         const recordToSave: InspectionRecord = {
             ...values,
@@ -268,10 +302,14 @@ export default function IndividualInspectionPage() {
         form.reset({
             ...defaultValues,
             id: newId,
-            status: getInitialStatus(user?.role)
+            status: getInitialStatus(user?.role),
+            empresaColaboradora: isCollaborator ? user?.name : '',
         });
-    } else {
-        form.reset(); // Resets to the loaded record data
+    } else if (currentRecord) {
+        form.reset({
+            ...currentRecord,
+            fechaProgramacion: parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()),
+        });
     }
   }
   
@@ -531,7 +569,7 @@ export default function IndividualInspectionPage() {
                  <FormField control={form.control} name="empresaColaboradora" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Empresa Colaboradora</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('empresaColaboradora')}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isFieldDisabled('empresaColaboradora')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {sampleCollaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
@@ -546,7 +584,7 @@ export default function IndividualInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('instalador')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {sampleInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                        {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -596,7 +634,7 @@ export default function IndividualInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('gestor')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un gestor" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {sampleExpansionManagers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                        {availableManagers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -610,7 +648,7 @@ export default function IndividualInspectionPage() {
                           <SelectTrigger><SelectValue placeholder="Selecciona un estado" /></SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(STATUS).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        {availableStatusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                       </SelectContent>
                      </Select>
                     <FormMessage />
@@ -686,3 +724,5 @@ export default function IndividualInspectionPage() {
     </div>
   );
 }
+
+    

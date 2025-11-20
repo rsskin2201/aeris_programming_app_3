@@ -72,6 +72,9 @@ export default function MassiveInspectionPage() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isCollaborator = user?.role === ROLES.COLABORADOR;
+  const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption
+
   const getInitialStatus = (role: Role | undefined) => {
     switch (role) {
       case ROLES.GESTOR: return STATUS.CONFIRMADA_POR_GE;
@@ -94,14 +97,14 @@ export default function MassiveInspectionPage() {
     tipoMdd: "",
     mercado: "",
     oferta: "",
-    empresaColaboradora: "",
+    empresaColaboradora: isCollaborator ? collaboratorCompany : "",
     horarioProgramacion: "",
     instalador: "",
     gestor: "",
     status: getInitialStatus(user?.role),
     inspections: [{ id: generateId(), poliza: "", caso: "", portal: "", escalera: "", piso: "", puerta: "" }],
     fechaProgramacion: undefined,
-  }), [user?.role, zone]);
+  }), [user?.role, zone, isCollaborator, collaboratorCompany]);
 
 
   const form = useForm<FormValues>({
@@ -124,6 +127,28 @@ export default function MassiveInspectionPage() {
     }
     return sampleSectors.filter(s => s.zone === currentZone);
   }, [formData.zone]);
+
+    const availableInstallers = useMemo(() => {
+        if (!isCollaborator) return sampleInstallers.filter(i => i.status === 'Activo');
+        return sampleInstallers.filter(i => 
+            i.collaboratorCompany === collaboratorCompany && i.status === 'Activo'
+        );
+    }, [isCollaborator, collaboratorCompany]);
+    
+    const availableManagers = useMemo(() => {
+        return sampleExpansionManagers.filter(m => 
+            (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
+            m.status === 'Activo'
+        );
+    }, [formData.zone]);
+
+    const availableStatusOptions = useMemo(() => {
+        if (isCollaborator) {
+            return [STATUS.REGISTRADA, STATUS.CANCELADA];
+        }
+        return Object.values(STATUS);
+    }, [isCollaborator]);
+
 
   const handlePreview = () => {
     form.trigger().then(isValid => {
@@ -174,7 +199,11 @@ export default function MassiveInspectionPage() {
   }
 
   const handleReset = () => {
-    form.reset(defaultValues);
+    form.reset({
+        ...defaultValues,
+        status: getInitialStatus(user?.role),
+        empresaColaboradora: isCollaborator ? user?.name : '',
+    });
   }
   
   const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: any) => {
@@ -444,7 +473,7 @@ export default function MassiveInspectionPage() {
                  <FormField control={form.control} name="empresaColaboradora" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Empresa Colaboradora</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isCollaborator}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {sampleCollaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
@@ -459,7 +488,7 @@ export default function MassiveInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {sampleInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                        {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -509,7 +538,7 @@ export default function MassiveInspectionPage() {
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un gestor" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {sampleExpansionManagers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                        {availableManagers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -518,9 +547,12 @@ export default function MassiveInspectionPage() {
                  <FormField control={form.control} name="status" render={({ field }) => (
                    <FormItem>
                     <FormLabel>Status</FormLabel>
-                     <FormControl>
-                        <Input {...field} readOnly disabled />
-                     </FormControl>
+                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isCollaborator}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                           {availableStatusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                     </Select>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -601,3 +633,5 @@ export default function MassiveInspectionPage() {
     </div>
   );
 }
+
+    
