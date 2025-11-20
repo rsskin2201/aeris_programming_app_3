@@ -471,10 +471,15 @@ export default function SpecialInspectionPage() {
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
-                          <Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                            {field.value ? format(field.value, "PPP", { locale: es }) : <span>Elige una fecha</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
+                             <div className="relative">
+                               <Input
+                                value={field.value ? format(field.value, "PPP", { locale: es }) : ''}
+                                readOnly
+                                placeholder="Elige una fecha"
+                                className={cn("pl-3 pr-10 text-left font-normal", !field.value && "text-muted-foreground")}
+                                />
+                                <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
+                            </div>
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">

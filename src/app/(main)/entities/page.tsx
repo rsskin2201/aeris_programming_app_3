@@ -193,15 +193,15 @@ export default function EntitiesPage() {
                       <TableBody>
                           {filteredCollaborators.map(item => (
                                <TableRow key={item.id} className="hover:bg-muted/60">
-                                  <TableCell className="font-mono">{item.id}</TableCell>
-                                  <TableCell className="font-medium">{item.name}</TableCell>
-                                  <TableCell>{item.rfc}</TableCell>
-                                   <TableCell>{item.zone}</TableCell>
-                                  <TableCell>
+                                  <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
+                                  <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
+                                  <TableCell className="py-2 px-4">{item.rfc}</TableCell>
+                                   <TableCell className="py-2 px-4">{item.zone}</TableCell>
+                                  <TableCell className="py-2 px-4">
                                       <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                                   </TableCell>
-                                  <TableCell>{item.created_at}</TableCell>
-                                  <TableCell className="text-right">
+                                  <TableCell className="py-2 px-4">{item.created_at}</TableCell>
+                                  <TableCell className="py-2 px-4 text-right">
                                       <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                           <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -249,9 +249,10 @@ export default function EntitiesPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>ID</TableHead>
-                        <TableHead>Nombre Instalador</TableHead>
+                        <TableHead>Nombre</TableHead>
                         <TableHead>Empresa</TableHead>
                         <TableHead>Zona</TableHead>
+                        <TableHead>Cert. Inicio</TableHead>
                         <TableHead>Cert. Fin</TableHead>
                         <TableHead>Estatus</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
@@ -260,15 +261,16 @@ export default function EntitiesPage() {
                     <TableBody>
                       {filteredInstallers.map(item => (
                         <TableRow key={item.id} className="hover:bg-muted/60">
-                          <TableCell className="font-mono">{item.id}</TableCell>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>{item.collaboratorCompany}</TableCell>
-                          <TableCell>{item.zone}</TableCell>
-                          <TableCell>{item.certEndDate}</TableCell>
-                           <TableCell>
+                          <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
+                          <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
+                          <TableCell className="py-2 px-4">{item.collaboratorCompany}</TableCell>
+                          <TableCell className="py-2 px-4">{item.zone}</TableCell>
+                          <TableCell className="py-2 px-4">{item.certStartDate}</TableCell>
+                          <TableCell className="py-2 px-4">{item.certEndDate}</TableCell>
+                           <TableCell className="py-2 px-4">
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="py-2 px-4 text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -317,8 +319,10 @@ export default function EntitiesPage() {
                       <TableRow>
                         <TableHead>ID</TableHead>
                         <TableHead>Nombre</TableHead>
+                        <TableHead>Puesto</TableHead>
                         <TableHead>Zona</TableHead>
                         <TableHead>Asignación</TableHead>
+                        <TableHead>Sub-Asignación</TableHead>
                         <TableHead>Estatus</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
@@ -326,14 +330,16 @@ export default function EntitiesPage() {
                     <TableBody>
                       {filteredExpansionManagers.map(item => (
                         <TableRow key={item.id} className="hover:bg-muted/60">
-                          <TableCell className="font-mono">{item.id}</TableCell>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>{item.zone}</TableCell>
-                          <TableCell>{item.assignment}</TableCell>
-                           <TableCell>
+                          <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
+                          <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
+                          <TableCell className="py-2 px-4">{item.position}</TableCell>
+                          <TableCell className="py-2 px-4">{item.zone}</TableCell>
+                          <TableCell className="py-2 px-4">{item.assignment}</TableCell>
+                          <TableCell className="py-2 px-4">{item.subAssignment}</TableCell>
+                           <TableCell className="py-2 px-4">
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="py-2 px-4 text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -392,15 +398,15 @@ export default function EntitiesPage() {
                     <TableBody>
                       {filteredQualityCompanies.map(item => (
                         <TableRow key={item.id} className="hover:bg-muted/60">
-                          <TableCell className="font-mono">{item.id}</TableCell>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>{item.rfc}</TableCell>
-                          <TableCell>{item.zone}</TableCell>
-                          <TableCell>
+                          <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
+                          <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
+                          <TableCell className="py-2 px-4">{item.rfc}</TableCell>
+                          <TableCell className="py-2 px-4">{item.zone}</TableCell>
+                          <TableCell className="py-2 px-4">
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
-                          <TableCell>{item.created_at}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="py-2 px-4">{item.created_at}</TableCell>
+                          <TableCell className="py-2 px-4 text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -448,9 +454,10 @@ export default function EntitiesPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>ID</TableHead>
-                        <TableHead>Nombre Inspector</TableHead>
+                        <TableHead>Nombre</TableHead>
                         <TableHead>Empresa</TableHead>
                         <TableHead>Zona</TableHead>
+                        <TableHead>Cert. Inicio</TableHead>
                         <TableHead>Cert. Fin</TableHead>
                         <TableHead>Estatus</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
@@ -459,15 +466,16 @@ export default function EntitiesPage() {
                     <TableBody>
                       {filteredInspectors.map(item => (
                         <TableRow key={item.id} className="hover:bg-muted/60">
-                          <TableCell className="font-mono">{item.id}</TableCell>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>{item.qualityCompany}</TableCell>
-                          <TableCell>{item.zone}</TableCell>
-                          <TableCell>{item.certEndDate}</TableCell>
-                           <TableCell>
+                          <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
+                          <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
+                          <TableCell className="py-2 px-4">{item.qualityCompany}</TableCell>
+                          <TableCell className="py-2 px-4">{item.zone}</TableCell>
+                          <TableCell className="py-2 px-4">{item.certStartDate}</TableCell>
+                          <TableCell className="py-2 px-4">{item.certEndDate}</TableCell>
+                           <TableCell className="py-2 px-4">
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="py-2 px-4 text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -519,6 +527,7 @@ export default function EntitiesPage() {
                         <TableHead>Clave</TableHead>
                         <TableHead>Zona</TableHead>
                         <TableHead>Asignación</TableHead>
+                        <TableHead>Sub-Asignación</TableHead>
                         <TableHead>Estatus</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
@@ -526,15 +535,16 @@ export default function EntitiesPage() {
                     <TableBody>
                       {filteredSectors.map(item => (
                         <TableRow key={item.id} className="hover:bg-muted/60">
-                          <TableCell className="font-mono">{item.id}</TableCell>
-                          <TableCell className="font-medium">{item.sector}</TableCell>
-                          <TableCell>{item.sectorKey}</TableCell>
-                          <TableCell>{item.zone}</TableCell>
-                          <TableCell>{item.assignment}</TableCell>
-                          <TableCell>
+                          <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
+                          <TableCell className="py-2 px-4 font-medium">{item.sector}</TableCell>
+                          <TableCell className="py-2 px-4">{item.sectorKey}</TableCell>
+                          <TableCell className="py-2 px-4">{item.zone}</TableCell>
+                          <TableCell className="py-2 px-4">{item.assignment}</TableCell>
+                          <TableCell className="py-2 px-4">{item.subAssignment}</TableCell>
+                          <TableCell className="py-2 px-4">
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="py-2 px-4 text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">

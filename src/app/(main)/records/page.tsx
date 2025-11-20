@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { InspectionRecord, sampleExpansionManagers, sampleCollaborators, sampleSectors } from "@/lib/mock-data";
-import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { InspectionRecord } from "@/lib/mock-data";
+import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppContext } from '@/hooks/use-app-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -16,7 +16,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
 import { addDays, format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
@@ -52,7 +51,7 @@ const initialFilters = {
 };
 
 export default function RecordsPage() {
-  const { zone, records } = useAppContext();
+  const { zone, records, expansionManagers, collaborators, sectors } = useAppContext();
   const router = useRouter();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -130,7 +129,7 @@ export default function RecordsPage() {
                         <Select value={filters.gestor} onValueChange={(v) => handleFilterChange('gestor', v)}>
                             <SelectTrigger id="gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
-                                {sampleExpansionManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
+                                {expansionManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -139,7 +138,7 @@ export default function RecordsPage() {
                         <Select value={filters.empresa} onValueChange={(v) => handleFilterChange('empresa', v)}>
                             <SelectTrigger id="empresa"><SelectValue placeholder="Todas" /></SelectTrigger>
                             <SelectContent>
-                                 {sampleCollaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                                 {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -148,7 +147,7 @@ export default function RecordsPage() {
                          <Select value={filters.sector} onValueChange={(v) => handleFilterChange('sector', v)}>
                             <SelectTrigger id="sector"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
-                                {sampleSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
+                                {sectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -262,7 +261,7 @@ export default function RecordsPage() {
             </TableHeader>
             <TableBody>
               {paginatedRecords.map((record) => (
-                <TableRow key={record.id} className="h-auto transition-colors hover:bg-muted data-[state=selected]:bg-muted">
+                <TableRow key={record.id} className="transition-colors hover:bg-muted/60">
                   <TableCell className="py-2 px-4 font-mono text-xs">{record.id}</TableCell>
                    <TableCell className="py-2 px-4">
                     <Badge className={cn('whitespace-nowrap', statusColors[record.status] || 'bg-gray-400')}>{record.status}</Badge>
