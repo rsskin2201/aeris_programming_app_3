@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role, STATUS } from "@/lib/types";
-import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers, InspectionRecord } from "@/lib/mock-data";
+import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO } from "@/lib/form-options";
 import { ChecklistForm } from "@/components/inspections/checklist-form";
@@ -64,9 +64,32 @@ const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMAD
 const checklistRoles = [ROLES.CALIDAD, ROLES.SOPORTE, ROLES.ADMIN];
 const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RESULTADO_REGISTRADO];
 
+// TODO: This should come from a dynamic source, maybe the context
+const mockMunicipalities = [
+    { id: 'MUN-01', name: 'Guadalajara' },
+    { id: 'MUN-02', name: 'Zapopan' },
+    { id: 'MUN-03', name: 'Tlaquepaque' },
+    { id: 'MUN-04', name: 'Tonalá' },
+    { id: 'MUN-05', name: 'Monterrey' },
+    { id: 'MUN-06', name: 'San Pedro Garza García' },
+    { id: 'MUN-07', name: 'Ciudad de México - Miguel Hidalgo' },
+];
+
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, getRecordById, addRecord, updateRecord, zone } = useAppContext();
+  const { 
+    user, 
+    weekendsEnabled, 
+    blockedDays, 
+    getRecordById, 
+    addRecord, 
+    updateRecord, 
+    zone, 
+    collaborators, 
+    installers, 
+    expansionManagers, 
+    sectors 
+  } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(false);
@@ -180,7 +203,7 @@ export default function IndividualInspectionPage() {
             case 'gestor':
                 return ![ROLES.ADMIN, ROLES.SOPORTE].includes(user!.role) && !isCollaborator;
             case 'empresaColaboradora':
-                return ![ROLES.GESTOR, ROLES.ADMIN, ROLESSOPORTE].includes(user!.role);
+                return ![ROLES.GESTOR, ROLES.ADMIN, ROLES.SOPORTE].includes(user!.role);
             case 'poliza':
             case 'caso':
                 return ![ROLES.COLABORADOR, ROLES.GESTOR, ROLES.SOPORTE, ROLES.ADMIN].includes(user!.role);
@@ -218,24 +241,24 @@ export default function IndividualInspectionPage() {
   const availableSectors = useMemo(() => {
     const currentZone = formData.zone;
     if (currentZone === 'Todas las zonas') {
-        return sampleSectors;
+        return sectors;
     }
-    return sampleSectors.filter(s => s.zone === currentZone);
-  }, [formData.zone]);
+    return sectors.filter(s => s.zone === currentZone);
+  }, [formData.zone, sectors]);
 
     const availableInstallers = useMemo(() => {
-        if (!isCollaborator) return sampleInstallers.filter(i => i.status === 'Activo');
-        return sampleInstallers.filter(i => 
+        if (!isCollaborator) return installers.filter(i => i.status === 'Activo');
+        return installers.filter(i => 
             i.collaboratorCompany === collaboratorCompany && i.status === 'Activo'
         );
-    }, [isCollaborator, collaboratorCompany]);
+    }, [isCollaborator, collaboratorCompany, installers]);
     
     const availableManagers = useMemo(() => {
-        return sampleExpansionManagers.filter(m => 
+        return expansionManagers.filter(m => 
             (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
             m.status === 'Activo'
         );
-    }, [formData.zone]);
+    }, [formData.zone, expansionManagers]);
 
     const availableStatusOptions = useMemo(() => {
         if (isCollaborator && pageMode === 'edit') {
@@ -572,7 +595,7 @@ export default function IndividualInspectionPage() {
                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isFieldDisabled('empresaColaboradora')}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {sampleCollaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -724,5 +747,3 @@ export default function IndividualInspectionPage() {
     </div>
   );
 }
-
-    

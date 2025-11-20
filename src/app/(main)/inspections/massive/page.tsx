@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role, STATUS } from "@/lib/types";
-import { sampleInstallers, sampleCollaborators, sampleSectors, mockMunicipalities, sampleExpansionManagers, InspectionRecord } from "@/lib/mock-data";
+import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA } from "@/lib/form-options";
 
@@ -65,9 +65,20 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// TODO: This should come from a dynamic source, maybe the context
+const mockMunicipalities = [
+    { id: 'MUN-01', name: 'Guadalajara' },
+    { id: 'MUN-02', name: 'Zapopan' },
+    { id: 'MUN-03', name: 'Tlaquepaque' },
+    { id: 'MUN-04', name: 'Tonalá' },
+    { id: 'MUN-05', name: 'Monterrey' },
+    { id: 'MUN-06', name: 'San Pedro Garza García' },
+    { id: 'MUN-07', name: 'Ciudad de México - Miguel Hidalgo' },
+];
+
 export default function MassiveInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, addRecord, zone } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors } = useAppContext();
   const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,24 +134,24 @@ export default function MassiveInspectionPage() {
   const availableSectors = useMemo(() => {
     const currentZone = formData.zone;
     if (currentZone === 'Todas las zonas') {
-        return sampleSectors;
+        return sectors;
     }
-    return sampleSectors.filter(s => s.zone === currentZone);
-  }, [formData.zone]);
+    return sectors.filter(s => s.zone === currentZone);
+  }, [formData.zone, sectors]);
 
     const availableInstallers = useMemo(() => {
-        if (!isCollaborator) return sampleInstallers.filter(i => i.status === 'Activo');
-        return sampleInstallers.filter(i => 
+        if (!isCollaborator) return installers.filter(i => i.status === 'Activo');
+        return installers.filter(i => 
             i.collaboratorCompany === collaboratorCompany && i.status === 'Activo'
         );
-    }, [isCollaborator, collaboratorCompany]);
+    }, [isCollaborator, collaboratorCompany, installers]);
     
     const availableManagers = useMemo(() => {
-        return sampleExpansionManagers.filter(m => 
+        return expansionManagers.filter(m => 
             (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
             m.status === 'Activo'
         );
-    }, [formData.zone]);
+    }, [formData.zone, expansionManagers]);
 
     const availableStatusOptions = useMemo(() => {
         if (isCollaborator) {
@@ -476,7 +487,7 @@ export default function MassiveInspectionPage() {
                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isCollaborator}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {sampleCollaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -633,5 +644,3 @@ export default function MassiveInspectionPage() {
     </div>
   );
 }
-
-    

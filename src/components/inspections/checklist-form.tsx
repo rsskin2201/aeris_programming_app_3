@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { sampleInspectors, InspectionRecord } from "@/lib/mock-data";
+import { InspectionRecord } from "@/lib/mock-data";
 import { MARCA_MDD, TIPO_MDD, SI_NO, MATERIAL_TUBERIA, EQUIPO, FORMA_PAGO } from "@/lib/form-options";
 import { ScrollArea } from "../ui/scroll-area";
 
@@ -70,7 +70,7 @@ interface ChecklistFormProps {
 
 export function ChecklistForm({ record, onClose }: ChecklistFormProps) {
     const { toast } = useToast();
-    const { user, zone } = useAppContext();
+    const { user, zone, inspectors } = useAppContext();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -108,8 +108,8 @@ export function ChecklistForm({ record, onClose }: ChecklistFormProps) {
     const availableInspectors = useMemo(() => {
         const recordZone = record?.zone;
         if (!recordZone) return [];
-        return sampleInspectors.filter(i => i.zone === recordZone);
-    }, [record?.zone]);
+        return inspectors.filter(i => i.zone === recordZone);
+    }, [record?.zone, inspectors]);
 
     function onSubmit(values: FormValues) {
         console.log("Checklist Submitted", values);
