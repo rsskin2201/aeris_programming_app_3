@@ -397,7 +397,7 @@ export default function IndividualInspectionPage() {
        <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" asChild>
-                <Link href="/records">
+                <Link href="/inspections">
                     <ChevronLeft className="h-4 w-4" />
                 </Link>
                 </Button>
@@ -721,7 +721,7 @@ export default function IndividualInspectionPage() {
             {pageMode !== 'view' && (
               <div className="flex justify-end gap-2">
                   <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
-                  <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
+                  <Button type="button" variant="outline" onClick={() => router.push('/inspections')} disabled={isSubmitting}>Cancelar</Button>
                   <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
                       <DialogTrigger asChild>
                           <Button type="button" onClick={handlePreview} disabled={isSubmitting}>

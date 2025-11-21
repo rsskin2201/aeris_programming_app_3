@@ -547,7 +547,7 @@ export default function SpecialInspectionPage() {
 
             <div className="flex justify-end gap-2">
                 <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
-                <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
+                <Button type="button" variant="outline" onClick={() => router.push('/inspections')} disabled={isSubmitting}>Cancelar</Button>
                 <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
                     <DialogTrigger asChild>
                          <Button type="button" onClick={handlePreview} disabled={isSubmitting}>

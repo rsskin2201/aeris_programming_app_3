@@ -20,8 +20,11 @@ import { addDays, format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { STATUS, ROLES } from '@/lib/types';
+import { STATUS, ROLES, User } from '@/lib/types';
 import { TIPO_INSPECCION_ESPECIAL, TIPO_INSPECCION_MASIVA, MERCADO } from '@/lib/form-options';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import Papa from 'papaparse';
+import { useToast } from '@/hooks/use-toast';
 
 const statusColors: Record<InspectionRecord['status'], string> = {
   [STATUS.REGISTRADA]: 'bg-gray-500/80 border-gray-600 text-white',
@@ -55,10 +58,12 @@ const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
 export default function RecordsPage() {
   const { user, zone, records, expansionManagers, collaborators, sectors } = useAppContext();
   const router = useRouter();
+  const { toast } = useToast();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState(initialFilters);
+  const [isExporting, setIsExporting] = useState(false);
   
   const canModify = user && !viewOnlyRoles.includes(user.role);
   const canExport = user && user.role !== ROLES.CANALES;
@@ -107,20 +112,54 @@ export default function RecordsPage() {
     router.push(`/inspections/individual?id=${recordId}&mode=${mode}`);
   }
 
+  const handleExport = () => {
+    const csv = Papa.unparse(filteredRecords);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `registros_inspecciones_${format(new Date(), 'yyyyMMdd')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    setIsExporting(false);
+    toast({
+        title: "Exportación Completa",
+        description: "Los registros han sido exportados a CSV."
+    });
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-headline text-3xl font-semibold">Gestión de Registros</h1>
-        <div className="flex flex-wrap items-center gap-2">
-            {canExport && (
-                <Button
-                    variant="outline"
-                    className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700"
-                >
-                    <Download className="mr-2 h-4 w-4" /> Exportar .csv
-                </Button>
-            )}
-        </div>
+        {canExport && (
+          <Dialog open={isExporting} onOpenChange={setIsExporting}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700 active:bg-green-800"
+              >
+                <Download className="mr-2 h-4 w-4" /> Exportar .csv
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirmar Exportación</DialogTitle>
+                <DialogDescription>
+                  Se exportarán {filteredRecords.length} registros a un archivo CSV. ¿Deseas continuar?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
+                <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">Confirmar</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
        <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>

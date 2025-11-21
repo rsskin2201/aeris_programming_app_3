@@ -5,13 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, UserPlus, Pencil, KeyRound, Ban, Trash2, ShieldAlert, Filter, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { ROLES, ZONES, USER_STATUS } from "@/lib/types";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { ROLES, ZONES, USER_STATUS, User } from "@/lib/types";
 import { useAppContext } from "@/hooks/use-app-context";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserForm } from "@/components/users/user-form";
-import type { User } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -19,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import Papa from "papaparse";
+import { format } from 'date-fns';
 
 const initialFilters = {
     name: '',
@@ -51,6 +52,7 @@ export default function UsersPage() {
     const [filters, setFilters] = useState(initialFilters);
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [isExporting, setIsExporting] = useState(false);
 
     useEffect(() => {
         if (user && user.role !== ROLES.ADMIN) {
@@ -145,6 +147,26 @@ export default function UsersPage() {
         }
     }
 
+    const handleExport = () => {
+      const csv = Papa.unparse(filteredUsers);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `usuarios_${format(new Date(), 'yyyyMMdd')}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      setIsExporting(false);
+      toast({
+          title: "Exportación Completa",
+          description: "La lista de usuarios ha sido exportada a CSV."
+      });
+    };
+
 
     if (!user || user.role !== ROLES.ADMIN) {
         return <div className="flex h-full items-center justify-center"><p>Acceso denegado.</p></div>;
@@ -155,12 +177,28 @@ export default function UsersPage() {
        <div className="flex flex-wrap items-center justify-between gap-4">
             <h1 className="font-headline text-3xl font-semibold">Gestión de Usuarios</h1>
             <div className='flex items-center gap-2'>
-                <Button
-                    variant="outline"
-                    className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700"
-                >
-                    <Download className="mr-2 h-4 w-4" /> Exportar .csv
-                </Button>
+                <Dialog open={isExporting} onOpenChange={setIsExporting}>
+                    <DialogTrigger asChild>
+                        <Button
+                            variant="outline"
+                            className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700 active:bg-green-800"
+                        >
+                            <Download className="mr-2 h-4 w-4" /> Exportar .csv
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirmar Exportación</DialogTitle>
+                            <DialogDescription>
+                                Se exportarán {filteredUsers.length} usuarios a un archivo CSV. ¿Deseas continuar?
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
+                            <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">Confirmar</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
                 <Dialog open={dialogState.isCreateOpen || dialogState.isEditOpen} onOpenChange={(isOpen) => {
                     if (!isOpen) {
                         handleCloseDialog('isCreateOpen');
