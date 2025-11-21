@@ -163,7 +163,7 @@ export default function CalendarPage() {
 
 
   const firstDayOfMonth = startOfMonth(currentDate);
-  const startingDayOfWeek = getDay(firstDayOfMonth) === 0 ? 6 : getDay(firstDayOfMonth) - 1; // Adjust to make Monday the first day
+  const startingDayOfWeek = getDay(firstDayOfMonth) === 0 ? 1 : (getDay(firstDayOfMonth) + 6) % 7;
   
   const daysInMonth = Array.from(
     { length: new Date(getYear(currentDate), getMonth(currentDate) + 1, 0).getDate() },
@@ -300,11 +300,13 @@ export default function CalendarPage() {
               key={day}
               onClick={() => handleDateClick(date)}
               className={cn(
-                'h-24 rounded-md border p-2 text-sm transition-colors hover:bg-accent/50 cursor-pointer',
-                isSameDay(date, new Date()) && 'bg-accent text-accent-foreground',
-                isSunday(date) && !weekendsEnabled && 'bg-destructive/10 text-destructive cursor-not-allowed hover:bg-destructive/10',
-                isSunday(date) && weekendsEnabled && 'bg-green-100',
-                blockedDayInfo && 'bg-muted-foreground/20 text-muted-foreground cursor-not-allowed hover:bg-muted-foreground/20',
+                'h-24 rounded-md border p-2 text-sm transition-all duration-200 hover:shadow-md hover:border-primary/80',
+                blockedDayInfo
+                  ? 'bg-muted-foreground/30 text-muted-foreground cursor-not-allowed hover:bg-muted-foreground/30'
+                  : 'cursor-pointer',
+                isSameDay(date, new Date()) && 'bg-primary/20 ring-2 ring-primary',
+                isSunday(date) && !weekendsEnabled && 'bg-destructive/20 text-destructive cursor-not-allowed hover:bg-destructive/20',
+                isSunday(date) && weekendsEnabled && 'bg-green-100/70',
               )}
             >
               <span>{day}</span>
@@ -382,7 +384,7 @@ export default function CalendarPage() {
             key={hour}
             className={cn(
               "h-16 border-b pr-2 flex items-center justify-center text-muted-foreground",
-              (parseInt(hour) < 9 || parseInt(hour) >= 19) && "bg-muted/30"
+              (parseInt(hour) < 9 || parseInt(hour) >= 19) && "bg-muted/40"
             )}
           >
             {hour}
@@ -397,8 +399,8 @@ export default function CalendarPage() {
             <div
               key={day.toString()}
               className={cn('border-l relative', 
-                isSameDay(day, new Date()) && 'bg-accent/50',
-                isBlocked && 'bg-muted-foreground/20'
+                isSameDay(day, new Date()) && 'bg-primary/10',
+                isBlocked && 'bg-muted-foreground/30'
               )}
             >
               {hoursOfDay.map((hour) => (
@@ -406,11 +408,11 @@ export default function CalendarPage() {
                   key={`${day}-${hour}`}
                   onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
                   className={cn(
-                    'h-16 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
+                    'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer overflow-y-auto',
                     isSunday(day) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                     isSunday(day) && weekendsEnabled && 'bg-green-100/50',
-                    isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/20',
-                    (parseInt(hour) < 9 || parseInt(hour) >= 19) && 'bg-muted/30 hover:bg-muted/50'
+                    isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
+                    (parseInt(hour) < 9 || parseInt(hour) >= 19) && 'bg-muted/40 hover:bg-muted/60'
                   )}
                 >
                   {!isBlocked && renderInspectionsForSlot(day, hour)}
@@ -434,7 +436,7 @@ export default function CalendarPage() {
             key={hour}
             className={cn(
               "h-16 border-b pr-2 flex items-center justify-center text-muted-foreground",
-              (parseInt(hour) < 9 || parseInt(hour) >= 19) && "bg-muted/30"
+              (parseInt(hour) < 9 || parseInt(hour) >= 19) && "bg-muted/40"
             )}
           >
             {hour}
@@ -445,8 +447,8 @@ export default function CalendarPage() {
         <div
           className={cn(
             'border-l relative',
-            isSameDay(currentDate, new Date()) && 'bg-accent/50',
-            isBlocked && 'bg-muted-foreground/20'
+            isSameDay(currentDate, new Date()) && 'bg-primary/10',
+            isBlocked && 'bg-muted-foreground/30'
           )}
         >
           {hoursOfDay.map((hour) => (
@@ -454,11 +456,11 @@ export default function CalendarPage() {
               key={`${currentDate}-${hour}`}
               onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
               className={cn(
-                'h-16 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
+                'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer overflow-y-auto',
                 isSunday(currentDate) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                 isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50',
-                isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/20',
-                (parseInt(hour) < 9 || parseInt(hour) >= 19) && 'bg-muted/30 hover:bg-muted/50'
+                isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
+                (parseInt(hour) < 9 || parseInt(hour) >= 19) && 'bg-muted/40 hover:bg-muted/60'
               )}
             >
               {!isBlocked && renderInspectionsForSlot(currentDate, hour)}
@@ -665,24 +667,24 @@ export default function CalendarPage() {
             <div className="flex items-center gap-2 rounded-md bg-muted p-1 text-sm">
               <Button
                 size="sm"
-                variant={view === 'month' ? 'ghost' : 'ghost'}
-                className={view === 'month' ? 'bg-background' : ''}
+                variant={'ghost'}
+                className={cn(view === 'month' && 'bg-background shadow font-semibold text-primary')}
                 onClick={() => setView('month')}
               >
                 Mes
               </Button>
               <Button
                 size="sm"
-                variant={view === 'week' ? 'ghost' : 'ghost'}
-                className={view === 'week' ? 'bg-background' : ''}
+                variant={'ghost'}
+                className={cn(view === 'week' && 'bg-background shadow font-semibold text-primary')}
                 onClick={() => setView('week')}
               >
                 Semana
               </Button>
               <Button
                 size="sm"
-                variant={view === 'day' ? 'ghost' : 'ghost'}
-                className={view === 'day' ? 'bg-background' : ''}
+                variant={'ghost'}
+                className={cn(view === 'day' && 'bg-background shadow font-semibold text-primary')}
                 onClick={() => setView('day')}
               >
                 Día
