@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { InspectionRecord } from "@/lib/mock-data";
-import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
+import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppContext } from '@/hooks/use-app-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -20,7 +20,7 @@ import { addDays, format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { STATUS } from '@/lib/types';
+import { STATUS, ROLES } from '@/lib/types';
 import { TIPO_INSPECCION_ESPECIAL, TIPO_INSPECCION_MASIVA, MERCADO } from '@/lib/form-options';
 
 const statusColors: Record<InspectionRecord['status'], string> = {
@@ -50,13 +50,18 @@ const initialFilters = {
     date: undefined as DateRange | undefined,
 };
 
+const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
+
 export default function RecordsPage() {
-  const { zone, records, expansionManagers, collaborators, sectors } = useAppContext();
+  const { user, zone, records, expansionManagers, collaborators, sectors } = useAppContext();
   const router = useRouter();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState(initialFilters);
+  
+  const canModify = user && !viewOnlyRoles.includes(user.role);
+  const canExport = user && user.role !== ROLES.CANALES;
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value || '' }));
@@ -107,12 +112,14 @@ export default function RecordsPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-headline text-3xl font-semibold">Gestión de Registros</h1>
         <div className="flex flex-wrap items-center gap-2">
-            <Button
-                variant="outline"
-                className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700"
-            >
-                <Download className="mr-2 h-4 w-4" /> Exportar .csv
-            </Button>
+            {canExport && (
+                <Button
+                    variant="outline"
+                    className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700"
+                >
+                    <Download className="mr-2 h-4 w-4" /> Exportar .csv
+                </Button>
+            )}
         </div>
       </div>
 
@@ -287,8 +294,16 @@ export default function RecordsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleAction(record.id, 'view')}>Visualizar</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction(record.id, 'edit')}>Modificar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction(record.id, 'view')}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Visualizar
+                        </DropdownMenuItem>
+                        {canModify && (
+                            <DropdownMenuItem onClick={() => handleAction(record.id, 'edit')}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Modificar
+                            </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

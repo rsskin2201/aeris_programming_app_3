@@ -140,7 +140,7 @@ export default function Header() {
           <span className="text-2xl">⚡</span>
           <span className="font-headline text-xl">AERIS</span>
         </Link>
-        <Button asChild variant={pathname === '/' ? 'secondary' : 'ghost'} size="sm">
+        <Button asChild variant={pathname === '/' ? 'secondary' : 'ghost'} size="sm" className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground">
             <Link href="/">
                 <Home className="mr-2 h-4 w-4" />
                 Panel Principal
@@ -165,7 +165,7 @@ export default function Header() {
               <span className="text-2xl">⚡</span>
               <span className="font-headline text-xl">AERIS</span>
             </Link>
-            <Button asChild variant={pathname === '/' ? 'secondary' : 'ghost'}>
+            <Button asChild variant={pathname === '/' ? 'secondary' : 'ghost'} className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground">
                 <Link href="/">
                     <Home className="mr-2 h-4 w-4" />
                     Panel Principal

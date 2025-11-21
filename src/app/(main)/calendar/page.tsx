@@ -22,6 +22,8 @@ import {
   ShieldCheck,
   ShieldOff,
   CalendarClock,
+  Eye,
+  Pencil,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
@@ -69,6 +71,7 @@ import { Textarea } from '@/components/ui/textarea';
 const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE];
 const adminRoles = [ROLES.ADMIN];
 const dayBlockingRoles = [ROLES.ADMIN, ROLES.CALIDAD, 'Empresa Control de Calidad'];
+const canExportRoles = [ROLES.ADMIN, ROLES.CALIDAD];
 
 const daysOfWeek = [
   'Lunes',
@@ -98,7 +101,8 @@ export default function CalendarPage() {
     toggleWeekends,
     blockedDays,
     addBlockedDay,
-    removeBlockedDay
+    removeBlockedDay,
+    records,
   } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
@@ -110,12 +114,20 @@ export default function CalendarPage() {
   const canToggleForms = user && privilegedRoles.includes(user.role);
   const canEnableWeekends = user && adminRoles.includes(user.role);
   const canBlockDays = user && dayBlockingRoles.includes(user.role);
+  const canExport = user && canExportRoles.includes(user.role);
+  
+  const isCollaborator = user?.role === ROLES.COLABORADOR;
+
 
   const inspectionsByDay = useMemo(() => {
-    const filteredRecords = mockRecords.filter(
-      (record) => zone === 'Todas las zonas' || record.zone === zone
-    );
-    const inspections: Record<string, typeof mockRecords> = {};
+    let filteredRecords = records;
+    if (isCollaborator) {
+        filteredRecords = records.filter(record => record.collaboratorCompany === user.name);
+    } else if (zone !== 'Todas las zonas') {
+        filteredRecords = records.filter(record => record.zone === zone);
+    }
+    
+    const inspections: Record<string, typeof records> = {};
 
     filteredRecords.forEach((record) => {
       const recordDate = parseISO(record.requestDate);
@@ -126,13 +138,17 @@ export default function CalendarPage() {
       inspections[dateKey].push(record);
     });
     return inspections;
-  }, [zone]);
+  }, [zone, records, isCollaborator, user]);
   
    const inspectionsByTime = useMemo(() => {
-    const inspections: Record<string, typeof mockRecords> = {};
-    const filteredRecords = mockRecords.filter(
-      (record) => zone === 'Todas las zonas' || record.zone === zone
-    );
+    const inspections: Record<string, typeof records> = {};
+    
+    let filteredRecords = records;
+    if (isCollaborator) {
+        filteredRecords = records.filter(record => record.collaboratorCompany === user.name);
+    } else if (zone !== 'Todas las zonas') {
+        filteredRecords = records.filter(record => record.zone === zone);
+    }
 
     filteredRecords.forEach((record) => {
       const recordDate = parseISO(record.requestDate);
@@ -143,7 +159,7 @@ export default function CalendarPage() {
       inspections[dateTimeKey].push(record);
     });
     return inspections;
-  }, [zone]);
+  }, [zone, records, isCollaborator, user]);
 
 
   const firstDayOfMonth = startOfMonth(currentDate);
@@ -402,13 +418,15 @@ export default function CalendarPage() {
           Calendario de Inspecciones
         </h1>
         <div className="flex flex-wrap items-center gap-2">
-            <Button 
-                variant="outline"
-                className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700"
-                onClick={exportToCsv}
-            >
-                <Download className="mr-2 h-4 w-4" /> Exportar .csv
-            </Button>
+            {canExport && (
+              <Button 
+                  variant="outline"
+                  className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700"
+                  onClick={exportToCsv}
+              >
+                  <Download className="mr-2 h-4 w-4" /> Exportar .csv
+              </Button>
+            )}
           {canEnableWeekends && (
             <Button
               variant={weekendsEnabled ? 'secondary' : 'destructive'}
