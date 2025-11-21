@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/hooks/use-app-context';
 import Header from '@/components/layout/header';
 import { WelcomeZoneSelector } from '@/components/layout/welcome-zone-selector';
