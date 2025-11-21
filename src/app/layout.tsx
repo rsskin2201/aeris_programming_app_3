@@ -4,7 +4,7 @@ import { AppProvider } from '@/contexts/app-provider';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'AERIS',
+  title: 'Aeris Programming',
   description: 'Gestión de Inspecciones de Gas Natural',
 };
 

@@ -143,7 +143,7 @@ export default function Header() {
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold text-primary">
           <span className="text-2xl">⚡</span>
-          <span className="font-headline text-xl">AERIS</span>
+          <span className="font-headline text-xl">Aeris Prog.</span>
         </Link>
         <Button
           asChild
@@ -176,7 +176,7 @@ export default function Header() {
           <nav className="grid gap-6 text-lg font-medium">
              <Link href="/" className="flex items-center gap-2 text-lg font-bold text-primary">
               <span className="text-2xl">⚡</span>
-              <span className="font-headline text-xl">AERIS</span>
+              <span className="font-headline text-xl">Aeris Programming</span>
             </Link>
             <Button asChild variant={pathname === '/' ? 'secondary' : 'ghost'} className={cn(
               "hover:bg-accent/90 hover:text-accent-foreground",

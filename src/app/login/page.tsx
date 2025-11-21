@@ -22,7 +22,10 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex items-center justify-center gap-3">
             <span className="text-6xl font-bold text-primary">⚡</span>
-            <h1 className="font-headline text-6xl font-bold text-primary">AERIS</h1>
+            <div className='flex flex-col'>
+                <h1 className="font-headline text-5xl font-bold text-primary">Aeris</h1>
+                <p className="font-headline text-3xl font-semibold text-primary/90 -mt-2">Programming</p>
+            </div>
           </div>
           <CardTitle className="font-headline text-2xl">Bienvenido(a)</CardTitle>
           <CardDescription>Inicia sesión para gestionar las inspecciones.</CardDescription>
