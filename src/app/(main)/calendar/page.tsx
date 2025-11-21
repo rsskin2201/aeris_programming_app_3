@@ -63,7 +63,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import Papa from 'papaparse';
@@ -300,7 +300,7 @@ export default function CalendarPage() {
               key={day}
               onClick={() => handleDateClick(date)}
               className={cn(
-                'h-24 rounded-md border p-2 text-sm transition-all duration-200 hover:shadow-lg hover:border-accent/80',
+                'h-24 rounded-md border p-2 text-sm transition-all duration-200 hover:shadow-lg hover:border-primary/80',
                 blockedDayInfo
                   ? 'bg-muted-foreground/30 text-muted-foreground cursor-not-allowed hover:bg-muted-foreground/30'
                   : 'cursor-pointer',
@@ -384,7 +384,7 @@ export default function CalendarPage() {
             key={hour}
             className={cn(
               "h-16 border-b pr-2 flex items-center justify-center text-muted-foreground",
-              (parseInt(hour) < 9 || parseInt(hour) >= 19) && "bg-muted/40"
+              (parseInt(hour) < 9 || parseInt(hour) >= 20) && "bg-muted/40"
             )}
           >
             {hour}
@@ -399,7 +399,7 @@ export default function CalendarPage() {
             <div
               key={day.toString()}
               className={cn('border-l relative', 
-                isSameDay(day, new Date()) && 'bg-accent/10',
+                isSameDay(day, new Date()) && 'bg-blue-500/10',
                 isBlocked && 'bg-muted-foreground/30'
               )}
             >
@@ -408,11 +408,11 @@ export default function CalendarPage() {
                   key={`${day}-${hour}`}
                   onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
                   className={cn(
-                    'h-16 border-b p-1 transition-colors hover:bg-accent/20 hover:border-l-2 hover:border-accent cursor-pointer overflow-y-auto',
+                    'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer overflow-y-auto',
                     isSunday(day) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                     isSunday(day) && weekendsEnabled && 'bg-green-100/50',
                     isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
-                    (parseInt(hour) < 9 || parseInt(hour) >= 19) && 'bg-muted/40 hover:bg-muted/60'
+                    (parseInt(hour) < 9 || parseInt(hour) >= 20) && 'bg-muted/40 hover:bg-muted/60'
                   )}
                 >
                   {!isBlocked && renderInspectionsForSlot(day, hour)}
@@ -436,7 +436,7 @@ export default function CalendarPage() {
             key={hour}
             className={cn(
               "h-16 border-b pr-2 flex items-center justify-center text-muted-foreground",
-              (parseInt(hour) < 9 || parseInt(hour) >= 19) && "bg-muted/40"
+              (parseInt(hour) < 9 || parseInt(hour) >= 20) && "bg-muted/40"
             )}
           >
             {hour}
@@ -447,7 +447,7 @@ export default function CalendarPage() {
         <div
           className={cn(
             'border-l relative',
-            isSameDay(currentDate, new Date()) && 'bg-accent/10',
+            isSameDay(currentDate, new Date()) && 'bg-blue-500/10',
             isBlocked && 'bg-muted-foreground/30'
           )}
         >
@@ -456,11 +456,11 @@ export default function CalendarPage() {
               key={`${currentDate}-${hour}`}
               onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
               className={cn(
-                'h-16 border-b p-1 transition-colors hover:bg-accent/20 hover:border-l-2 hover:border-accent cursor-pointer overflow-y-auto',
+                'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer overflow-y-auto',
                 isSunday(currentDate) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                 isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50',
                 isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
-                (parseInt(hour) < 9 || parseInt(hour) >= 19) && 'bg-muted/40 hover:bg-muted/60'
+                (parseInt(hour) < 9 || parseInt(hour) >= 20) && 'bg-muted/40 hover:bg-muted/60'
               )}
             >
               {!isBlocked && renderInspectionsForSlot(currentDate, hour)}
@@ -668,7 +668,7 @@ export default function CalendarPage() {
               <Button
                 size="sm"
                 variant={'ghost'}
-                className={cn('bg-background shadow font-semibold text-primary', view === 'month' ? 'bg-primary/10 text-primary' : 'hover:bg-primary/5')}
+                className={cn('bg-background shadow font-semibold text-primary', view === 'month' ? 'bg-primary/20 text-primary font-bold' : 'hover:bg-primary/5')}
                 onClick={() => setView('month')}
               >
                 Mes
@@ -676,7 +676,7 @@ export default function CalendarPage() {
               <Button
                 size="sm"
                 variant={'ghost'}
-                className={cn('bg-background shadow font-semibold text-primary', view === 'week' ? 'bg-primary/10 text-primary' : 'hover:bg-primary/5')}
+                className={cn('bg-background shadow font-semibold text-primary', view === 'week' ? 'bg-primary/20 text-primary font-bold' : 'hover:bg-primary/5')}
                 onClick={() => setView('week')}
               >
                 Semana
@@ -684,7 +684,7 @@ export default function CalendarPage() {
               <Button
                 size="sm"
                 variant={'ghost'}
-                className={cn('bg-background shadow font-semibold text-primary', view === 'day' ? 'bg-primary/10 text-primary' : 'hover:bg-primary/5')}
+                className={cn('bg-background shadow font-semibold text-primary', view === 'day' ? 'bg-primary/20 text-primary font-bold' : 'hover:bg-primary/5')}
                 onClick={() => setView('day')}
               >
                 Día
