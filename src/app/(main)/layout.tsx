@@ -6,7 +6,7 @@ import { useAppContext } from '@/hooks/use-app-context';
 import Header from '@/components/layout/header';
 import { WelcomeZoneSelector } from '@/components/layout/welcome-zone-selector';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Copy, HelpCircle } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
