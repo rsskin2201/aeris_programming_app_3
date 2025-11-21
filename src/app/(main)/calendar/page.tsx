@@ -44,7 +44,7 @@ import {
   parseISO,
   getYear,
   getMonth,
-  getISODay,
+  getDay,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ROLES } from '@/lib/types';
@@ -163,15 +163,17 @@ export default function CalendarPage() {
 
 
   const firstDayOfMonth = startOfMonth(currentDate);
-  const startingDayOfWeek = (getISODay(firstDayOfMonth) % 7); // 0=Sun, 1=Mon... but we want 0=Sat, so we adjust
+  const startingDayOfWeek = getDay(firstDayOfMonth) === 0 ? 6 : getDay(firstDayOfMonth) - 1; // Adjust to make Monday the first day
+  
   const daysInMonth = Array.from(
     { length: new Date(getYear(currentDate), getMonth(currentDate) + 1, 0).getDate() },
     (_, i) => i + 1
   );
 
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    return addDays(startOfWeek(currentDate, { weekStartsOn: 6 }), i);
-  });
+  const weekDays = useMemo(() => {
+    const start = startOfWeek(currentDate, { weekStartsOn: 6 }); // 6 for Saturday
+    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  }, [currentDate]);
 
   const changeDate = (amount: number) => {
     if (view === 'month') setCurrentDate((prev) => addMonths(prev, amount));
@@ -192,7 +194,7 @@ export default function CalendarPage() {
     const dateKey = format(date, 'yyyy-MM-dd');
     if (blockedDays[dateKey]) return;
     if (isSunday(date) && !weekendsEnabled) return;
-    const url = `/inspections/individual?date=${format(date, 'yyyy-MM-dd')}&time=${hour}`;
+    const url = `/inspections/individual?date=${format(date, 'yyyy-MM-dd')}&time=${hour}&from=calendar`;
     router.push(url);
   }
 
@@ -519,7 +521,7 @@ export default function CalendarPage() {
               ) : (
                 <ShieldOff className="mr-2 h-4 w-4" />
               )}
-              {weekendsEnabled ? 'Domingos Hab.' : 'Domingos Deshab.'}
+              {weekendsEnabled ? 'Hab. Domingos' : 'Deshab Domingos'}
             </Button>
           )}
           {canToggleForms && (

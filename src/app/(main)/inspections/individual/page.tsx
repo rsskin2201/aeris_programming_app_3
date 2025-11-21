@@ -100,6 +100,8 @@ export default function IndividualInspectionPage() {
   const [pageMode, setPageMode] = useState<'new' | 'view' | 'edit'>('new');
   const [currentRecord, setCurrentRecord] = useState<InspectionRecord | null>(null);
   
+  const fromCalendar = searchParams.get('from') === 'calendar';
+  
   const isCollaborator = user?.role === ROLES.COLABORADOR;
   const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption: user.name is company name for collaborator
 
@@ -346,7 +348,7 @@ export default function IndividualInspectionPage() {
 
         setIsSubmitting(false);
         setIsConfirming(false);
-        router.push('/records');
+        router.push(fromCalendar ? '/calendar' : '/records');
     }, 1500);
   }
 
@@ -391,13 +393,15 @@ export default function IndividualInspectionPage() {
         </div>
       );
   }
+  
+  const backPath = fromCalendar ? '/calendar' : '/inspections';
 
   return (
     <div className="flex flex-col gap-6">
        <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" asChild>
-                <Link href="/inspections">
+                <Link href={backPath}>
                     <ChevronLeft className="h-4 w-4" />
                 </Link>
                 </Button>
@@ -722,7 +726,7 @@ export default function IndividualInspectionPage() {
             {pageMode !== 'view' && (
               <div className="flex justify-end gap-2">
                   <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
-                  <Button type="button" variant="outline" onClick={() => router.push('/inspections')} disabled={isSubmitting}>Cancelar</Button>
+                  <Button type="button" variant="outline" onClick={() => router.push(backPath)} disabled={isSubmitting}>Cancelar</Button>
                   <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
                       <DialogTrigger asChild>
                           <Button type="button" onClick={handlePreview} disabled={isSubmitting}>
