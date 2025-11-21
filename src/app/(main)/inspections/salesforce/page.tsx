@@ -71,7 +71,7 @@ const CsvEditor = ({ file, onUpload, isUploading }: CsvEditorProps) => {
 
     const handleProcessUpload = () => {
         const requiredFields: (keyof InspectionRecord)[] = ['address', 'client', 'requestDate'];
-        const mappedFields = Object.values(mapping).filter(v => v !== '');
+        const mappedFields = Object.values(mapping).filter(v => v !== '' && v !== 'no-map');
 
         for (const field of requiredFields) {
             if (!mappedFields.includes(field)) {
@@ -85,7 +85,7 @@ const CsvEditor = ({ file, onUpload, isUploading }: CsvEditorProps) => {
             const record: any = {};
             headers.forEach((header, index) => {
                 const mappedField = mapping[header];
-                if (mappedField) {
+                if (mappedField && mappedField !== 'no-map') {
                     record[mappedField] = row[index];
                 }
             });
@@ -122,7 +122,7 @@ const CsvEditor = ({ file, onUpload, isUploading }: CsvEditorProps) => {
                                             <SelectValue placeholder="Mapear a..." />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">No Mapear</SelectItem>
+                                            <SelectItem value="no-map">No Mapear</SelectItem>
                                             {recordFields.map(field => (
                                                 <SelectItem key={field} value={field}>{field}</SelectItem>
                                             ))}
