@@ -69,6 +69,7 @@ import { es } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
 
 const moduleIcons = {
   [MODULES.INSPECTIONS]: Briefcase,
@@ -82,48 +83,56 @@ const moduleIcons = {
 
 export default function Header() {
   const pathname = usePathname();
-  const { user, operatorName, switchRole, logout, passwordRequests, resolvePasswordRequest } = useAppContext();
+  const { user, operatorName, switchRole, logout, passwordRequests, resolvePasswordRequest, notifications, markNotificationAsRead } = useAppContext();
   const { toast } = useToast();
   
 
   if (!user) return null;
 
-  const NotificationBell = () => {
-    if (user.role !== ROLES.ADMIN || passwordRequests.length === 0) {
-      return null;
-    }
+  const userNotifications = notifications.filter(n => n.recipientUsername === user.username);
+  const unreadCount = userNotifications.filter(n => !n.read).length;
 
+  const NotificationBell = () => {
     return (
         <Popover>
             <PopoverTrigger asChild>
                 <Button variant="outline" size="icon" className="relative h-9 w-9">
                     <Bell className="h-4 w-4" />
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-                        {passwordRequests.length}
-                    </span>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
+                          {unreadCount}
+                      </span>
+                    )}
                     <span className="sr-only">Notificaciones</span>
                 </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-80">
                 <div className="flex items-center justify-between">
-                    <p className="font-medium">Solicitudes de Contraseña</p>
-                    <Badge variant="secondary">{passwordRequests.length}</Badge>
+                    <p className="font-medium">Notificaciones</p>
+                    <Badge variant="secondary">{unreadCount} nuevas</Badge>
                 </div>
-                <div className="mt-4 space-y-4">
-                    {passwordRequests.map(req => (
-                         <div key={req.id} className="text-sm">
-                            <p>Usuario: <span className="font-semibold">{req.username}</span></p>
-                            <p>Correo: <span className="font-semibold">{req.email}</span></p>
+                <ScrollArea className="mt-4 h-[300px]">
+                  <div className="space-y-4 pr-2">
+                    {userNotifications.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">No tienes notificaciones.</p>
+                    ) : (
+                      userNotifications.map(n => (
+                         <div key={n.id} className={cn("text-sm p-2 rounded-md", !n.read && "bg-accent/50")}>
+                            <p>{n.message}</p>
                             <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
-                                <span>hace {formatDistanceToNow(req.date, { locale: es })}</span>
-                                <Button size="sm" variant="ghost" className="h-auto px-2 py-1 text-primary hover:text-primary" onClick={() => resolvePasswordRequest(req.id)}>
-                                    <Check className="mr-1 h-3 w-3"/>
-                                    Marcar resuelto
-                                </Button>
+                                <span>hace {formatDistanceToNow(n.date, { locale: es })}</span>
+                                {!n.read && (
+                                  <Button size="sm" variant="ghost" className="h-auto px-2 py-1 text-primary hover:text-primary" onClick={() => markNotificationAsRead(n.id)}>
+                                      <Check className="mr-1 h-3 w-3"/>
+                                      Marcar leído
+                                  </Button>
+                                )}
                             </div>
                         </div>
-                    ))}
-                </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
             </PopoverContent>
         </Popover>
     );

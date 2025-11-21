@@ -88,7 +88,9 @@ export default function IndividualInspectionPage() {
     collaborators, 
     installers, 
     expansionManagers, 
-    sectors 
+    sectors,
+    addNotification,
+    users: allUsers,
   } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -304,8 +306,37 @@ export default function IndividualInspectionPage() {
 
         if (pageMode === 'edit' && currentRecord) {
             updateRecord(recordToSave);
+            // Notify on status change
+             if (values.status !== currentRecord.status) {
+                if (values.status === STATUS.APROBADA) {
+                    const coordinators = allUsers.filter(u => u.role === ROLES.COORDINADOR_SSPP && (u.zone === recordToSave.zone || u.zone === 'Todas las zonas'));
+                    coordinators.forEach(c => addNotification({
+                        recipientUsername: c.username,
+                        message: `Inspección ${recordToSave.id} aprobada en zona ${recordToSave.zone}.`,
+                    }));
+                } else if (values.status === STATUS.NO_APROBADA) {
+                    const creator = allUsers.find(u => u.username === recordToSave.createdBy);
+                    if (creator) addNotification({
+                         recipientUsername: creator.username,
+                         message: `Tu solicitud de inspección ${recordToSave.id} ha sido rechazada.`,
+                    });
+                    const gestor = allUsers.find(u => u.name === recordToSave.gestor);
+                    if (gestor) addNotification({
+                        recipientUsername: gestor.username,
+                        message: `La inspección ${recordToSave.id} asignada a ti ha sido rechazada.`,
+                    });
+                }
+            }
         } else {
             addRecord(recordToSave);
+            // Notify gestor of new inspection
+            const gestorUser = allUsers.find(u => u.name === values.gestor);
+            if (gestorUser) {
+                addNotification({
+                    recipientUsername: gestorUser.username,
+                    message: `Nueva inspección individual (${recordToSave.id}) te ha sido asignada.`,
+                });
+            }
         }
 
         toast({

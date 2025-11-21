@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { InspectionRecord } from '@/lib/mock-data';
 import { format } from 'date-fns';
-import { STATUS } from '@/lib/types';
+import { STATUS, ROLES } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // --- CsvEditor Component ---
@@ -165,7 +165,7 @@ export default function SalesforceUploadPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const { addRecord, user, zone } = useAppContext();
+  const { addRecord, user, zone, users: allUsers, addNotification } = useAppContext();
 
   const handleFileChange = (files: FileList | null) => {
     if (files && files[0]) {
@@ -214,9 +214,26 @@ export default function SalesforceUploadPage() {
                     createdBy: user?.username || 'desconocido',
                     status: STATUS.REGISTRADA,
                     inspector: 'N/A',
-                    zone: zone,
+                    zone: zone, // Assign current global zone
+                    // Default missing required fields
+                    gestor: rec.gestor || 'N/A',
+                    collaboratorCompany: rec.collaboratorCompany || 'N/A',
+                    sector: rec.sector || 'N/A',
                 };
                 addRecord(recordToSave);
+            });
+
+            // Notify relevant users
+            const usersToNotify = allUsers.filter(u => 
+                (u.role === ROLES.COORDINADOR_SSPP || u.role === ROLES.CALIDAD) &&
+                (u.zone === zone || u.zone === 'Todas las zonas')
+            );
+            
+            usersToNotify.forEach(notifiedUser => {
+                addNotification({
+                    recipientUsername: notifiedUser.username,
+                    message: `Se han cargado ${newRecords.length} registros masivos en la zona ${zone}.`,
+                });
             });
 
             setIsUploading(false);

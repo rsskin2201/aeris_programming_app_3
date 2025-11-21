@@ -72,7 +72,7 @@ const mockMunicipalities = [
 
 export default function SpecialInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, addNotification, users: allUsers } = useAppContext();
   const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -190,6 +190,15 @@ export default function SpecialInspectionPage() {
             mercado: values.mercado,
         };
         addRecord(recordToSave);
+
+        // Notify gestor of new inspection
+        const gestorUser = allUsers.find(u => u.name === values.gestor);
+        if (gestorUser) {
+            addNotification({
+                recipientUsername: gestorUser.username,
+                message: `Nueva inspección especial (${recordToSave.id}) te ha sido asignada.`,
+            });
+        }
 
         toast({
         title: "Solicitud Enviada",

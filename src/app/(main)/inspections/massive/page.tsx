@@ -78,7 +78,7 @@ const mockMunicipalities = [
 
 export default function MassiveInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, addNotification, users: allUsers } = useAppContext();
   const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -179,6 +179,8 @@ export default function MassiveInspectionPage() {
     setIsSubmitting(true);
     
     setTimeout(() => {
+        const gestorUser = allUsers.find(u => u.name === values.gestor);
+        
         values.inspections.forEach(detail => {
             const recordToSave: InspectionRecord = {
                 ...values,
@@ -197,6 +199,13 @@ export default function MassiveInspectionPage() {
             };
             addRecord(recordToSave);
         });
+
+        if (gestorUser) {
+            addNotification({
+                recipientUsername: gestorUser.username,
+                message: `${values.inspections.length} nuevas inspecciones masivas te han sido asignadas.`,
+            });
+        }
 
         toast({
             title: "Solicitudes Enviadas",

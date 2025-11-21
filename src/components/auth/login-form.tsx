@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/hooks/use-app-context';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Label } from '../ui/label';
+import { ROLES } from '@/lib/types';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'El usuario es requerido.' }),
@@ -82,7 +83,7 @@ export function LoginForm() {
 
     setIsSubmittingForgot(true);
     setTimeout(() => {
-        addPasswordRequest({ username: forgotUsername, email: forgotEmail });
+        addPasswordRequest({ username: forgotUsername, email: forgotEmail, recipientRole: ROLES.ADMIN });
         toast({
             title: 'Solicitud Enviada',
             description: 'Se ha enviado una notificación al administrador. Se pondrá en contacto contigo en breve.'

@@ -78,4 +78,14 @@ export type PasswordResetRequest = {
     username: string;
     email: string;
     date: Date;
+    recipientRole: Role;
 };
+
+export type AppNotification = {
+    id: string;
+    recipientUsername: string;
+    message: string;
+    date: Date;
+    read: boolean;
+    link?: string;
+}

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback } from 'react';
-import type { User, Role, Zone, BlockedDay, PasswordResetRequest, UserStatus } from '@/lib/types';
+import type { User, Role, Zone, BlockedDay, PasswordResetRequest, UserStatus, AppNotification } from '@/lib/types';
 import { ROLES, ZONES, USER_STATUS } from '@/lib/types';
 import { mockUsers as initialMockUsers, mockRecords as initialMockRecords, InspectionRecord, sampleCollaborators as initialCollaborators, sampleQualityControlCompanies as initialQualityCompanies, sampleInspectors as initialInspectors, sampleInstallers as initialInstallers, sampleExpansionManagers as initialManagers, sampleSectors as initialSectors, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from '@/lib/mock-data';
 
@@ -15,6 +15,7 @@ interface AppContextType {
   weekendsEnabled: boolean;
   blockedDays: Record<string, BlockedDay>;
   passwordRequests: PasswordResetRequest[];
+  notifications: AppNotification[];
   
   // Records
   records: InspectionRecord[];
@@ -59,6 +60,8 @@ interface AppContextType {
   removeBlockedDay: (date: string) => void;
   addPasswordRequest: (request: Omit<PasswordResetRequest, 'id' | 'date'>) => void;
   resolvePasswordRequest: (id: string) => void;
+  addNotification: (notification: Omit<AppNotification, 'id' | 'date' | 'read'>) => void;
+  markNotificationAsRead: (id: string) => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -72,6 +75,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [formsEnabled, setFormsEnabled] = useState(true);
   const [weekendsEnabled, setWeekendsEnabled] = useState(false);
   const [passwordRequests, setPasswordRequests] = useState<PasswordResetRequest[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   
   // Data State
   const [records, setRecords] = useState<InspectionRecord[]>(initialMockRecords);
@@ -148,10 +152,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
         date: new Date(),
     };
     setPasswordRequests(prev => [newRequest, ...prev]);
-  }, []);
+    
+    // Also send a notification to the admin
+    const admins = users.filter(u => u.role === ROLES.ADMIN);
+    admins.forEach(admin => {
+        addNotification({
+            recipientUsername: admin.username,
+            message: `Nueva solicitud de reseteo de contraseña de ${request.username}.`
+        });
+    });
+
+  }, [users]);
 
   const resolvePasswordRequest = useCallback((id: string) => {
       setPasswordRequests(prev => prev.filter(req => req.id !== id));
+  }, []);
+
+  const addNotification = useCallback((notificationData: Omit<AppNotification, 'id' | 'date' | 'read'>) => {
+    const newNotification: AppNotification = {
+      ...notificationData,
+      id: `notif-${Date.now()}-${Math.random()}`,
+      date: new Date(),
+      read: false,
+    };
+    setNotifications(prev => [newNotification, ...prev]);
+  }, []);
+
+  const markNotificationAsRead = useCallback((id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   }, []);
   
   // Records Callbacks
@@ -195,6 +223,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       weekendsEnabled,
       blockedDays,
       passwordRequests,
+      notifications,
       records,
       collaborators,
       qualityCompanies,
@@ -231,10 +260,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removeBlockedDay,
       addPasswordRequest,
       resolvePasswordRequest,
+      addNotification,
+      markNotificationAsRead,
     }),
     [
-      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
-      getRecordById, addRecord, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest
+      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
+      getRecordById, addRecord, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead
     ]
   );
 
