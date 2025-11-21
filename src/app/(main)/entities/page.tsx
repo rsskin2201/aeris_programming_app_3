@@ -161,8 +161,16 @@ export default function EntitiesPage() {
 
       
         <Tabs defaultValue={entities[0]}>
-          <TabsList className="flex-wrap h-auto">
-            {entities.map(entity => <TabsTrigger key={entity} value={entity}>{entity}</TabsTrigger>)}
+          <TabsList className="h-auto flex-wrap justify-start bg-transparent p-0">
+            {entities.map(entity => (
+              <TabsTrigger 
+                key={entity} 
+                value={entity}
+                className="transition-all duration-300 data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-md hover:bg-primary/5 hover:border-primary/50 border-b-2 border-transparent"
+              >
+                {entity}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="Empresa Colaboradora">
