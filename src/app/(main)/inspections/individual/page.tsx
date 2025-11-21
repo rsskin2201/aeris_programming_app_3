@@ -23,7 +23,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role, STATUS } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO } from "@/lib/form-options";
+import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, mockMunicipalities } from "@/lib/form-options";
 import { ChecklistForm } from "@/components/inspections/checklist-form";
 
 const formSchema = z.object({
@@ -63,17 +63,6 @@ type FormValues = z.infer<typeof formSchema>;
 const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMADA_POR_GE, STATUS.REGISTRADA];
 const checklistRoles = [ROLES.CALIDAD, ROLES.SOPORTE, ROLES.ADMIN];
 const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RESULTADO_REGISTRADO];
-
-// TODO: This should come from a dynamic source, maybe the context
-const mockMunicipalities = [
-    { id: 'MUN-01', name: 'Guadalajara' },
-    { id: 'MUN-02', name: 'Zapopan' },
-    { id: 'MUN-03', name: 'Tlaquepaque' },
-    { id: 'MUN-04', name: 'Tonalá' },
-    { id: 'MUN-05', name: 'Monterrey' },
-    { id: 'MUN-06', name: 'San Pedro Garza García' },
-    { id: 'MUN-07', name: 'Ciudad de México - Miguel Hidalgo' },
-];
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();

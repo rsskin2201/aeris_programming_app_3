@@ -32,6 +32,7 @@ export type User = {
   role: Role;
   zone: Zone;
   status: UserStatus;
+  password?: string;
 };
 
 export const MODULES = {
@@ -43,6 +44,8 @@ export const MODULES = {
   STATISTICS: 'statistics',
   USERS: 'users',
   SALESFORCE_UPLOAD: 'salesforce_upload',
+  USER_UPLOAD: 'user_upload',
+  ENTITY_UPLOAD: 'entity_upload',
 } as const;
 
 export type Module = (typeof MODULES)[keyof typeof MODULES];

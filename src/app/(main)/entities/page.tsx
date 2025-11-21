@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, PlusCircle, Settings } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Settings, Upload } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CollaboratorCompanyForm } from "@/components/entities/collaborator-company-form";
 import { QualityControlCompanyForm } from "@/components/entities/quality-control-company-form";
@@ -18,6 +18,7 @@ import { ExpansionManagerForm } from "@/components/entities/expansion-manager-fo
 import { SectorForm } from "@/components/entities/sector-form";
 import { useAppContext } from "@/hooks/use-app-context";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 
 const entities = [
@@ -157,6 +158,12 @@ export default function EntitiesPage() {
           <Settings className="h-8 w-8 text-primary" />
           Gestión de Entidades
         </h1>
+         <Button asChild>
+          <Link href="/entities/upload">
+            <Upload className="mr-2 h-4 w-4" />
+            Carga Masiva
+          </Link>
+        </Button>
       </div>
 
       

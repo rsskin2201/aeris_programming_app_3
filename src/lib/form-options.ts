@@ -61,3 +61,15 @@ export const EQUIPO = [
     'SECADORA'
 ] as const;
 export const FORMA_PAGO = ['PAGO A EC', 'PENDIENTE', 'IACEPTA', 'PAGO POR LOTE', 'OXXO', 'TRANSFERENCIA'] as const;
+
+
+// Opciones Centralizadas
+export const mockMunicipalities = [
+    { id: 'MUN-01', name: 'Guadalajara' },
+    { id: 'MUN-02', name: 'Zapopan' },
+    { id: 'MUN-03', name: 'Tlaquepaque' },
+    { id: 'MUN-04', name: 'Tonalá' },
+    { id: 'MUN-05', name: 'Monterrey' },
+    { id: 'MUN-06', name: 'San Pedro Garza García' },
+    { id: 'MUN-07', name: 'Ciudad de México - Miguel Hidalgo' },
+];

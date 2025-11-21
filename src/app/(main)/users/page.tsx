@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, UserPlus, Pencil, KeyRound, Ban, Trash2, ShieldAlert, Filter, ChevronLeft, ChevronRight, Download, Users as UsersIcon } from "lucide-react";
+import { MoreHorizontal, UserPlus, Pencil, KeyRound, Ban, Trash2, ShieldAlert, Filter, ChevronLeft, ChevronRight, Download, Users as UsersIcon, Upload } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { ROLES, ZONES, USER_STATUS, User } from "@/lib/types";
@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import Papa from "papaparse";
 import { format } from 'date-fns';
+import Link from "next/link";
 
 const initialFilters = {
     name: '',
@@ -180,6 +181,12 @@ export default function UsersPage() {
               Gestión de Usuarios
             </h1>
             <div className='flex items-center gap-2'>
+                <Button asChild variant="outline">
+                    <Link href="/users/upload">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Carga Masiva
+                    </Link>
+                </Button>
                 <Dialog open={isExporting} onOpenChange={setIsExporting}>
                     <DialogTrigger asChild>
                         <Button

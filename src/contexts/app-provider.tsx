@@ -46,7 +46,13 @@ interface AppContextType {
   addUser: (newUser: User) => void;
   updateUser: (updatedUser: User) => void;
   deleteUser: (username: string) => void;
-
+  addMultipleUsers: (newUsers: User[]) => void;
+  addMultipleCollaborators: (newCollaborators: CollaboratorCompany[]) => void;
+  addMultipleQualityControlCompanies: (newCompanies: QualityControlCompany[]) => void;
+  addMultipleInspectors: (newInspectors: Inspector[]) => void;
+  addMultipleInstallers: (newInstallers: Installer[]) => void;
+  addMultipleExpansionManagers: (newManagers: ExpansionManager[]) => void;
+  addMultipleSectors: (newSectors: Sector[]) => void;
 
   // Auth & Settings
   login: (username: string, operatorName?: string) => User | null;
@@ -212,6 +218,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateUser = useCallback((item: User) => setUsers(prev => prev.map(u => u.username === item.username ? item : u)), []);
   const deleteUser = useCallback((username: string) => setUsers(prev => prev.filter(u => u.username !== username)), []);
 
+  const addMultipleUsers = useCallback((newUsers: User[]) => setUsers(prev => [...newUsers, ...prev]), []);
+  const addMultipleCollaborators = useCallback((newItems: CollaboratorCompany[]) => setCollaborators(prev => [...newItems, ...prev]), []);
+  const addMultipleQualityControlCompanies = useCallback((newItems: QualityControlCompany[]) => setQualityCompanies(prev => [...newItems, ...prev]), []);
+  const addMultipleInspectors = useCallback((newItems: Inspector[]) => setInspectors(prev => [...newItems, ...prev]), []);
+  const addMultipleInstallers = useCallback((newItems: Installer[]) => setInstallers(prev => [...newItems, ...prev]), []);
+  const addMultipleExpansionManagers = useCallback((newItems: ExpansionManager[]) => setExpansionManagers(prev => [...newItems, ...prev]), []);
+  const addMultipleSectors = useCallback((newItems: Sector[]) => setSectors(prev => [...newItems, ...prev]), []);
+
+
   const contextValue = useMemo(
     () => ({
       user,
@@ -250,6 +265,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addUser,
       updateUser,
       deleteUser,
+      addMultipleUsers,
+      addMultipleCollaborators,
+      addMultipleQualityControlCompanies,
+      addMultipleInspectors,
+      addMultipleInstallers,
+      addMultipleExpansionManagers,
+      addMultipleSectors,
       login,
       logout,
       switchRole,
@@ -265,7 +287,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
-      getRecordById, addRecord, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead
+      getRecordById, addRecord, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead,
+      addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors
     ]
   );
 

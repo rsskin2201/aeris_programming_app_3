@@ -23,7 +23,7 @@ import { ROLES, Role, STATUS } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
 import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO } from "@/lib/form-options";
+import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO, mockMunicipalities } from "@/lib/form-options";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -58,17 +58,6 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-// TODO: This should come from a dynamic source, maybe the context
-const mockMunicipalities = [
-    { id: 'MUN-01', name: 'Guadalajara' },
-    { id: 'MUN-02', name: 'Zapopan' },
-    { id: 'MUN-03', name: 'Tlaquepaque' },
-    { id: 'MUN-04', name: 'Tonalá' },
-    { id: 'MUN-05', name: 'Monterrey' },
-    { id: 'MUN-06', name: 'San Pedro Garza García' },
-    { id: 'MUN-07', name: 'Ciudad de México - Miguel Hidalgo' },
-];
 
 export default function SpecialInspectionPage() {
   const { toast } = useToast();
