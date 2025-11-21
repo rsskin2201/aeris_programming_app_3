@@ -40,7 +40,7 @@ const inspectionTypes = [
     }
 ];
 
-const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE];
+const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE, ROLES.COORDINADOR_SSPP];
 const restrictedRoles = [ROLES.COLABORADOR, ROLES.GESTOR];
 
 export default function InspectionsPage() {
@@ -53,10 +53,16 @@ export default function InspectionsPage() {
     const isFormCreationRestricted = restrictedRoles.includes(user.role) && !formsEnabled;
 
     const userPermissions = PERMISSIONS[user.role] || [];
-    const visibleCards = inspectionTypes.filter(it => userPermissions.includes(it.requiredModule as any));
+    let visibleCards = inspectionTypes.filter(it => userPermissions.includes(it.requiredModule as any));
+
+    // Special logic for Coordinator SSPP
+    if (user.role === ROLES.COORDINADOR_SSPP) {
+        visibleCards = visibleCards.filter(it => it.id === 'salesforce');
+    }
+
 
     const handleCardClick = (e: React.MouseEvent, cardHref: string) => {
-        if (!formsEnabled) {
+        if (!formsEnabled && cardHref !== '/inspections/salesforce') {
             e.preventDefault();
             toast({
                 variant: "destructive",

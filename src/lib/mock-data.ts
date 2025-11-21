@@ -5,6 +5,7 @@ export const mockUsers: User[] = [
   { name: 'Gerardo Gestor', username: 'gestor', role: ROLES.GESTOR, zone: 'Zona Norte', status: USER_STATUS.ACTIVO },
   { name: 'Ana Colaboradora', username: 'colaboradora', role: ROLES.COLABORADOR, zone: 'Bajio Norte', status: USER_STATUS.ACTIVO },
   { name: 'Sofia Soporte', username: 'soporte', role: ROLES.SOPORTE, zone: 'Zona Centro', status: USER_STATUS.ACTIVO },
+  { name: 'Samuel Coordinador', username: 'coordinador', role: ROLES.COORDINADOR_SSPP, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
   { name: 'Carla Calidad', username: 'calidad', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
   { name: 'Carlos Canales', username: 'canales', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
   { name: 'Victor Visual', username: 'visual', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.INACTIVO },

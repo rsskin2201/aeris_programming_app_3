@@ -3,6 +3,7 @@ export const ROLES = {
   GESTOR: 'Gestor',
   COLABORADOR: 'Empresa Colaboradora',
   SOPORTE: 'Soporte a Procesos',
+  COORDINADOR_SSPP: 'Coordinador SSPP',
   CALIDAD: 'Empresa Control de Calidad',
   CANALES: 'Canales',
   VISUAL: 'Visual',

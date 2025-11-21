@@ -68,6 +68,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { cn } from '@/lib/utils';
 
 const moduleIcons = {
   [MODULES.INSPECTIONS]: Briefcase,
@@ -139,7 +140,10 @@ export default function Header() {
           asChild
           variant={pathname === '/' ? 'secondary' : 'ghost'}
           size="sm"
-          className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground"
+          className={cn(
+              "hover:bg-accent/90 hover:text-accent-foreground",
+              pathname === '/' && "bg-accent text-accent-foreground"
+          )}
         >
             <Link href="/">
                 <Home className="mr-2 h-4 w-4" />
@@ -165,7 +169,10 @@ export default function Header() {
               <span className="text-2xl">⚡</span>
               <span className="font-headline text-xl">AERIS</span>
             </Link>
-            <Button asChild variant={pathname === '/' ? 'secondary' : 'ghost'} className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground">
+            <Button asChild variant={pathname === '/' ? 'secondary' : 'ghost'} className={cn(
+              "hover:bg-accent/90 hover:text-accent-foreground",
+              pathname === '/' && "bg-accent text-accent-foreground"
+            )}>
                 <Link href="/">
                     <Home className="mr-2 h-4 w-4" />
                     Panel Principal
