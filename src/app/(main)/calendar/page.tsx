@@ -75,13 +75,13 @@ const dayBlockingRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP];
 const canExportRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP, ROLES.VISUAL];
 
 const daysOfWeek = [
-  'Sábado',
-  'Domingo',
   'Lunes',
   'Martes',
   'Miércoles',
   'Jueves',
   'Viernes',
+  'Sábado',
+  'Domingo',
 ];
 const hoursOfDay = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
 
@@ -163,7 +163,7 @@ export default function CalendarPage() {
 
 
   const firstDayOfMonth = startOfMonth(currentDate);
-  const startingDayOfWeek = getDay(firstDayOfMonth) === 0 ? 1 : (getDay(firstDayOfMonth) + 6) % 7;
+  const startingDayOfWeek = (getDay(firstDayOfMonth) + 6) % 7; // 0 for Monday, 1 for Tuesday ... 6 for Sunday
   
   const daysInMonth = Array.from(
     { length: new Date(getYear(currentDate), getMonth(currentDate) + 1, 0).getDate() },
@@ -171,7 +171,7 @@ export default function CalendarPage() {
   );
 
   const weekDays = useMemo(() => {
-    const start = startOfWeek(currentDate, { weekStartsOn: 6 }); // 6 for Saturday
+    const start = startOfWeek(currentDate, { weekStartsOn: 1 }); // 1 for Monday
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   }, [currentDate]);
 
@@ -226,8 +226,8 @@ export default function CalendarPage() {
               end = start;
               break;
           case 'week':
-              start = startOfWeek(currentDate, { weekStartsOn: 6 });
-              end = endOfWeek(currentDate, { weekStartsOn: 6 });
+              start = startOfWeek(currentDate, { weekStartsOn: 1 });
+              end = endOfWeek(currentDate, { weekStartsOn: 1 });
               break;
           case 'month':
           default:
@@ -300,7 +300,7 @@ export default function CalendarPage() {
               key={day}
               onClick={() => handleDateClick(date)}
               className={cn(
-                'h-24 rounded-md border p-2 text-sm transition-all duration-200 hover:shadow-md hover:border-primary/80',
+                'h-24 rounded-md border p-2 text-sm transition-all duration-200 hover:shadow-lg hover:border-primary/80',
                 blockedDayInfo
                   ? 'bg-muted-foreground/30 text-muted-foreground cursor-not-allowed hover:bg-muted-foreground/30'
                   : 'cursor-pointer',
@@ -523,7 +523,7 @@ export default function CalendarPage() {
               ) : (
                 <ShieldOff className="mr-2 h-4 w-4" />
               )}
-              {weekendsEnabled ? 'Hab. Domingos' : 'Deshab Domingos'}
+              {weekendsEnabled ? 'Hab. Domingos' : 'Deshab. Domingos'}
             </Button>
           )}
           {canToggleForms && (
@@ -642,10 +642,10 @@ export default function CalendarPage() {
                     format(currentDate, "eeee, dd 'de' MMMM", { locale: es })}
                 {view === 'week' &&
                     `Semana del ${format(
-                    startOfWeek(currentDate, { weekStartsOn: 6 }),
+                    startOfWeek(currentDate, { weekStartsOn: 1 }),
                     "dd 'de' MMM"
                     )} - ${format(
-                    addDays(startOfWeek(currentDate, { weekStartsOn: 6 }), 6),
+                    addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6),
                     "dd 'de' MMM, yyyy",
                     { locale: es }
                     )}`}
@@ -668,7 +668,7 @@ export default function CalendarPage() {
               <Button
                 size="sm"
                 variant={'ghost'}
-                className={cn(view === 'month' && 'bg-background shadow font-semibold text-primary')}
+                className={cn('bg-background shadow font-semibold text-primary', view === 'month' ? 'bg-primary/10 text-primary' : 'hover:bg-primary/5')}
                 onClick={() => setView('month')}
               >
                 Mes
@@ -676,7 +676,7 @@ export default function CalendarPage() {
               <Button
                 size="sm"
                 variant={'ghost'}
-                className={cn(view === 'week' && 'bg-background shadow font-semibold text-primary')}
+                className={cn('bg-background shadow font-semibold text-primary', view === 'week' ? 'bg-primary/10 text-primary' : 'hover:bg-primary/5')}
                 onClick={() => setView('week')}
               >
                 Semana
@@ -684,7 +684,7 @@ export default function CalendarPage() {
               <Button
                 size="sm"
                 variant={'ghost'}
-                className={cn(view === 'day' && 'bg-background shadow font-semibold text-primary')}
+                className={cn('bg-background shadow font-semibold text-primary', view === 'day' ? 'bg-primary/10 text-primary' : 'hover:bg-primary/5')}
                 onClick={() => setView('day')}
               >
                 Día
