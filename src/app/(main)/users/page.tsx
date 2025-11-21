@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, UserPlus, Pencil, KeyRound, Ban, Trash2, ShieldAlert, Filter, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { MoreHorizontal, UserPlus, Pencil, KeyRound, Ban, Trash2, ShieldAlert, Filter, ChevronLeft, ChevronRight, Download, Users as UsersIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { ROLES, ZONES, USER_STATUS, User } from "@/lib/types";
@@ -175,7 +175,10 @@ export default function UsersPage() {
   return (
     <div className="flex flex-col gap-6">
        <div className="flex flex-wrap items-center justify-between gap-4">
-            <h1 className="font-headline text-3xl font-semibold">Gestión de Usuarios</h1>
+            <h1 className="flex items-center gap-3 font-headline text-3xl font-semibold">
+              <UsersIcon className="h-8 w-8 text-primary" />
+              Gestión de Usuarios
+            </h1>
             <div className='flex items-center gap-2'>
                 <Dialog open={isExporting} onOpenChange={setIsExporting}>
                     <DialogTrigger asChild>

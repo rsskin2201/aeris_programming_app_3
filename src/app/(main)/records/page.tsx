@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { InspectionRecord } from "@/lib/mock-data";
-import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil } from "lucide-react";
+import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, ListTodo } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppContext } from '@/hooks/use-app-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -135,7 +135,10 @@ export default function RecordsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-headline text-3xl font-semibold">Gestión de Registros</h1>
+        <h1 className="flex items-center gap-3 font-headline text-3xl font-semibold">
+          <ListTodo className="h-8 w-8 text-primary" />
+          Gestión de Registros
+        </h1>
         {canExport && (
           <Dialog open={isExporting} onOpenChange={setIsExporting}>
             <DialogTrigger asChild>

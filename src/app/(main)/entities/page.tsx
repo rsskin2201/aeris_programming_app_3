@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Settings } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CollaboratorCompanyForm } from "@/components/entities/collaborator-company-form";
 import { QualityControlCompanyForm } from "@/components/entities/quality-control-company-form";
@@ -153,7 +153,10 @@ export default function EntitiesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-headline text-3xl font-semibold">Gestión de Entidades</h1>
+        <h1 className="flex items-center gap-3 font-headline text-3xl font-semibold">
+          <Settings className="h-8 w-8 text-primary" />
+          Gestión de Entidades
+        </h1>
       </div>
 
       

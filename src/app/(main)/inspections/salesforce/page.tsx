@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, File, X, Loader2, ChevronLeft, AlertCircle } from 'lucide-react';
+import { UploadCloud, File, X, Loader2, ChevronLeft, AlertCircle, FileUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -116,7 +116,7 @@ const CsvEditor = ({ file, onUpload, isUploading }: CsvEditorProps) => {
                                     <p className="font-bold text-foreground truncate">{header}</p>
                                     <Select 
                                       value={mapping[header] || ''}
-                                      onValueChange={(value: keyof InspectionRecord | '') => handleMappingChange(header, value)}
+                                      onValueChange={(value: keyof InspectionRecord | '' | 'no-map') => handleMappingChange(header, value as keyof InspectionRecord | '')}
                                     >
                                         <SelectTrigger className="h-8 mt-1">
                                             <SelectValue placeholder="Mapear a..." />
@@ -262,7 +262,10 @@ export default function SalesforceUploadPage() {
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h1 className="font-headline text-3xl font-semibold">Carga Masiva de Salesforce</h1>
+        <h1 className="flex items-center gap-3 font-headline text-3xl font-semibold">
+          <FileUp className="h-8 w-8 text-primary" />
+          Carga Masiva de Salesforce
+        </h1>
       </div>
       <Card>
         <CardHeader>

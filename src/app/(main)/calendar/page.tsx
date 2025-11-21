@@ -24,6 +24,7 @@ import {
   CalendarClock,
   Eye,
   Pencil,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
@@ -414,7 +415,8 @@ export default function CalendarPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-headline text-3xl font-semibold">
+        <h1 className="flex items-center gap-3 font-headline text-3xl font-semibold">
+          <CalendarIcon className="h-8 w-8 text-primary" />
           Calendario de Inspecciones
         </h1>
         <div className="flex flex-wrap items-center gap-2">

@@ -6,7 +6,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { PERMISSIONS } from "@/lib/permissions";
 import { MODULES, ROLES } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Power, PowerOff, Upload } from "lucide-react";
+import { Briefcase, Power, PowerOff, Upload } from "lucide-react";
 
 const inspectionTypes = [
     {
@@ -77,7 +77,10 @@ export default function InspectionsPage() {
     <div>
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <div>
-                <h1 className="font-headline text-3xl font-semibold">Gestión de Inspecciones</h1>
+                <h1 className="flex items-center gap-3 font-headline text-3xl font-semibold">
+                  <Briefcase className="h-8 w-8 text-primary" />
+                  Gestión de Inspecciones
+                </h1>
                 <p className="text-muted-foreground mt-2">Selecciona el tipo de programación que deseas realizar.</p>
             </div>
             {canToggleForms && (

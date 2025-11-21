@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle, CalendarIcon, ListChecks } from "lucide-react";
+import { ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle, CalendarIcon as CalendarIconLucide, ListChecks, File as FileIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse, isBefore, set, endOfDay } from "date-fns";
@@ -402,7 +402,8 @@ export default function IndividualInspectionPage() {
                 </Link>
                 </Button>
                 <div>
-                <h1 className="font-headline text-3xl font-semibold">
+                <h1 className="flex items-center gap-3 font-headline text-3xl font-semibold">
+                    <FileIcon className="h-8 w-8 text-primary" />
                     {pageMode === 'new' && 'Programación Individual de PES'}
                     {pageMode === 'view' && 'Visualizar Inspección Individual'}
                     {pageMode === 'edit' && 'Modificar Inspección Individual'}
@@ -658,7 +659,7 @@ export default function IndividualInspectionPage() {
                                 placeholder="Elige una fecha"
                                 className={cn("pl-3 pr-10 text-left font-normal", !field.value && "text-muted-foreground")}
                                 />
-                                <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
+                                <CalendarIconLucide className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
                             </div>
                         </FormControl>
                       </PopoverTrigger>

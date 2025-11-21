@@ -6,6 +6,7 @@ import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/u
 import { useAppContext } from '@/hooks/use-app-context';
 import { mockRecords } from '@/lib/mock-data';
 import { useMemo } from 'react';
+import { PieChart } from 'lucide-react';
 
 const chartData = [
   { month: 'Enero', inspections: 186, approved: 160 },
@@ -66,7 +67,10 @@ export default function StatisticsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-headline text-3xl font-semibold">Estadísticas y Métricas</h1>
+      <h1 className="flex items-center gap-3 font-headline text-3xl font-semibold">
+        <PieChart className="h-8 w-8 text-primary" />
+        Estadísticas y Métricas
+      </h1>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpis.map(kpi => (
