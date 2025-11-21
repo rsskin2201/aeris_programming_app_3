@@ -587,7 +587,7 @@ export default function MassiveInspectionPage() {
               </CardContent>
             </Card>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-center gap-2">
                 <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
                 <Button type="button" variant="outline" onClick={() => router.push('/inspections')} disabled={isSubmitting}>Cancelar</Button>
                  <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
