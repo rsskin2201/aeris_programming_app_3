@@ -34,19 +34,17 @@ import {
   addMonths,
   addWeeks,
   format,
-  getDate,
-  getDay,
-  getISODay,
-  getHours,
-  getMonth,
-  getYear,
-  isSameDay,
-  isSameMonth,
-  isSunday,
-  parseISO,
+  endOfMonth,
+  endOfWeek,
   startOfDay,
   startOfMonth,
   startOfWeek,
+  isSunday,
+  isSameDay,
+  parseISO,
+  getYear,
+  getMonth,
+  getISODay,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ROLES } from '@/lib/types';
@@ -68,22 +66,24 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import Papa from 'papaparse';
+import { useToast } from '@/hooks/use-toast';
 
 const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE, ROLES.COORDINADOR_SSPP];
 const adminRoles = [ROLES.ADMIN];
 const dayBlockingRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP];
-const canExportRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP];
+const canExportRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP, ROLES.VISUAL];
 
 const daysOfWeek = [
+  'Sábado',
+  'Domingo',
   'Lunes',
   'Martes',
   'Miércoles',
   'Jueves',
   'Viernes',
-  'Sábado',
-  'Domingo',
 ];
-const hoursOfDay = Array.from({ length: 11 }, (_, i) => `${String(i + 9).padStart(2, '0')}:00`); // 09:00 to 19:00
+const hoursOfDay = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
 
 const statusColors: Record<InspectionRecord['status'], string> = {
     'Aprobado': 'bg-green-500/80 border-green-700 text-white',
@@ -109,8 +109,10 @@ export default function CalendarPage() {
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [blockReason, setBlockReason] = useState('');
   const router = useRouter();
+  const { toast } = useToast();
 
   const canToggleForms = user && privilegedRoles.includes(user.role);
   const canEnableWeekends = user && adminRoles.includes(user.role);
@@ -118,19 +120,24 @@ export default function CalendarPage() {
   const canExport = user && canExportRoles.includes(user.role);
   
   const isCollaborator = user?.role === ROLES.COLABORADOR;
+  const isQualityControl = user?.role === ROLES.CALIDAD;
+
+  const filteredRecordsForView = useMemo(() => {
+    let filtered = records;
+    if (isCollaborator) {
+      filtered = records.filter(record => record.collaboratorCompany === user.name);
+    } else if (zone !== 'Todas las zonas' && !isQualityControl) {
+      filtered = records.filter(record => record.zone === zone);
+    }
+    // For Quality Control, they can see all in their zone, so no special filter here,
+    // it's handled by the global zone context.
+    return filtered;
+  }, [zone, records, isCollaborator, isQualityControl, user]);
 
 
   const inspectionsByDay = useMemo(() => {
-    let filteredRecords = records;
-    if (isCollaborator) {
-        filteredRecords = records.filter(record => record.collaboratorCompany === user.name);
-    } else if (zone !== 'Todas las zonas') {
-        filteredRecords = records.filter(record => record.zone === zone);
-    }
-    
-    const inspections: Record<string, typeof records> = {};
-
-    filteredRecords.forEach((record) => {
+    const inspections: Record<string, typeof filteredRecordsForView> = {};
+    filteredRecordsForView.forEach((record) => {
       const recordDate = parseISO(record.requestDate);
       const dateKey = format(recordDate, 'yyyy-MM-dd');
       if (!inspections[dateKey]) {
@@ -139,19 +146,11 @@ export default function CalendarPage() {
       inspections[dateKey].push(record);
     });
     return inspections;
-  }, [zone, records, isCollaborator, user]);
+  }, [filteredRecordsForView]);
   
    const inspectionsByTime = useMemo(() => {
-    const inspections: Record<string, typeof records> = {};
-    
-    let filteredRecords = records;
-    if (isCollaborator) {
-        filteredRecords = records.filter(record => record.collaboratorCompany === user.name);
-    } else if (zone !== 'Todas las zonas') {
-        filteredRecords = records.filter(record => record.zone === zone);
-    }
-
-    filteredRecords.forEach((record) => {
+    const inspections: Record<string, typeof filteredRecordsForView> = {};
+    filteredRecordsForView.forEach((record) => {
       const recordDate = parseISO(record.requestDate);
       const dateTimeKey = format(recordDate, 'yyyy-MM-dd-HH');
       if (!inspections[dateTimeKey]) {
@@ -160,19 +159,18 @@ export default function CalendarPage() {
       inspections[dateTimeKey].push(record);
     });
     return inspections;
-  }, [zone, records, isCollaborator, user]);
+  }, [filteredRecordsForView]);
 
 
   const firstDayOfMonth = startOfMonth(currentDate);
-  const startingDayOfWeek = getISODay(firstDayOfMonth) - 1; // 0=Mon, 6=Sun
+  const startingDayOfWeek = (getISODay(firstDayOfMonth) % 7); // 0=Sun, 1=Mon... but we want 0=Sat, so we adjust
   const daysInMonth = Array.from(
     { length: new Date(getYear(currentDate), getMonth(currentDate) + 1, 0).getDate() },
     (_, i) => i + 1
   );
 
   const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const day = addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i);
-    return day;
+    return addDays(startOfWeek(currentDate, { weekStartsOn: 6 }), i);
   });
 
   const changeDate = (amount: number) => {
@@ -182,8 +180,8 @@ export default function CalendarPage() {
   };
   
   const handleDateClick = (date: Date) => {
-    const dateKey = format(date, 'yyyy-MM-dd');
-    const isBlocked = blockedDays[dateKey];
+    const isDayBlocked = !!blockedDays[format(date, 'yyyy-MM-dd')];
+    if (isDayBlocked) return;
     if (isSunday(date) && !weekendsEnabled) return;
 
     setCurrentDate(date);
@@ -215,10 +213,59 @@ export default function CalendarPage() {
     setIsBlockDialogOpen(false);
     setBlockReason('');
   }
+
+  const { exportData, exportRange, exportCount } = useMemo(() => {
+      let start: Date;
+      let end: Date;
+
+      switch(view) {
+          case 'day':
+              start = startOfDay(currentDate);
+              end = start;
+              break;
+          case 'week':
+              start = startOfWeek(currentDate, { weekStartsOn: 6 });
+              end = endOfWeek(currentDate, { weekStartsOn: 6 });
+              break;
+          case 'month':
+          default:
+              start = startOfMonth(currentDate);
+              end = endOfMonth(currentDate);
+              break;
+      }
+      
+      const recordsToExport = filteredRecordsForView.filter(rec => {
+          const recDate = parseISO(rec.requestDate);
+          return recDate >= start && recDate <= end;
+      });
+
+      return {
+          exportData: recordsToExport,
+          exportCount: recordsToExport.length,
+          exportRange: { from: start, to: end }
+      };
+
+  }, [view, currentDate, filteredRecordsForView]);
   
-  const exportToCsv = () => {
-    alert('Funcionalidad de exportación pendiente de implementación.');
-  }
+  const handleExport = () => {
+    const csv = Papa.unparse(exportData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `calendario_${format(new Date(), 'yyyyMMdd')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    setIsExporting(false);
+    toast({
+        title: "Exportación Completa",
+        description: `${exportCount} registros han sido exportados a CSV.`
+    });
+  };
 
   const renderMonthView = () => (
     <>
@@ -331,7 +378,10 @@ export default function CalendarPage() {
         {hoursOfDay.map((hour) => (
           <div
             key={hour}
-            className="h-20 border-b pr-2 flex items-center justify-center text-muted-foreground"
+            className={cn(
+              "h-16 border-b pr-2 flex items-center justify-center text-muted-foreground",
+              (parseInt(hour) < 9 || parseInt(hour) >= 19) && "bg-muted/30"
+            )}
           >
             {hour}
           </div>
@@ -354,10 +404,11 @@ export default function CalendarPage() {
                   key={`${day}-${hour}`}
                   onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
                   className={cn(
-                    'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
+                    'h-16 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
                     isSunday(day) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                     isSunday(day) && weekendsEnabled && 'bg-green-100/50',
-                    isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/20'
+                    isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/20',
+                    (parseInt(hour) < 9 || parseInt(hour) >= 19) && 'bg-muted/30 hover:bg-muted/50'
                   )}
                 >
                   {!isBlocked && renderInspectionsForSlot(day, hour)}
@@ -379,7 +430,10 @@ export default function CalendarPage() {
         {hoursOfDay.map((hour) => (
           <div
             key={hour}
-            className="h-20 border-b pr-2 flex items-center justify-center text-muted-foreground"
+            className={cn(
+              "h-16 border-b pr-2 flex items-center justify-center text-muted-foreground",
+              (parseInt(hour) < 9 || parseInt(hour) >= 19) && "bg-muted/30"
+            )}
           >
             {hour}
           </div>
@@ -398,10 +452,11 @@ export default function CalendarPage() {
               key={`${currentDate}-${hour}`}
               onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
               className={cn(
-                'h-20 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
+                'h-16 border-b p-1 transition-colors hover:bg-primary/10 cursor-pointer overflow-y-auto',
                 isSunday(currentDate) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                 isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50',
-                isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/20'
+                isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/20',
+                (parseInt(hour) < 9 || parseInt(hour) >= 19) && 'bg-muted/30 hover:bg-muted/50'
               )}
             >
               {!isBlocked && renderInspectionsForSlot(currentDate, hour)}
@@ -421,13 +476,32 @@ export default function CalendarPage() {
         </h1>
         <div className="flex flex-wrap items-center gap-2">
             {canExport && (
-              <Button 
-                  variant="outline"
-                  className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700"
-                  onClick={exportToCsv}
-              >
-                  <Download className="mr-2 h-4 w-4" /> Exportar .csv
-              </Button>
+               <Dialog open={isExporting} onOpenChange={setIsExporting}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700 active:bg-green-800"
+                  >
+                    <Download className="mr-2 h-4 w-4" /> Exportar .csv
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Confirmar Exportación de Calendario</DialogTitle>
+                    <DialogDescription>
+                      Se exportarán <strong>{exportCount}</strong> registros para el rango de fechas:
+                      <p className='font-medium mt-2'>
+                          {format(exportRange.from, 'PPP', { locale: es })} - {format(exportRange.to, 'PPP', { locale: es })}
+                      </p>
+                      ¿Deseas continuar?
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
+                    <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">Confirmar</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             )}
           {canEnableWeekends && (
             <Button
@@ -558,21 +632,23 @@ export default function CalendarPage() {
             <Button variant="outline" size="icon" onClick={() => changeDate(-1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="font-headline text-xl capitalize">
-              {view === 'day' &&
-                format(currentDate, "eeee, dd 'de' MMMM", { locale: es })}
-              {view === 'week' &&
-                `Semana del ${format(
-                  startOfWeek(currentDate, { weekStartsOn: 1 }),
-                  "dd 'de' MMM"
-                )} - ${format(
-                  addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6),
-                  "dd 'de' MMM, yyyy",
-                  { locale: es }
-                )}`}
-              {view === 'month' &&
-                format(currentDate, 'MMMM yyyy', { locale: es })}
-            </CardTitle>
+            <div className='w-[350px]'>
+                <CardTitle className="font-headline text-xl capitalize text-center">
+                {view === 'day' &&
+                    format(currentDate, "eeee, dd 'de' MMMM", { locale: es })}
+                {view === 'week' &&
+                    `Semana del ${format(
+                    startOfWeek(currentDate, { weekStartsOn: 6 }),
+                    "dd 'de' MMM"
+                    )} - ${format(
+                    addDays(startOfWeek(currentDate, { weekStartsOn: 6 }), 6),
+                    "dd 'de' MMM, yyyy",
+                    { locale: es }
+                    )}`}
+                {view === 'month' &&
+                    format(currentDate, 'MMMM yyyy', { locale: es })}
+                </CardTitle>
+            </div>
             <Button variant="outline" size="icon" onClick={() => changeDate(1)}>
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -616,7 +692,7 @@ export default function CalendarPage() {
           {view === 'month' && renderMonthView()}
           {view === 'week' && (
             <div className="overflow-x-auto">
-              <div className="grid grid-cols-[auto,1fr] min-w-[800px]">
+              <div className="grid grid-cols-[auto,1fr] min-w-[900px]">
                 <div className="w-16 flex-shrink-0">&nbsp;</div>
                 <div className="grid grid-cols-7">
                   {weekDays.map((day) => (
