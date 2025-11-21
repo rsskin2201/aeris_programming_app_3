@@ -20,11 +20,11 @@ export default function LoginPage() {
       )}
       <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex items-center gap-3">
-            <span className="text-5xl font-bold text-primary">⚡</span>
-            <h1 className="font-headline text-5xl font-bold text-primary">AERIS</h1>
+          <div className="mx-auto mb-4 flex items-center justify-center gap-3">
+            <span className="text-6xl font-bold text-primary">⚡</span>
+            <h1 className="font-headline text-6xl font-bold text-primary">AERIS</h1>
           </div>
-          <CardTitle className="font-headline text-2xl">Bienvenido</CardTitle>
+          <CardTitle className="font-headline text-2xl">Bienvenido(a)</CardTitle>
           <CardDescription>Inicia sesión para gestionar las inspecciones.</CardDescription>
         </CardHeader>
         <CardContent>

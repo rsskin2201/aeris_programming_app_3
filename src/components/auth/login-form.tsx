@@ -15,6 +15,7 @@ import { useAppContext } from '@/hooks/use-app-context';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { ROLES } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'El usuario es requerido.' }),
@@ -53,7 +54,7 @@ export function LoginForm() {
       if (user) {
         toast({
           title: 'Inicio de sesión exitoso',
-          description: `Bienvenido, ${values.operatorName || user.name}`,
+          description: `Bienvenido(a), ${values.operatorName || user.name}`,
           duration: 2000,
         });
         router.push('/');
@@ -104,7 +105,7 @@ export function LoginForm() {
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Usuario</FormLabel>
+                <FormLabel className="text-base font-bold">Usuario</FormLabel>
                 <FormControl>
                   <Input placeholder="e.g., admin, gestor, visual" {...field} />
                 </FormControl>
@@ -117,7 +118,7 @@ export function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Contraseña</FormLabel>
+                <FormLabel className="text-base font-bold">Contraseña</FormLabel>
                 <FormControl>
                   <Input type="password" placeholder="******" {...field} />
                 </FormControl>
@@ -130,7 +131,7 @@ export function LoginForm() {
             name="operatorName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre de operador (Opcional)</FormLabel>
+                <FormLabel className="text-base font-bold">Nombre de operador (Opcional)</FormLabel>
                 <FormControl>
                   <Input placeholder="Tu nombre" {...field} />
                 </FormControl>
@@ -153,7 +154,7 @@ export function LoginForm() {
       <div className="mt-4 text-center text-sm">
         <Dialog open={isForgotPassOpen} onOpenChange={setIsForgotPassOpen}>
             <DialogTrigger asChild>
-                <button className="underline underline-offset-4 hover:text-primary">
+                <button className="underline underline-offset-4 text-primary hover:text-destructive">
                     ¿Olvidaste tu contraseña?
                 </button>
             </DialogTrigger>
