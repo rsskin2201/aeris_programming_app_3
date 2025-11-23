@@ -24,6 +24,7 @@ import { InspectionRecord } from "@/lib/mock-data";
 import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO, mockMunicipalities } from "@/lib/form-options";
+import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -47,6 +48,7 @@ const formSchema = z.object({
   tipoMdd: z.string().optional(),
   mercado: z.string().min(1, "El mercado es requerido."),
   oferta: z.string().optional(),
+  observaciones: z.string().optional(),
 
   empresaColaboradora: z.string().min(1, "La empresa colaboradora es requerida."),
   fechaProgramacion: z.date({ required_error: "La fecha de programación es requerida." }),
@@ -97,6 +99,7 @@ export default function SpecialInspectionPage() {
     tipoMdd: "",
     mercado: "",
     oferta: "",
+    observaciones: "",
     empresaColaboradora: isCollaborator ? collaboratorCompany : "",
     horarioProgramacion: "",
     instalador: "",
@@ -177,6 +180,7 @@ export default function SpecialInspectionPage() {
             id: values.id || generateId(),
             serieMdd: undefined,
             mercado: values.mercado,
+            observaciones: values.observaciones,
         };
         addRecord(recordToSave);
 
@@ -380,56 +384,70 @@ export default function SpecialInspectionPage() {
                 <CardTitle>Detalles de la Programación</CardTitle>
                 <CardDescription>Información técnica y de clasificación del servicio.</CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-6 md:grid-cols-2">
-                 <FormField control={form.control} name="tipoInspeccion" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Inspección</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {TIPO_INSPECCION_ESPECIAL.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="tipoProgramacion" render={({ field }) => (
-                   <FormItem>
-                    <FormLabel>Tipo de Programación</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {TIPO_PROGRAMACION_ESPECIAL.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                 <FormField control={form.control} name="tipoMdd" render={({ field }) => (
-                   <FormItem>
-                    <FormLabel>Tipo MDD</FormLabel>
-                     <FormControl>
-                        <Input {...field} disabled readOnly />
-                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                 <FormField control={form.control} name="mercado" render={({ field }) => (
-                   <FormItem>
-                    <FormLabel>Mercado</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un mercado" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {MERCADO.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="oferta" render={({ field }) => (
+              <CardContent className="grid gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="tipoInspeccion" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Oferta/Campaña (Opcional)</FormLabel>
-                        <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                        <FormLabel>Tipo de Inspección</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {TIPO_INSPECCION_ESPECIAL.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )} />
+                    <FormField control={form.control} name="tipoProgramacion" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Tipo de Programación</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {TIPO_PROGRAMACION_ESPECIAL.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )} />
+                    <FormField control={form.control} name="tipoMdd" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Tipo MDD</FormLabel>
+                        <FormControl>
+                            <Input {...field} disabled readOnly />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )} />
+                    <FormField control={form.control} name="mercado" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Mercado</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un mercado" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {MERCADO.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )} />
+                    <FormField control={form.control} name="oferta" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Oferta/Campaña (Opcional)</FormLabel>
+                            <FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)}/></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                 </div>
+                  <FormField control={form.control} name="observaciones" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Observaciones (Opcional)</FormLabel>
+                        <FormControl>
+                            <Textarea 
+                                placeholder="Añadir comentarios o notas relevantes para la inspección..."
+                                {...field}
+                            />
+                        </FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -575,6 +593,7 @@ export default function SpecialInspectionPage() {
                             {renderFieldWithFeedback('tipoMdd', 'Tipo MDD', formData.tipoMdd)}
                             {renderFieldWithFeedback('mercado', 'Mercado', formData.mercado)}
                             {renderFieldWithFeedback('oferta', 'Oferta/Campaña', formData.oferta)}
+                            {renderFieldWithFeedback('observaciones', 'Observaciones', formData.observaciones)}
 
                             <h3 className="font-semibold text-lg mb-2 mt-4">Asignación y Estatus</h3>
                             {renderFieldWithFeedback('empresaColaboradora', 'Empresa Colaboradora', formData.empresaColaboradora)}

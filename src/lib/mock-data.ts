@@ -30,6 +30,7 @@ export type InspectionRecord = {
   serieMdd?: string;
   mercado: string;
   horarioProgramacion?: string;
+  observaciones?: string;
 };
 
 export const mockRecords: InspectionRecord[] = [
