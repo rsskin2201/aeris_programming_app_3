@@ -382,6 +382,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                                             <SelectContent>
                                                 <SelectItem value={STATUS.APROBADA}>Aprobada</SelectItem>
                                                 <SelectItem value={STATUS.NO_APROBADA}>No Aprobada</SelectItem>
+                                                <SelectItem value={STATUS.RECHAZADA}>Rechazada</SelectItem>
                                                 <SelectItem value={STATUS.CANCELADA}>Cancelada</SelectItem>
                                             </SelectContent>
                                         </Select>

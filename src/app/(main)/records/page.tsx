@@ -34,6 +34,7 @@ const statusColors: Record<InspectionRecord['status'], string> = {
   [STATUS.PENDIENTE_INFORMAR_DATOS]: 'bg-yellow-500/80 border-yellow-600 text-white',
   [STATUS.APROBADA]: 'bg-green-600/80 border-green-700 text-white',
   [STATUS.NO_APROBADA]: 'bg-red-600/80 border-red-700 text-white',
+  [STATUS.RECHAZADA]: 'bg-red-700/80 border-red-800 text-white',
   [STATUS.CANCELADA]: 'bg-red-800/80 border-red-900 text-white',
   [STATUS.RESULTADO_REGISTRADO]: 'bg-purple-600/80 border-purple-700 text-white',
 };

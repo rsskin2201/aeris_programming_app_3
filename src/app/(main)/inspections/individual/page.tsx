@@ -66,7 +66,7 @@ type FormValues = z.infer<typeof formSchema>;
 const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMADA_POR_GE, STATUS.REGISTRADA];
 const checklistRoles = [ROLES.CALIDAD, ROLES.SOPORTE, ROLES.ADMIN];
 const supportRoles = [ROLES.SOPORTE, ROLES.ADMIN];
-const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RESULTADO_REGISTRADO];
+const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.RESULTADO_REGISTRADO];
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
@@ -186,7 +186,7 @@ export default function IndividualInspectionPage() {
     }
 
     if (pageMode === 'edit' && currentRecord) {
-        const isClosed = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.CANCELADA, STATUS.RESULTADO_REGISTRADO].includes(currentRecord.status as any);
+        const isClosed = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CANCELADA, STATUS.RESULTADO_REGISTRADO].includes(currentRecord.status as any);
         if (isClosed && user?.role !== ROLES.ADMIN) return true;
 
         if (isCollaborator && fieldName === 'status') {
@@ -238,7 +238,7 @@ export default function IndividualInspectionPage() {
   const showSupportButton = useMemo(() => {
     if (pageMode !== 'edit' || !user || !currentRecord) return false;
     const canAccess = supportRoles.includes(user.role);
-    const isValidStatus = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RESULTADO_REGISTRADO].includes(currentRecord.status as any);
+    const isValidStatus = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.RESULTADO_REGISTRADO].includes(currentRecord.status as any);
     return canAccess && isValidStatus;
   }, [pageMode, user, currentRecord]);
   
@@ -304,6 +304,7 @@ export default function IndividualInspectionPage() {
     
     setTimeout(() => {
         const recordToSave: InspectionRecord = {
+            ...currentRecord,
             ...values,
             client: currentRecord?.client || 'Cliente (TBD)',
             address: `${values.calle} ${values.numero}, ${values.colonia}`,
@@ -324,22 +325,24 @@ export default function IndividualInspectionPage() {
             updateRecord(recordToSave);
             // Notify on status change
              if (values.status !== currentRecord.status) {
+                const creator = allUsers.find(u => u.username === recordToSave.createdBy);
+                const gestor = allUsers.find(u => u.name === recordToSave.gestor);
+
                 if (values.status === STATUS.APROBADA) {
                     const coordinators = allUsers.filter(u => u.role === ROLES.COORDINADOR_SSPP && (u.zone === recordToSave.zone || u.zone === 'Todas las zonas'));
                     coordinators.forEach(c => addNotification({
                         recipientUsername: c.username,
                         message: `Inspección ${recordToSave.id} aprobada en zona ${recordToSave.zone}.`,
                     }));
-                } else if (values.status === STATUS.NO_APROBADA) {
-                    const creator = allUsers.find(u => u.username === recordToSave.createdBy);
+                } else if (values.status === STATUS.NO_APROBADA || values.status === STATUS.RECHAZADA) {
+                    const statusText = values.status === STATUS.NO_APROBADA ? 'no aprobada' : 'rechazada';
                     if (creator) addNotification({
                          recipientUsername: creator.username,
-                         message: `Tu solicitud de inspección ${recordToSave.id} ha sido rechazada.`,
+                         message: `Tu solicitud de inspección ${recordToSave.id} ha sido ${statusText}.`,
                     });
-                    const gestor = allUsers.find(u => u.name === recordToSave.gestor);
                     if (gestor) addNotification({
                         recipientUsername: gestor.username,
-                        message: `La inspección ${recordToSave.id} asignada a ti ha sido rechazada.`,
+                        message: `La inspección ${recordToSave.id} asignada a ti ha sido ${statusText}.`,
                     });
                 }
             }
