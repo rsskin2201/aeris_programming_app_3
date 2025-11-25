@@ -22,6 +22,7 @@ interface AppContextType {
   getRecordById: (id: string) => InspectionRecord | undefined;
   addRecord: (newRecord: InspectionRecord) => void;
   updateRecord: (updatedRecord: Partial<InspectionRecord> & { id: string }) => void;
+  addMultipleRecords: (newRecords: InspectionRecord[]) => void;
   
   // Entities
   collaborators: CollaboratorCompany[];
@@ -194,6 +195,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateRecord = useCallback((updatedRecord: Partial<InspectionRecord> & { id: string }) => {
     setRecords(prev => prev.map(record => record.id === updatedRecord.id ? { ...record, ...updatedRecord } : record));
   }, []);
+  const addMultipleRecords = useCallback((newRecords: InspectionRecord[]) => setRecords(prev => [...newRecords, ...prev]), []);
+
 
   // Entities Callbacks
   const addCollaborator = useCallback((item: CollaboratorCompany) => setCollaborators(prev => [item, ...prev]), []);
@@ -250,6 +253,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getRecordById,
       addRecord,
       updateRecord,
+      addMultipleRecords,
       addCollaborator,
       updateCollaborator,
       addQualityCompany,
@@ -287,7 +291,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
-      getRecordById, addRecord, updateRecord, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead,
+      getRecordById, addRecord, updateRecord, addMultipleRecords, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead,
       addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors
     ]
   );

@@ -32,10 +32,10 @@ const inspectionTypes = [
     },
     {
         id: 'salesforce',
-        title: 'Carga Masiva Salesforce',
-        description: 'Cargar registros desde un archivo .csv de Salesforce.',
+        title: 'Carga Masiva de Registros',
+        description: 'Cargar registros desde un archivo .csv (Excel, Sheets).',
         href: '/inspections/salesforce',
-        requiredModule: MODULES.SALESFORCE_UPLOAD, // Custom module for this
+        requiredModule: MODULES.SALESFORCE_UPLOAD,
         icon: Upload,
     }
 ];
@@ -50,19 +50,13 @@ export default function InspectionsPage() {
     if (!user) return null;
 
     const canToggleForms = privilegedRoles.includes(user.role);
-    const isFormCreationRestricted = restrictedRoles.includes(user.role) && !formsEnabled;
 
     const userPermissions = PERMISSIONS[user.role] || [];
-    let visibleCards = inspectionTypes.filter(it => userPermissions.includes(it.requiredModule as any));
+    const visibleCards = inspectionTypes.filter(it => userPermissions.includes(it.requiredModule as any));
 
-    // Special logic for Coordinator SSPP
-    if (user.role === ROLES.COORDINADOR_SSPP) {
-        visibleCards = visibleCards.filter(it => it.id === 'salesforce');
-    }
-
-
-    const handleCardClick = (e: React.MouseEvent, cardHref: string) => {
-        if (!formsEnabled && cardHref !== '/inspections/salesforce') {
+    const handleCardClick = (e: React.MouseEvent, cardId: string) => {
+        // Allow Salesforce upload even if forms are disabled
+        if (!formsEnabled && cardId !== 'salesforce') {
             e.preventDefault();
             toast({
                 variant: "destructive",
@@ -102,8 +96,8 @@ export default function InspectionsPage() {
                     <CardDescription>{card.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button asChild disabled={!formsEnabled && card.id !== 'salesforce'} onClick={(e) => handleCardClick(e, card.href)}>
-                        <Link href={card.href}>Iniciar Carga</Link>
+                    <Button asChild disabled={!formsEnabled && card.id !== 'salesforce'} onClick={(e) => handleCardClick(e, card.id)}>
+                        <Link href={card.href}>Iniciar</Link>
                     </Button>
                 </CardContent>
             </Card>
