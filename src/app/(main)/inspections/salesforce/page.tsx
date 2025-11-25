@@ -87,6 +87,11 @@ const recordFields: FieldDefinition<InspectionRecord>[] = [
     { key: 'altaSms', label: 'ALTA DE SMS' },
     { key: 'appNaturgy', label: 'APP NATURGY' },
     { key: 'entregaGuia', label: 'ENTREGA DE GUIA' },
+    { key: 'fechaConexion', label: 'FECHA CONEXION' },
+    { key: 'datosConfirmados', label: 'DATOS CONFIRMADOS' },
+    { key: 'observacionesSoporte', label: 'OBSERVACIONES SOPORTE' },
+    { key: 'tipoRechazo', label: 'TIPO RECHAZO' },
+    { key: 'motivoRechazo', label: 'MOTIVO RECHAZO' },
     // Fields that are not in the list but are required for the record
     { key: 'id', label: 'ID', required: true },
     { key: 'type', label: 'Tipo', required: true },
