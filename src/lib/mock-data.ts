@@ -96,6 +96,11 @@ export type InspectionRecord = {
   altaSms?: string;
   appNaturgy?: string;
   entregaGuia?: string;
+
+  // Support Validation Fields
+  fechaConexion?: string;
+  datosConfirmados?: boolean;
+  observacionesSoporte?: string;
 };
 
 export const mockRecords: InspectionRecord[] = [

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle, CalendarIcon as CalendarIconLucide, ListChecks, File as FileIcon } from "lucide-react";
+import { ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle, CalendarIcon as CalendarIconLucide, ListChecks, File as FileIcon, BadgeCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse, isBefore, set, endOfDay } from "date-fns";
@@ -25,6 +25,7 @@ import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, mockMunicipalities } from "@/lib/form-options";
 import { ChecklistForm } from "@/components/inspections/checklist-form";
+import { SupportValidationForm } from "@/components/inspections/support-validation-form";
 import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
@@ -64,6 +65,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMADA_POR_GE, STATUS.REGISTRADA];
 const checklistRoles = [ROLES.CALIDAD, ROLES.SOPORTE, ROLES.ADMIN];
+const supportRoles = [ROLES.SOPORTE, ROLES.ADMIN];
 const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RESULTADO_REGISTRADO];
 
 export default function IndividualInspectionPage() {
@@ -88,6 +90,7 @@ export default function IndividualInspectionPage() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
+  const [isSupportFormOpen, setIsSupportFormOpen] = useState(false);
   const [pageMode, setPageMode] = useState<'new' | 'view' | 'edit'>('new');
   const [currentRecord, setCurrentRecord] = useState<InspectionRecord | null>(null);
   
@@ -229,6 +232,13 @@ export default function IndividualInspectionPage() {
     if (pageMode !== 'edit' || !user || !currentRecord) return false;
     const canAccess = checklistRoles.includes(user.role);
     const isValidStatus = canViewChecklistStatuses.includes(currentRecord.status as any);
+    return canAccess && isValidStatus;
+  }, [pageMode, user, currentRecord]);
+
+  const showSupportButton = useMemo(() => {
+    if (pageMode !== 'edit' || !user || !currentRecord) return false;
+    const canAccess = supportRoles.includes(user.role);
+    const isValidStatus = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RESULTADO_REGISTRADO].includes(currentRecord.status as any);
     return canAccess && isValidStatus;
   }, [pageMode, user, currentRecord]);
   
@@ -387,12 +397,12 @@ export default function IndividualInspectionPage() {
       );
   }
   
-  const handleChecklistSave = (updatedData: Partial<InspectionRecord>) => {
+  const handleRecordUpdate = (updatedData: Partial<InspectionRecord>) => {
     if (currentRecord) {
         const newRecord = { ...currentRecord, ...updatedData };
         updateRecord(newRecord);
-        setCurrentRecord(newRecord);
-        form.reset({
+        setCurrentRecord(newRecord); // Update local state for immediate feedback
+        form.reset({ // Re-sync main form if needed
             ...newRecord,
             fechaProgramacion: parse(newRecord.requestDate, 'yyyy-MM-dd', new Date()),
         });
@@ -424,17 +434,30 @@ export default function IndividualInspectionPage() {
                 </p>
                 </div>
             </div>
-            {showChecklistButton && (
-                 <Dialog open={isChecklistOpen} onOpenChange={setIsChecklistOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="secondary">
-                            <ListChecks className="mr-2 h-4 w-4"/>
-                            Check List
-                        </Button>
-                    </DialogTrigger>
-                    <ChecklistForm record={currentRecord} onClose={() => setIsChecklistOpen(false)} onSave={handleChecklistSave} />
-                 </Dialog>
-            )}
+            <div className="flex items-center gap-2">
+                {showChecklistButton && (
+                    <Dialog open={isChecklistOpen} onOpenChange={setIsChecklistOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="secondary">
+                                <ListChecks className="mr-2 h-4 w-4"/>
+                                Check List
+                            </Button>
+                        </DialogTrigger>
+                        <ChecklistForm record={currentRecord} onClose={() => setIsChecklistOpen(false)} onSave={handleRecordUpdate} />
+                    </Dialog>
+                )}
+                {showSupportButton && (
+                    <Dialog open={isSupportFormOpen} onOpenChange={setIsSupportFormOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="secondary" className="bg-blue-600 hover:bg-blue-700 text-white">
+                                <BadgeCheck className="mr-2 h-4 w-4"/>
+                                Validar Datos (Soporte)
+                            </Button>
+                        </DialogTrigger>
+                        <SupportValidationForm record={currentRecord} onClose={() => setIsSupportFormOpen(false)} onSave={handleRecordUpdate} />
+                    </Dialog>
+                )}
+            </div>
       </div>
       
       <Form {...form}>
