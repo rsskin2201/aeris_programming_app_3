@@ -17,6 +17,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { InspectionRecord } from "@/lib/mock-data";
 import { MARCA_MDD, TIPO_MDD, SI_NO, MATERIAL_TUBERIA, EQUIPO, FORMA_PAGO } from "@/lib/form-options";
 import { ScrollArea } from "../ui/scroll-area";
+import { STATUS } from "@/lib/types";
 
 const equipmentSchema = z.object({
   equipo: z.string().min(1, "Requerido"),
@@ -59,6 +60,7 @@ const formSchema = z.object({
   altaSms: z.string().min(1, "Requerido"),
   appNaturgy: z.string().min(1, "Requerido"),
   entregaGuia: z.string().min(1, "Requerido"),
+  status: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -66,17 +68,18 @@ type FormValues = z.infer<typeof formSchema>;
 interface ChecklistFormProps {
     record: InspectionRecord | null;
     onClose: () => void;
+    onSave: (updatedRecord: Partial<InspectionRecord>) => void;
 }
 
-export function ChecklistForm({ record, onClose }: ChecklistFormProps) {
+export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
     const { toast } = useToast();
-    const { user, zone, inspectors } = useAppContext();
+    const { user, inspectors } = useAppContext();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            inspector: '',
-            serieMdd: '',
+            inspector: record?.inspector || '',
+            serieMdd: record?.serieMdd || '',
             marcaMdd: '',
             tipoMddCampo: '',
             presion: '',
@@ -95,7 +98,7 @@ export function ChecklistForm({ record, onClose }: ChecklistFormProps) {
             ventilacionEcc: '',
             numEquipos: 0,
             equipos: [],
-            nombreCliente: '',
+            nombreCliente: record?.client || '',
             telCliente: '',
             motivoCancelacion: '',
             comentariosOca: '',
@@ -106,6 +109,7 @@ export function ChecklistForm({ record, onClose }: ChecklistFormProps) {
             altaSms: '',
             appNaturgy: '',
             entregaGuia: '',
+            status: record?.status,
         },
         mode: "onChange",
     });
@@ -140,7 +144,18 @@ export function ChecklistForm({ record, onClose }: ChecklistFormProps) {
     }, [record?.zone, inspectors]);
 
     function onSubmit(values: FormValues) {
-        console.log("Checklist Submitted", values);
+        if (!record) return;
+
+        const updatedData: Partial<InspectionRecord> = {
+            inspector: values.inspector,
+            serieMdd: values.serieMdd,
+            client: values.nombreCliente,
+            status: values.status as any || record.status,
+            // You can add more fields from the checklist to save here
+        };
+
+        onSave(updatedData);
+
         toast({
         title: 'Checklist Guardado',
         description: 'La información del checklist se ha guardado correctamente.',
@@ -321,6 +336,20 @@ export function ChecklistForm({ record, onClose }: ChecklistFormProps) {
                         <div className="space-y-4 p-4 border rounded-md">
                             <h3 className="font-semibold text-lg">Datos Complementarios</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <FormField control={form.control} name="status" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Resultado de Inspección</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar resultado" /></SelectTrigger></FormControl>
+                                            <SelectContent>
+                                                <SelectItem value={STATUS.APROBADA}>Aprobada</SelectItem>
+                                                <SelectItem value={STATUS.NO_APROBADA}>No Aprobada</SelectItem>
+                                                <SelectItem value={STATUS.CANCELADA}>Cancelada</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
                                 <FormField control={form.control} name="nombreCliente" render={({ field }) => (
                                     <FormItem><FormLabel>Nombre del Cliente</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />

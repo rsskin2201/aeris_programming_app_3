@@ -21,7 +21,7 @@ interface AppContextType {
   records: InspectionRecord[];
   getRecordById: (id: string) => InspectionRecord | undefined;
   addRecord: (newRecord: InspectionRecord) => void;
-  updateRecord: (updatedRecord: InspectionRecord) => void;
+  updateRecord: (updatedRecord: Partial<InspectionRecord> & { id: string }) => void;
   
   // Entities
   collaborators: CollaboratorCompany[];
@@ -191,8 +191,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Records Callbacks
   const getRecordById = useCallback((id: string) => records.find(record => record.id === id), [records]);
   const addRecord = useCallback((newRecord: InspectionRecord) => setRecords(prev => [newRecord, ...prev]), []);
-  const updateRecord = useCallback((updatedRecord: InspectionRecord) => {
-    setRecords(prev => prev.map(record => record.id === updatedRecord.id ? updatedRecord : record));
+  const updateRecord = useCallback((updatedRecord: Partial<InspectionRecord> & { id: string }) => {
+    setRecords(prev => prev.map(record => record.id === updatedRecord.id ? { ...record, ...updatedRecord } : record));
   }, []);
 
   // Entities Callbacks

@@ -284,7 +284,7 @@ export default function IndividualInspectionPage() {
     setTimeout(() => {
         const recordToSave: InspectionRecord = {
             ...values,
-            client: 'Cliente (TBD)',
+            client: currentRecord?.client || 'Cliente (TBD)',
             address: `${values.calle} ${values.numero}, ${values.colonia}`,
             requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
             type: 'Individual PES',
@@ -387,6 +387,18 @@ export default function IndividualInspectionPage() {
       );
   }
   
+  const handleChecklistSave = (updatedData: Partial<InspectionRecord>) => {
+    if (currentRecord) {
+        const newRecord = { ...currentRecord, ...updatedData };
+        updateRecord(newRecord);
+        setCurrentRecord(newRecord);
+        form.reset({
+            ...newRecord,
+            fechaProgramacion: parse(newRecord.requestDate, 'yyyy-MM-dd', new Date()),
+        });
+    }
+  }
+
   const backPath = fromCalendar ? '/calendar' : '/inspections';
 
   return (
@@ -420,7 +432,7 @@ export default function IndividualInspectionPage() {
                             Check List
                         </Button>
                     </DialogTrigger>
-                    <ChecklistForm record={currentRecord} onClose={() => setIsChecklistOpen(false)} />
+                    <ChecklistForm record={currentRecord} onClose={() => setIsChecklistOpen(false)} onSave={handleChecklistSave} />
                  </Dialog>
             )}
       </div>
