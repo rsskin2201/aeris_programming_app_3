@@ -28,7 +28,7 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="font-headline text-2xl">Bienvenido(a)</CardTitle>
-          <CardDescription>Inicia sesión para gestionar las inspecciones.</CardDescription>
+          <CardDescription>Una App de NTTDATA</CardDescription>
         </CardHeader>
         <CardContent>
           <LoginForm />
