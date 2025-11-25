@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -75,44 +75,64 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
     const { toast } = useToast();
     const { user, inspectors } = useAppContext();
 
-    const form = useForm<FormValues>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
+    const defaultValues = useMemo(() => {
+        const getEquipos = () => {
+            const equipos = [];
+            if (record?.equipo_1) equipos.push({ equipo: record.equipo_1, marca: record.marca_eq1 || '', coCor: record.coCor_eq1 || '', coAmb: record.coAmb_eq1 || '' });
+            if (record?.equipo_2) equipos.push({ equipo: record.equipo_2, marca: record.marca_eq2 || '', coCor: record.coCor_eq2 || '', coAmb: record.coAmb_eq2 || '' });
+            if (record?.equipo_3) equipos.push({ equipo: record.equipo_3, marca: record.marca_eq3 || '', coCor: record.coCor_eq3 || '', coAmb: record.coAmb_eq3 || '' });
+            if (record?.equipo_4) equipos.push({ equipo: record.equipo_4, marca: record.marca_eq4 || '', coCor: record.coCor_eq4 || '', coAmb: record.coAmb_eq4 || '' });
+            if (record?.equipo_5) equipos.push({ equipo: record.equipo_5, marca: record.marca_eq5 || '', coCor: record.coCor_eq5 || '', coAmb: record.coAmb_eq5 || '' });
+            return equipos;
+        };
+        const equipos = getEquipos();
+
+        return {
             inspector: record?.inspector || '',
             serieMdd: record?.serieMdd || '',
-            marcaMdd: '',
-            tipoMddCampo: '',
-            presion: '',
-            folioIt: '',
-            precinto: '',
-            epp: '',
-            controlPrevio: '',
-            mtsInstalados: '',
-            materialTuberia: '',
-            folioChecklist: '',
-            defectosCorregidos: '',
-            defectosNoCorregidos: '',
-            horaEntrada: '',
-            horaSalida: '',
-            ventilaPreexistente: '',
-            ventilacionEcc: '',
-            numEquipos: 0,
-            equipos: [],
-            nombreCliente: record?.client || '',
-            telCliente: '',
-            motivoCancelacion: '',
-            comentariosOca: '',
-            formaDePago: '',
-            equipoExtra: '',
+            marcaMdd: record?.marcaMdd || '',
+            tipoMddCampo: record?.tipoMddCampo || '',
+            presion: record?.presion || '',
+            folioIt: record?.folioIt || '',
+            precinto: record?.precinto || '',
+            epp: record?.epp || '',
+            controlPrevio: record?.controlPrevio || '',
+            mtsInstalados: record?.mtsInstalados || '',
+            materialTuberia: record?.materialTuberia || '',
+            folioChecklist: record?.folioChecklist || '',
+            defectosCorregidos: record?.defectosCorregidos || '',
+            defectosNoCorregidos: record?.defectosNoCorregidos || '',
+            horaEntrada: record?.horaEntrada || '',
+            horaSalida: record?.horaSalida || '',
+            ventilaPreexistente: record?.ventilaPreexistente || '',
+            ventilacionEcc: record?.ventilacionEcc || '',
+            numEquipos: equipos.length,
+            equipos: equipos,
+            nombreCliente: record?.nombreCliente || record?.client || '',
+            telCliente: record?.telCliente || '',
+            motivoCancelacion: record?.motivoCancelacion || '',
+            comentariosOca: record?.comentariosOca || '',
+            formaDePago: record?.formaDePago || '',
+            equipoExtra: record?.equipoExtra || '',
             capturista: user?.name || '',
-            infFormasDePago: '',
-            altaSms: '',
-            appNaturgy: '',
-            entregaGuia: '',
+            infFormasDePago: record?.infFormasPago || '',
+            altaSms: record?.altaSms || '',
+            appNaturgy: record?.appNaturgy || '',
+            entregaGuia: record?.entregaGuia || '',
             status: record?.status,
-        },
+        };
+    }, [record, user?.name]);
+
+    const form = useForm<FormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues,
         mode: "onChange",
     });
+
+    useEffect(() => {
+        form.reset(defaultValues);
+    }, [defaultValues, form]);
+
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
@@ -147,11 +167,29 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         if (!record) return;
 
         const updatedData: Partial<InspectionRecord> = {
-            inspector: values.inspector,
-            serieMdd: values.serieMdd,
+            ...values,
+            equipo_1: values.equipos?.[0]?.equipo,
+            marca_eq1: values.equipos?.[0]?.marca,
+            coCor_eq1: values.equipos?.[0]?.coCor,
+            coAmb_eq1: values.equipos?.[0]?.coAmb,
+            equipo_2: values.equipos?.[1]?.equipo,
+            marca_eq2: values.equipos?.[1]?.marca,
+            coCor_eq2: values.equipos?.[1]?.coCor,
+            coAmb_eq2: values.equipos?.[1]?.coAmb,
+            equipo_3: values.equipos?.[2]?.equipo,
+            marca_eq3: values.equipos?.[2]?.marca,
+            coCor_eq3: values.equipos?.[2]?.coCor,
+            coAmb_eq3: values.equipos?.[2]?.coAmb,
+            equipo_4: values.equipos?.[3]?.equipo,
+            marca_eq4: values.equipos?.[3]?.marca,
+            coCor_eq4: values.equipos?.[3]?.coCor,
+            coAmb_eq4: values.equipos?.[3]?.coAmb,
+            equipo_5: values.equipos?.[4]?.equipo,
+            marca_eq5: values.equipos?.[4]?.marca,
+            coCor_eq5: values.equipos?.[4]?.coCor,
+            coAmb_eq5: values.equipos?.[4]?.coAmb,
             client: values.nombreCliente,
-            status: values.status as any || record.status,
-            // You can add more fields from the checklist to save here
+            status: (values.status as any) || record.status,
         };
 
         onSave(updatedData);
@@ -434,3 +472,5 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
     </DialogContent>
   );
 }
+
+    
