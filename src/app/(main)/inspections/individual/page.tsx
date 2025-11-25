@@ -66,7 +66,7 @@ type FormValues = z.infer<typeof formSchema>;
 const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMADA_POR_GE, STATUS.REGISTRADA];
 const checklistRoles = [ROLES.CALIDAD, ROLES.SOPORTE, ROLES.ADMIN];
 const supportRoles = [ROLES.SOPORTE, ROLES.ADMIN];
-const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.RESULTADO_REGISTRADO];
+const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CONECTADA, STATUS.PENDIENTE_CORRECCION];
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
@@ -186,7 +186,7 @@ export default function IndividualInspectionPage() {
     }
 
     if (pageMode === 'edit' && currentRecord) {
-        const isClosed = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CANCELADA, STATUS.RESULTADO_REGISTRADO].includes(currentRecord.status as any);
+        const isClosed = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CANCELADA, STATUS.CONECTADA, STATUS.PENDIENTE_CORRECCION].includes(currentRecord.status as any);
         if (isClosed && user?.role !== ROLES.ADMIN) return true;
 
         if (isCollaborator && fieldName === 'status') {
@@ -238,7 +238,7 @@ export default function IndividualInspectionPage() {
   const showSupportButton = useMemo(() => {
     if (pageMode !== 'edit' || !user || !currentRecord) return false;
     const canAccess = supportRoles.includes(user.role);
-    const isValidStatus = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.RESULTADO_REGISTRADO].includes(currentRecord.status as any);
+    const isValidStatus = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.PENDIENTE_CORRECCION, STATUS.CONECTADA].includes(currentRecord.status as any);
     return canAccess && isValidStatus;
   }, [pageMode, user, currentRecord]);
   
@@ -413,7 +413,12 @@ export default function IndividualInspectionPage() {
   
   const handleRecordUpdate = (updatedData: Partial<InspectionRecord>) => {
     if (currentRecord) {
-        const newRecord = { ...currentRecord, ...updatedData };
+        const newRecord: InspectionRecord = { 
+            ...currentRecord, 
+            ...updatedData,
+            lastModifiedBy: user?.username,
+            lastModifiedAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        };
         updateRecord(newRecord);
         setCurrentRecord(newRecord); // Update local state for immediate feedback
         form.reset({ // Re-sync main form if needed
@@ -466,7 +471,7 @@ export default function IndividualInspectionPage() {
                                 Validar Datos (Soporte)
                             </Button>
                         </DialogTrigger>
-                        <SupportValidationForm record={currentRecord} onClose={() => setIsSupportFormOpen(false)} onSave={handleRecordUpdate} />
+                        <SupportValidationForm user={user} record={currentRecord} onClose={() => setIsSupportFormOpen(false)} onSave={handleRecordUpdate} />
                     </Dialog>
                 )}
             </div>

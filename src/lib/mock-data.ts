@@ -101,6 +101,10 @@ export type InspectionRecord = {
   fechaConexion?: string;
   datosConfirmados?: boolean;
   observacionesSoporte?: string;
+  tipoRechazo?: string;
+  motivoRechazo?: string;
+  lastModifiedBy?: string;
+  lastModifiedAt?: string;
 };
 
 export const mockRecords: InspectionRecord[] = [

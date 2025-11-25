@@ -36,7 +36,8 @@ const statusColors: Record<InspectionRecord['status'], string> = {
   [STATUS.NO_APROBADA]: 'bg-red-600/80 border-red-700 text-white',
   [STATUS.RECHAZADA]: 'bg-red-700/80 border-red-800 text-white',
   [STATUS.CANCELADA]: 'bg-red-800/80 border-red-900 text-white',
-  [STATUS.RESULTADO_REGISTRADO]: 'bg-purple-600/80 border-purple-700 text-white',
+  [STATUS.CONECTADA]: 'bg-purple-600/80 border-purple-700 text-white',
+  [STATUS.PENDIENTE_CORRECCION]: 'bg-yellow-600/80 border-yellow-700 text-white',
 };
 
 const allInspectionTypes = [...new Set(['Individual PES', 'Masiva PES', ...TIPO_INSPECCION_MASIVA, ...TIPO_INSPECCION_ESPECIAL])];
