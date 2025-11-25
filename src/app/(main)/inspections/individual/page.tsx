@@ -94,7 +94,7 @@ export default function IndividualInspectionPage() {
   const [pageMode, setPageMode] = useState<'new' | 'view' | 'edit'>('new');
   const [currentRecord, setCurrentRecord] = useState<InspectionRecord | null>(null);
   
-  const fromCalendar = searchParams.get('from') === 'calendar';
+  const fromParam = searchParams.get('from');
   
   const isCollaborator = user?.role === ROLES.COLABORADOR;
   const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption: user.name is company name for collaborator
@@ -288,6 +288,17 @@ export default function IndividualInspectionPage() {
       })
   }
   
+  const backPath = useMemo(() => {
+    switch (fromParam) {
+      case 'calendar':
+        return '/calendar';
+      case 'records':
+        return '/records';
+      default:
+        return '/inspections';
+    }
+  }, [fromParam]);
+
   function onFinalSubmit(values: FormValues) {
     setIsSubmitting(true);
     
@@ -351,7 +362,7 @@ export default function IndividualInspectionPage() {
 
         setIsSubmitting(false);
         setIsConfirming(false);
-        router.push(fromCalendar ? '/calendar' : '/records');
+        router.push(backPath);
     }, 1500);
   }
 
@@ -408,8 +419,6 @@ export default function IndividualInspectionPage() {
         });
     }
   }
-
-  const backPath = fromCalendar ? '/calendar' : '/inspections';
 
   return (
     <div className="flex flex-col gap-6">

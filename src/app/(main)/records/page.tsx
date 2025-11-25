@@ -109,7 +109,7 @@ export default function RecordsPage() {
   }
 
   const handleAction = (recordId: string, mode: 'view' | 'edit') => {
-    router.push(`/inspections/individual?id=${recordId}&mode=${mode}`);
+    router.push(`/inspections/individual?id=${recordId}&mode=${mode}&from=records`);
   }
 
   const handleExport = () => {
