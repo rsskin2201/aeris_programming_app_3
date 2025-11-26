@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default function LoginPage() {
   const loginBg = PlaceHolderImages.find(img => img.id === 'login-background');
-  const nttLogo = PlaceHolderImages.find(img => img.id === 'ntt-data-logo');
 
   return (
     <main className="relative flex min-h-screen w-full flex-col items-center justify-center p-4">
@@ -29,17 +28,7 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="font-headline text-2xl">Bienvenido(a)</CardTitle>
-          {nttLogo && (
-            <div className="flex justify-center pt-2">
-              <Image
-                src={nttLogo.imageUrl}
-                alt={nttLogo.description}
-                width={150}
-                height={48}
-                data-ai-hint={nttLogo.imageHint}
-              />
-            </div>
-          )}
+          <CardDescription>Una App de NTTDATA</CardDescription>
         </CardHeader>
         <CardContent>
           <LoginForm />

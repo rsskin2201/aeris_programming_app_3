@@ -11,12 +11,6 @@
       "description": "Funko pop style avatar for the support team member",
       "imageUrl": "https://storage.googleapis.com/aifirebase-79f91.appspot.com/funko-Ricardo.png",
       "imageHint": "funko pop"
-    },
-    {
-      "id": "ntt-data-logo",
-      "description": "NTT Data company logo",
-      "imageUrl": "https://storage.googleapis.com/aifirebase-79f91.appspot.com/ntt-data-logo.png",
-      "imageHint": "logo nttdata"
     }
   ]
 }
