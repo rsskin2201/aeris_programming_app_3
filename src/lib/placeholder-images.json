@@ -15,7 +15,7 @@
     {
       "id": "ntt-data-logo",
       "description": "NTT Data company logo",
-      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4d/NTT_DATA_logo.svg",
+      "imageUrl": "https://storage.googleapis.com/aifirebase-79f91.appspot.com/ntt-data-logo.png",
       "imageHint": "logo nttdata"
     }
   ]
