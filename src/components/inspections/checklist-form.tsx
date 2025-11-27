@@ -199,8 +199,8 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         onSave(updatedData);
 
         toast({
-        title: 'Checklist Guardado',
-        description: 'La información del checklist se ha guardado correctamente.',
+            title: 'Checklist Guardado',
+            description: 'La información del checklist se ha guardado correctamente.',
         });
         onClose();
     }
