@@ -53,6 +53,7 @@ export const EQUIPO = [
     'CALDERA',
     'ESTUFA',
     'ESTUFA/PARRILLA',
+    'ESTUFON',
     'FREIDORA',
     'HORNO',
     'OTRO',

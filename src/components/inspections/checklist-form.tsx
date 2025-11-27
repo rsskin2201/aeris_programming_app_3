@@ -3,14 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import React, { useEffect, useMemo } from "react";
 
-import { Button } from "@/components/ui/button";
-import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from '@/components/ui/button';
+import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
@@ -46,7 +46,7 @@ const formSchema = z.object({
   ventilaPreexistente: z.string().min(1, "Requerido"),
   ventilacionEcc: z.string().min(1, "Requerido"),
   
-  numEquipos: z.coerce.number().int().min(0, "Debe ser 0 o más").max(10, "Máximo 10 equipos"),
+  numEquipos: z.coerce.number().int().min(0, "Debe ser 0 o más").max(5, "Máximo 5 equipos"),
   equipos: z.array(equipmentSchema).optional(),
 
   nombreCliente: z.string().min(1, "Requerido"),
@@ -162,6 +162,10 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         if (!recordZone) return [];
         return inspectors.filter(i => i.zone === recordZone);
     }, [record?.zone, inspectors]);
+
+    const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+        field.onChange(e.target.value.toUpperCase());
+    };
 
     function onSubmit(values: FormValues) {
         if (!record) return;
@@ -338,7 +342,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                              <FormField control={form.control} name="numEquipos" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Número de Equipos Conectados</FormLabel>
-                                    <FormControl><Input type="number" min="0" max="10" {...field} /></FormControl>
+                                    <FormControl><Input type="number" min="0" max="5" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
@@ -357,13 +361,13 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                                             </FormItem>
                                         )} />
                                         <FormField control={form.control} name={`equipos.${index}.marca`} render={({ field }) => (
-                                            <FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl><FormMessage /></FormItem>
                                         )} />
                                         <FormField control={form.control} name={`equipos.${index}.coCor`} render={({ field }) => (
-                                            <FormItem><FormLabel>Co Cor PPM</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem><FormLabel>Co Cor (PPM)</FormLabel><FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl><FormMessage /></FormMessage>
                                         )} />
                                         <FormField control={form.control} name={`equipos.${index}.coAmb`} render={({ field }) => (
-                                            <FormItem><FormLabel>Co AMB PPM</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem><FormLabel>Co AMB (PPM)</FormLabel><FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl><FormMessage /></FormMessage>
                                         )} />
                                     </div>
                                 </div>
