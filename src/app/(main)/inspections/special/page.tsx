@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { CalendarIcon as CalendarIconLucide, ChevronLeft, Loader2, CheckCircle, AlertCircle, FileCheck2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { format, isSunday } from "date-fns";
+import { useRouter, useSearchParams } from "next/navigation";
+import { format, isSunday, parse } from "date-fns";
 import { es } from 'date-fns/locale';
 
 import { cn } from "@/lib/utils";
@@ -65,8 +65,11 @@ export default function SpecialInspectionPage() {
   const { toast } = useToast();
   const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, addNotification, users: allUsers } = useAppContext();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fromParam = searchParams.get('from');
 
   const isCollaborator = user?.role === ROLES.COLABORADOR;
   const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption
@@ -81,33 +84,38 @@ export default function SpecialInspectionPage() {
 
   const generateId = () => `INSP-ES-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-  const defaultValues: FormValues = useMemo(() => ({
-    id: generateId(),
-    zone: zone,
-    poliza: "",
-    caso: "",
-    municipality: "",
-    colonia: "",
-    calle: "",
-    numero: "",
-    portal: "",
-    escalera: "",
-    piso: "",
-    puerta: "",
-    tipoInspeccion: "",
-    tipoProgramacion: "",
-    tipoMdd: "",
-    mercado: "",
-    oferta: "",
-    observaciones: "",
-    empresaColaboradora: isCollaborator ? collaboratorCompany : "",
-    horarioProgramacion: "",
-    instalador: "",
-    gestor: "",
-    sector: "",
-    status: getInitialStatus(user?.role),
-    fechaProgramacion: undefined,
-  }), [user?.role, zone, isCollaborator, collaboratorCompany]);
+  const defaultValues: FormValues = useMemo(() => {
+    const dateParam = searchParams.get('date');
+    const timeParam = searchParams.get('time');
+
+    return {
+      id: generateId(),
+      zone: zone,
+      poliza: "",
+      caso: "",
+      municipality: "",
+      colonia: "",
+      calle: "",
+      numero: "",
+      portal: "",
+      escalera: "",
+      piso: "",
+      puerta: "",
+      tipoInspeccion: "",
+      tipoProgramacion: "",
+      tipoMdd: "",
+      mercado: "",
+      oferta: "",
+      observaciones: "",
+      empresaColaboradora: isCollaborator ? collaboratorCompany : "",
+      horarioProgramacion: timeParam || "",
+      instalador: "",
+      gestor: "",
+      sector: "",
+      status: getInitialStatus(user?.role),
+      fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : undefined,
+    }
+  }, [user?.role, zone, isCollaborator, collaboratorCompany, searchParams]);
 
 
   const form = useForm<FormValues>({
@@ -161,6 +169,15 @@ export default function SpecialInspectionPage() {
       }
     });
   }
+  
+  const backPath = useMemo(() => {
+    switch (fromParam) {
+      case 'calendar':
+        return '/calendar';
+      default:
+        return '/inspections';
+    }
+  }, [fromParam]);
 
   function onFinalSubmit(values: FormValues) {
     setIsSubmitting(true);
@@ -244,7 +261,7 @@ export default function SpecialInspectionPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" asChild>
-          <Link href="/inspections">
+          <Link href={backPath}>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -557,7 +574,7 @@ export default function SpecialInspectionPage() {
 
             <div className="flex justify-center gap-2">
                 <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting}>Limpiar</Button>
-                <Button type="button" variant="outline" onClick={() => router.push('/inspections')} disabled={isSubmitting}>Cancelar</Button>
+                <Button type="button" variant="outline" onClick={() => router.push(backPath)} disabled={isSubmitting}>Cancelar</Button>
                 <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
                     <DialogTrigger asChild>
                          <Button type="button" onClick={handlePreview} disabled={isSubmitting}>
