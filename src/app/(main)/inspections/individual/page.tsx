@@ -27,14 +27,15 @@ import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, mockMunicipalities } from "@/
 import { ChecklistForm } from "@/components/inspections/checklist-form";
 import { SupportValidationForm } from "@/components/inspections/support-validation-form";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   id: z.string().optional(),
   zone: z.string(),
   sector: z.string().min(1, "El sector es requerido."),
   poliza: z.string().optional(),
-  caso: z.string().max(11, 'El caso no debe exceder los 11 caracteres.').optional().refine(val => !val || /^AT-\d{7}$/.test(val), {
-    message: 'El formato debe ser AT-XXXXXXX'
+  caso: z.string().max(11, 'El caso no debe exceder los 11 caracteres.').optional().refine(val => !val || /^AT-\d{8}$/.test(val), {
+    message: 'El formato debe ser AT-XXXXXXXX'
   }),
   municipality: z.string().min(1, "El municipio es requerido."),
   colonia: z.string().min(1, "La colonia es requerida."),
@@ -538,7 +539,7 @@ export default function IndividualInspectionPage() {
                   <FormField control={form.control} name="caso" render={({ field }) => (
                       <FormItem>
                           <FormLabel>Caso (AT)</FormLabel>
-                          <FormControl><Input placeholder="Ej. AT-1234567" {...field} maxLength={11} disabled={isFieldDisabled('caso')} /></FormControl>
+                          <FormControl><Input placeholder="Ej. AT-12345678" {...field} maxLength={11} disabled={isFieldDisabled('caso')} /></FormControl>
                           <FormMessage />
                       </FormItem>
                   )} />

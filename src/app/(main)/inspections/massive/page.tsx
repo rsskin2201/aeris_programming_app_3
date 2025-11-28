@@ -30,8 +30,8 @@ import { Label } from "@/components/ui/label";
 const inspectionDetailSchema = z.object({
   id: z.string(),
   poliza: z.string().optional(),
-  caso: z.string().max(11, 'El caso no debe exceder los 11 caracteres.').optional().refine(val => !val || /^AT-\d{7}$/.test(val), {
-    message: 'El formato debe ser AT-XXXXXXX'
+  caso: z.string().max(11, 'El caso no debe exceder los 11 caracteres.').optional().refine(val => !val || /^AT-\d{8}$/.test(val), {
+    message: 'El formato debe ser AT-XXXXXXXX'
   }),
   portal: z.string().optional(),
   escalera: z.string().optional(),
@@ -404,7 +404,7 @@ export default function MassiveInspectionPage() {
                                 <FormField control={form.control} name={`inspections.${index}.caso`} render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Caso (AT) (Opcional)</FormLabel>
-                                        <FormControl><Input placeholder="Ej. AT-1234567" {...field} maxLength={11} /></FormControl>
+                                        <FormControl><Input placeholder="Ej. AT-12345678" {...field} maxLength={11} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
