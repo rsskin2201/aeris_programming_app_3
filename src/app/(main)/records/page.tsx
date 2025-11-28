@@ -130,7 +130,7 @@ export default function RecordsPage() {
     setIsExporting(false);
     toast({
         title: "Exportación Completa",
-        description: "Los registros han sido exportados a CSV."
+        description: `${filteredRecords.length} registros han sido exportados a CSV.`
     });
   };
 
@@ -155,7 +155,8 @@ export default function RecordsPage() {
               <DialogHeader>
                 <DialogTitle>Confirmar Exportación</DialogTitle>
                 <DialogDescription>
-                  Se exportarán {filteredRecords.length} registros a un archivo CSV. ¿Deseas continuar?
+                  Se exportarán <strong>{filteredRecords.length}</strong> registros que coinciden con los filtros actuales.
+                  ¿Deseas continuar?
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
