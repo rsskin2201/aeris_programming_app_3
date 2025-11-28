@@ -56,7 +56,7 @@ const formSchema = z.object({
   formaDePago: z.string().min(1, "Requerido"),
   equipoExtra: z.string().optional(),
   capturista: z.string(),
-  infFormasDePago: zstring().min(1, "Requerido"),
+  infFormasDePago: z.string().min(1, "Requerido"),
   altaSms: z.string().min(1, "Requerido"),
   appNaturgy: z.string().min(1, "Requerido"),
   entregaGuia: z.string().min(1, "Requerido"),
@@ -477,3 +477,4 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         </DialogContent>
     );
 }
+    
