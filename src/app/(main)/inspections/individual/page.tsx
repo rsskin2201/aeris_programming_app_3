@@ -455,7 +455,7 @@ export default function IndividualInspectionPage() {
                 {showChecklistButton && (
                     <Dialog open={isChecklistOpen} onOpenChange={setIsChecklistOpen}>
                         <DialogTrigger asChild>
-                            <Button variant="secondary">
+                            <Button variant="secondary" className="bg-orange-500 hover:bg-orange-600 text-white">
                                 <ListChecks className="mr-2 h-4 w-4"/>
                                 Check List
                             </Button>
