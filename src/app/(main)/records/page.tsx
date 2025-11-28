@@ -69,6 +69,7 @@ export default function RecordsPage() {
   
   const canModify = user && !viewOnlyRoles.includes(user.role);
   const canExport = user && user.role !== ROLES.CANALES;
+  const canGenerateBackendReport = user && [ROLES.ADMIN, ROLES.COORDINADOR_SSPP].includes(user.role);
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value || '' }));
@@ -151,10 +152,12 @@ export default function RecordsPage() {
         </h1>
         {canExport && (
           <div className='flex items-center gap-2'>
-            <Button variant="outline" onClick={handleBackendExport}>
-                <Server className="mr-2 h-4 w-4" />
-                Generar Reporte Completo (Backend)
-            </Button>
+            {canGenerateBackendReport && (
+              <Button variant="outline" onClick={handleBackendExport}>
+                  <Server className="mr-2 h-4 w-4" />
+                  Generar Reporte Completo (Backend)
+              </Button>
+            )}
             <Dialog open={isExporting} onOpenChange={setIsExporting}>
               <DialogTrigger asChild>
                 <Button
