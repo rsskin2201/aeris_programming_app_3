@@ -477,4 +477,3 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         </DialogContent>
     );
 }
-    
