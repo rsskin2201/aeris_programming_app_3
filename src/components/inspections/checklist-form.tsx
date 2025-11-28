@@ -68,6 +68,7 @@ const formSchema = z.object({
   formaDePago: z.string().min(1, "Requerido"),
   equipoExtra: z.string().optional(),
   capturista: z.string(),
+  hraDeAudio: z.string().optional(),
   infFormasPago: z.string().min(1, "Requerido"),
   altaSms: z.string().min(1, "Requerido"),
   appNaturgy: z.string().min(1, "Requerido"),
@@ -136,6 +137,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         formaDePago: record?.formaDePago || '',
         equipoExtra: record?.equipoExtra || '',
         capturista: user?.name || '',
+        hraDeAudio: record?.hraDeAudio || '',
         infFormasPago: record?.infFormasPago || '',
         altaSms: record?.altaSms || '',
         appNaturgy: record?.appNaturgy || '',
@@ -312,12 +314,12 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                             
                             {/* Estatus de la Inspección */}
                             <div className="space-y-4 p-4 border rounded-md">
-                                <h3 className="font-semibold text-lg border-b pb-2">Estatus de la Inspección</h3>
+                                <h3 className="font-semibold text-lg border-b pb-2">Resultado de la Inspección</h3>
                                 <FormField control={form.control} name="status" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Actualizar Estatus</FormLabel>
+                                        <FormLabel>Dictamen Final</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar estatus" /></SelectTrigger></FormControl>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar resultado" /></SelectTrigger></FormControl>
                                             <SelectContent>
                                                 <SelectItem value={STATUS.APROBADA}>APROBADA</SelectItem>
                                                 <SelectItem value={STATUS.NO_APROBADA}>NO APROBADA</SelectItem>
@@ -346,5 +348,3 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         </DialogContent>
     );
 }
-
-    
