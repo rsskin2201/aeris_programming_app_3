@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +15,6 @@ import { useAppContext } from '@/hooks/use-app-context';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { ROLES } from '@/lib/types';
-import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'El usuario es requerido.' }),
@@ -35,7 +34,7 @@ export function LoginForm() {
   const [forgotUsername, setForgotUsername] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
   const router = useRouter();
-  const { login, addPasswordRequest } = useAppContext();
+  const { login, addPasswordRequest, users } = useAppContext();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -46,6 +45,19 @@ export function LoginForm() {
       operatorName: '',
     },
   });
+
+  const usernameValue = form.watch('username');
+
+  useEffect(() => {
+    if (usernameValue) {
+      const userFound = users.find(u => u.username.toLowerCase() === usernameValue.toLowerCase());
+      if (userFound) {
+        form.setValue('operatorName', userFound.name);
+      } else {
+        form.setValue('operatorName', '');
+      }
+    }
+  }, [usernameValue, users, form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
