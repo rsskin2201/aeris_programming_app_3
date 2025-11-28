@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { InspectionRecord } from "@/lib/mock-data";
-import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, ListTodo } from "lucide-react";
+import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, ListTodo, Server } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppContext } from '@/hooks/use-app-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -134,6 +134,14 @@ export default function RecordsPage() {
     });
   };
 
+  const handleBackendExport = () => {
+    toast({
+        title: "Proceso de Exportación Iniciado",
+        description: "Se está generando el reporte completo en el servidor. Recibirás una notificación cuando esté listo para descargar.",
+        duration: 5000,
+    });
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -142,29 +150,35 @@ export default function RecordsPage() {
           Gestión de Registros
         </h1>
         {canExport && (
-          <Dialog open={isExporting} onOpenChange={setIsExporting}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700 active:bg-green-800"
-              >
-                <Download className="mr-2 h-4 w-4" /> Exportar .csv
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Confirmar Exportación</DialogTitle>
-                <DialogDescription>
-                  Se exportarán <strong>{filteredRecords.length}</strong> registros que coinciden con los filtros actuales.
-                  ¿Deseas continuar?
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
-                <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">Confirmar</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <div className='flex items-center gap-2'>
+            <Button variant="outline" onClick={handleBackendExport}>
+                <Server className="mr-2 h-4 w-4" />
+                Generar Reporte Completo (Backend)
+            </Button>
+            <Dialog open={isExporting} onOpenChange={setIsExporting}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-700 active:bg-green-800"
+                >
+                  <Download className="mr-2 h-4 w-4" /> Exportar Vista Actual
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirmar Exportación de Vista</DialogTitle>
+                  <DialogDescription>
+                    Se exportarán <strong>{filteredRecords.length}</strong> registros que coinciden con los filtros actuales.
+                    ¿Deseas continuar?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
+                  <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">Confirmar</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         )}
       </div>
 
