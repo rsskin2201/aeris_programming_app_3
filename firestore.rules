@@ -1,0 +1,315 @@
+/**
+ * Core Philosophy: This ruleset enforces a strict Role-Based Access Control (RBAC) model.
+ * A dedicated collection, `/roles_admin`, grants global administrator privileges, providing a clear
+ * separation of concerns. All other user permissions are determined by the 'rol' field in their
+ * user profile document. The default security posture is denial; access is only granted explicitly.
+ *
+ * Data Structure: The database consists of several top-level collections for core entities like
+ * users, companies, and inspection requests. Some entities are nested for organizational clarity
+ * (e.g., installers under their parent company), but authorization logic relies on denormalized
+ * fields within documents to maintain performance and security.
+ *
+ * Key Security Decisions:
+ * - Admin Access: A user is considered an admin if a document with their UID exists in the
+ *   `/roles_admin` collection. Admins have broad read and write access across the database.
+ * - User Data Privacy: Users can create their own profile document but cannot modify it after
+ *   creation. They can read their own profile, but cannot list or view other users' profiles.
+ * - Master Data Protection: Core business data (e.g., collaborating companies, sectors, zones)
+ *   is readable by any authenticated user to populate application UIs, but can only be modified
+ *   by administrators to ensure data integrity.
+ * - Role-Based Writes: For most transactional data (like managing installers or inspectors),
+ *   write access is currently restricted to admins. This is a secure default due to the User
+ *   schema lacking fields that link users to specific companies. This can be expanded later
+ *   by adding, for example, an `empresaColaboradoraId` to the user document.
+ *
+ * Denormalization for Authorization: The rules heavily rely on denormalized data to perform
+ * fast and secure authorization checks. For instance, the `userId` is stored on `/reports`
+ * documents, and the `zonaId` is stored on `gestores_expansion` documents. This avoids slow and
+ * costly `get()` calls in rules, especially for list operations.
+ *
+ * Structural Segregation: Administrative roles are segregated into the `/roles_admin` collection,
+ * separating high-privilege markers from general user data. Similarly, user-generated reports
+ * are in their own top-level collection, simplifying access control compared to nesting them
+ * under user documents.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------------------------------------------------------------------------------
+    // Helper Functions
+    // --------------------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the requesting user's UID matches the provided userId.
+     * This is the foundation for document ownership rules.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if the requesting user has administrative privileges.
+     * This is determined by the existence of their UID in the /roles_admin collection.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * Retrieves the role of the currently authenticated user from their user profile.
+     */
+    function getUserData() {
+        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    /**
+     * Checks if the currently authenticated user has a specific role.
+     */
+    function isRole(roleName) {
+      return isSignedIn() && getUserData().rol == roleName;
+    }
+
+    /**
+     * Checks if the user is a 'Gestor de Expansion' for a specific zone.
+     */
+    function isGestorForZone(zonaId) {
+      return isRole('Gestor de Expansion') && getUserData().zonaId == zonaId;
+    }
+    
+    /**
+     * Checks if the user has a role that can manage inspection requests.
+     * This is a broad rule for prototyping; it can be refined later.
+     */
+    function canManageInspections() {
+      let userRole = getUserData().rol;
+      return userRole == 'Empresa Colaboradora' 
+          || userRole == 'Gestor de Expansion' 
+          || userRole == 'Empresa Control Calidad';
+    }
+
+    /**
+     * Checks if the user has a role that can manage the calendar.
+     */
+    function canManageCalendar() {
+      return isRole('Empresa Control Calidad');
+    }
+
+    // --------------------------------------------------------------------------------
+    // User and Role Management
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @description Manages user profiles. Users can create their own profile upon signup
+     *              and can read their own data. Only admins can list, update, or delete users.
+     * @path        /users/{userId}
+     * @allow       (create) A new user creating their own profile: `auth.uid == userId`.
+     * @deny        (update) A user trying to change their own role.
+     * @principle   Enforces self-creation and admin-only management for user profiles.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Defines administrator privileges. The existence of a document with a user's
+     *              UID in this collection grants them admin rights throughout the application.
+     * @path        /roles_admin/{userId}
+     * @allow       (get) An admin checking another user's admin status.
+     * @deny        (create) A non-admin user trying to grant themselves admin rights.
+     * @principle   Segregates administrative markers from user data for enhanced security.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    // --------------------------------------------------------------------------------
+    // Core Business Entities (Master Data)
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @description Stores information about collaborating companies. This data is considered
+     *              publicly readable for authenticated users but writeable only by admins.
+     * @path        /empresas_colaboradoras/{empresaColaboradoraId}
+     * @allow       (get, list) Any authenticated user reading company data to populate a dropdown.
+     * @deny        (create) A non-admin user trying to add a new company.
+     * @principle   Protects master data integrity with admin-only writes while allowing reads for application functionality.
+     */
+    match /empresas_colaboradoras/{empresaColaboradoraId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Stores information about quality control companies. This data is
+     *              readable by authenticated users but writeable only by admins.
+     * @path        /empresas_control_calidad/{empresaControlCalidadId}
+     * @allow       (list) Any authenticated user fetching a list of quality control companies.
+     * @deny        (update) A non-admin user trying to modify a company's details.
+     * @principle   Protects master data integrity with admin-only writes.
+     */
+    match /empresas_control_calidad/{empresaControlCalidadId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Stores business sector information. Readable by authenticated users,
+     *              writeable only by admins.
+     * @path        /sectores/{sectorId}
+     * @allow       (get) An authenticated user reading details of a specific sector.
+     * @deny        (delete) A non-admin user trying to delete a sector.
+     * @principle   Protects master data integrity with admin-only writes.
+     */
+    match /sectores/{sectorId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Stores geographical zone information. Readable by authenticated users,
+     *              writeable only by admins.
+     * @path        /zonas/{zonaId}
+     * @allow       (get) An authenticated user reading zone information.
+     * @deny        (create) A non-admin user trying to add a new zone.
+     * @principle   Protects master data integrity with admin-only writes.
+     */
+    match /zonas/{zonaId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    // --------------------------------------------------------------------------------
+    // Nested Business Entities
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @description Stores installers associated with a collaborating company. Reads are open
+     *              to signed-in users. Writes are admin-only as a secure default.
+     * @path        /empresas_colaboradoras/{empresaColaboradoraId}/instaladores/{instaladorId}
+     * @allow       (get) Any signed-in user viewing an installer's details.
+     * @deny        (create) A user with role 'Empresa Colaboradora' trying to add an installer.
+     * @principle   Restricts writes to admins as a secure default because the User schema lacks a
+     *              direct link to an 'empresaColaboradoraId' for role-based validation.
+     */
+    match /empresas_colaboradoras/{empresaColaboradoraId}/instaladores/{instaladorId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin() && request.resource.data.empresaColaboradoraId == empresaColaboradoraId;
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+    
+    /**
+     * @description Stores expansion managers associated with a zone. Readable by signed-in users.
+     *              Writeable by admins or by users with the 'Gestor de Expansion' role for that specific zone.
+     * @path        /zonas/{zonaId}/gestores_expansion/{gestorExpansionId}
+     * @allow       (create) A 'Gestor de Expansion' user adding a new manager to their own zone.
+     * @deny        (update) A 'Gestor de Expansion' user trying to modify a manager in a different zone.
+     * @principle   Enforces role-based access control scoped to a specific geographical zone.
+     */
+    match /zonas/{zonaId}/gestores_expansion/{gestorExpansionId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if (isAdmin() || isGestorForZone(zonaId)) && request.resource.data.zonaId == zonaId;
+      allow update: if (isAdmin() || isGestorForZone(zonaId)) && resource != null;
+      allow delete: if (isAdmin() || isGestorForZone(zonaId)) && resource != null;
+    }
+
+    /**
+     * @description Stores inspectors associated with a quality control company. Reads are open
+     *              to signed-in users. Writes are admin-only as a secure default.
+     * @path        /empresas_control_calidad/{empresaControlCalidadId}/inspectores/{inspectorId}
+     * @allow       (list) Any signed-in user listing inspectors for a given company.
+     * @deny        (create) A user with role 'Empresa de Control de Calidad' trying to add an inspector.
+     * @principle   Restricts writes to admins as a secure default because the User schema lacks a
+     *              direct link to an 'empresaControlCalidadId' for role-based validation.
+     */
+    match /empresas_control_calidad/{empresaControlCalidadId}/inspectores/{inspectorId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin() && request.resource.data.empresaControlCalidadId == empresaControlCalidadId;
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    // --------------------------------------------------------------------------------
+    // Transactional Collections
+    // --------------------------------------------------------------------------------
+    
+    /**
+     * @description Stores inspection requests, which are central to the app's workflow.
+     *              Access is granted to admins or users with relevant roles.
+     * @path        /inspection_requests/{inspectionRequestId}
+     * @allow       (create) A user with role 'Empresa Colaboradora' creating a new request.
+     * @deny        (get) An unauthenticated user trying to read inspection data.
+     * @principle   Applies a broad role-based access rule suitable for prototyping the inspection workflow.
+     */
+    match /inspection_requests/{inspectionRequestId} {
+      allow get: if isAdmin() || canManageInspections();
+      allow list: if isAdmin() || canManageInspections();
+      allow create: if isAdmin() || canManageInspections();
+      allow update: if (isAdmin() || canManageInspections()) && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Stores calendar events for scheduling inspections. Access is restricted
+     *              to admins and users from quality control companies.
+     * @path        /calendar_events/{calendarEventId}
+     * @allow       (create) A user with role 'Empresa de Control de Calidad' blocking a time slot.
+     * @deny        (update) A 'Gestor de Expansion' user trying to modify a calendar event.
+     * @principle   Enforces strict role-based access for the scheduling subsystem.
+     */
+    match /calendar_events/{calendarEventId} {
+      allow get: if isAdmin() || canManageCalendar();
+      allow list: if isAdmin() || canManageCalendar();
+      allow create: if isAdmin() || canManageCalendar();
+      allow update: if (isAdmin() || canManageCalendar()) && resource != null;
+      allow delete: if (isAdmin() || canManageCalendar()) && resource != null;
+    }
+
+    /**
+     * @description Stores generated reports. Reports can be managed by their creator or by an admin.
+     *              Listing all reports is an admin-only operation to prevent data leakage.
+     * @path        /reports/{reportId}
+     * @allow       (create) A user generating a new report for themselves: `auth.uid == report.userId`.
+     * @deny        (get) A user trying to read a report generated by another user.
+     * @principle   Enforces a strict document ownership model for user-generated content.
+     */
+    match /reports/{reportId} {
+      allow get: if isAdmin() || isOwner(resource.data.userId);
+      allow list: if isAdmin();
+      allow create: if isOwner(request.resource.data.userId);
+      allow update: if (isAdmin() || isOwner(resource.data.userId)) && resource != null;
+      allow delete: if (isAdmin() || isOwner(resource.data.userId)) && resource != null;
+    }
+  }
+}

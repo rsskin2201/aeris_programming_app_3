@@ -1,0 +1,613 @@
+{
+  "entities": {
+    "EmpresaColaboradora": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EmpresaColaboradora",
+      "type": "object",
+      "description": "Represents a collaborating company.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the EmpresaColaboradora entity."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "Name of the collaborating company."
+        },
+        "direccion": {
+          "type": "string",
+          "description": "Address of the collaborating company."
+        },
+        "contacto": {
+          "type": "string",
+          "description": "Contact information for the collaborating company."
+        },
+        "habilitado": {
+          "type": "boolean",
+          "description": "Indicates if the collaborating company is enabled."
+        }
+      },
+      "required": [
+        "id",
+        "nombre"
+      ]
+    },
+    "Instalador": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Instalador",
+      "type": "object",
+      "description": "Represents an installer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Instalador entity."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "Name of the installer."
+        },
+        "empresaColaboradoraId": {
+          "type": "string",
+          "description": "Reference to EmpresaColaboradora. (Relationship: EmpresaColaboradora 1:N Instalador)"
+        },
+        "contacto": {
+          "type": "string",
+          "description": "Contact information for the installer."
+        },
+        "habilitado": {
+          "type": "boolean",
+          "description": "Indicates if the installer is enabled."
+        }
+      },
+      "required": [
+        "id",
+        "nombre",
+        "empresaColaboradoraId"
+      ]
+    },
+    "GestorExpansion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GestorExpansion",
+      "type": "object",
+      "description": "Represents an expansion manager.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the GestorExpansion entity."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "Name of the expansion manager."
+        },
+        "zonaId": {
+          "type": "string",
+          "description": "Reference to Zona. (Relationship: Zona 1:N GestorExpansion)"
+        },
+        "contacto": {
+          "type": "string",
+          "description": "Contact information for the expansion manager."
+        },
+        "habilitado": {
+          "type": "boolean",
+          "description": "Indicates if the expansion manager is enabled."
+        }
+      },
+      "required": [
+        "id",
+        "nombre",
+        "zonaId"
+      ]
+    },
+    "EmpresaControlCalidad": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EmpresaControlCalidad",
+      "type": "object",
+      "description": "Represents a quality control company.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the EmpresaControlCalidad entity."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "Name of the quality control company."
+        },
+        "direccion": {
+          "type": "string",
+          "description": "Address of the quality control company."
+        },
+        "contacto": {
+          "type": "string",
+          "description": "Contact information for the quality control company."
+        },
+        "habilitado": {
+          "type": "boolean",
+          "description": "Indicates if the quality control company is enabled."
+        }
+      },
+      "required": [
+        "id",
+        "nombre"
+      ]
+    },
+    "Inspector": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Inspector",
+      "type": "object",
+      "description": "Represents an inspector.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Inspector entity."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "Name of the inspector."
+        },
+        "empresaControlCalidadId": {
+          "type": "string",
+          "description": "Reference to EmpresaControlCalidad. (Relationship: EmpresaControlCalidad 1:N Inspector)"
+        },
+        "contacto": {
+          "type": "string",
+          "description": "Contact information for the inspector."
+        },
+        "habilitado": {
+          "type": "boolean",
+          "description": "Indicates if the inspector is enabled."
+        }
+      },
+      "required": [
+        "id",
+        "nombre",
+        "empresaControlCalidadId"
+      ]
+    },
+    "Sector": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Sector",
+      "type": "object",
+      "description": "Represents a sector.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Sector entity."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "Name of the sector."
+        },
+        "descripcion": {
+          "type": "string",
+          "description": "Description of the sector."
+        },
+        "habilitado": {
+          "type": "boolean",
+          "description": "Indicates if the sector is enabled."
+        }
+      },
+      "required": [
+        "id",
+        "nombre"
+      ]
+    },
+    "Zona": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Zona",
+      "type": "object",
+      "description": "Represents a geographical zone.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Zone entity."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "Name of the zone (e.g., Zona Norte, Zona Centro)."
+        },
+        "descripcion": {
+          "type": "string",
+          "description": "Description of the zone."
+        }
+      },
+      "required": [
+        "id",
+        "nombre"
+      ]
+    },
+    "InspectionRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "InspectionRequest",
+      "type": "object",
+      "description": "Represents an inspection request.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the InspectionRequest entity."
+        },
+        "tipoInspeccion": {
+          "type": "string",
+          "description": "Type of inspection (e.g., PES Individual, PES Masiva, Especial)."
+        },
+        "empresaColaboradoraId": {
+          "type": "string",
+          "description": "Reference to EmpresaColaboradora. (Relationship: EmpresaColaboradora 1:N InspectionRequest)"
+        },
+        "gestorExpansionId": {
+          "type": "string",
+          "description": "Reference to GestorExpansion. (Relationship: GestorExpansion 1:N InspectionRequest)"
+        },
+        "instaladorId": {
+          "type": "string",
+          "description": "Reference to Instalador. (Relationship: Instalador 1:N InspectionRequest)"
+        },
+        "sectorId": {
+          "type": "string",
+          "description": "Reference to Sector. (Relationship: Sector 1:N InspectionRequest)"
+        },
+        "fechaSolicitud": {
+          "type": "string",
+          "description": "Date when the inspection was requested.",
+          "format": "date-time"
+        },
+        "direccion": {
+          "type": "string",
+          "description": "Address where the inspection is to be performed."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the inspection request (e.g., Pendiente Aprobacion, Contemplado, Approved, Rejected)."
+        },
+        "empresaControlCalidadId": {
+          "type": "string",
+          "description": "Reference to EmpresaControlCalidad. (Relationship: EmpresaControlCalidad 1:N InspectionRequest)"
+        },
+        "inspectorId": {
+          "type": "string",
+          "description": "Reference to Inspector. (Relationship: Inspector 1:N InspectionRequest)"
+        },
+        "programacionEspecialDetalles": {
+          "type": "string",
+          "description": "Details regarding special scheduling requirements for this inspection, if applicable."
+        }
+      },
+      "required": [
+        "id",
+        "tipoInspeccion",
+        "fechaSolicitud",
+        "direccion",
+        "status"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "usuario": {
+          "type": "string",
+          "description": "User's unique alias."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "User's full name."
+        },
+        "rol": {
+          "type": "string",
+          "description": "User's role (e.g., Empresa Colaboradora, Gestor de Expansion, Administrador)."
+        },
+        "zonaId": {
+          "type": "string",
+          "description": "Reference to Zona. (Relationship: Zona 1:N User).  The user's assigned zone."
+        },
+        "habilitado": {
+          "type": "boolean",
+          "description": "Indicates if the user account is enabled."
+        }
+      },
+      "required": [
+        "id",
+        "usuario",
+        "nombre",
+        "rol"
+      ]
+    },
+    "CalendarEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CalendarEvent",
+      "type": "object",
+      "description": "Represents an event on the inspection scheduling calendar.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CalendarEvent entity."
+        },
+        "inspectionRequestId": {
+          "type": "string",
+          "description": "Reference to InspectionRequest. (Relationship: InspectionRequest 1:N CalendarEvent)"
+        },
+        "startDateTime": {
+          "type": "string",
+          "description": "Start date and time of the event.",
+          "format": "date-time"
+        },
+        "endDateTime": {
+          "type": "string",
+          "description": "End date and time of the event.",
+          "format": "date-time"
+        },
+        "isBlocked": {
+          "type": "boolean",
+          "description": "Indicates if the event represents a blocked time slot."
+        }
+      },
+      "required": [
+        "id",
+        "inspectionRequestId",
+        "startDateTime",
+        "endDateTime"
+      ]
+    },
+    "Report": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Report",
+      "type": "object",
+      "description": "Represents a report generated from inspection data.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Report entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Report). User who generated the report."
+        },
+        "reportType": {
+          "type": "string",
+          "description": "Type of report (e.g., Inspection Summary, Performance Analysis)."
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "Date when the report was generated.",
+          "format": "date-time"
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "URL of the generated report file stored in Cloud Storage.",
+          "format": "uri"
+        },
+        "filters": {
+          "type": "string",
+          "description": "JSON string representing the filters applied to generate the report."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "reportType",
+        "generationDate",
+        "fileUrl"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Roles are defined here. Only admins can create or modify users.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "roles_admin",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Indicates administrator privileges. Existence of a document with the user ID grants admin rights.  No data is stored in the document; its existence is the signal.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/empresas_colaboradoras/{empresaColaboradoraId}",
+        "definition": {
+          "entityName": "EmpresaColaboradora",
+          "schema": {
+            "$ref": "#/backend/entities/EmpresaColaboradora"
+          },
+          "description": "Stores collaborating company information. Accessible by Canales and Admins.",
+          "params": [
+            {
+              "name": "empresaColaboradoraId",
+              "description": "The unique identifier of the collaborating company."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/empresas_control_calidad/{empresaControlCalidadId}",
+        "definition": {
+          "entityName": "EmpresaControlCalidad",
+          "schema": {
+            "$ref": "#/backend/entities/EmpresaControlCalidad"
+          },
+          "description": "Stores quality control company information. Accessible by Canales and Admins.",
+          "params": [
+            {
+              "name": "empresaControlCalidadId",
+              "description": "The unique identifier of the quality control company."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sectores/{sectorId}",
+        "definition": {
+          "entityName": "Sector",
+          "schema": {
+            "$ref": "#/backend/entities/Sector"
+          },
+          "description": "Stores sector information. Accessible by Canales and Admins.",
+          "params": [
+            {
+              "name": "sectorId",
+              "description": "The unique identifier of the sector."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/zonas/{zonaId}",
+        "definition": {
+          "entityName": "Zona",
+          "schema": {
+            "$ref": "#/backend/entities/Zona"
+          },
+          "description": "Stores zone information. Accessible by Canales and Admins.",
+          "params": [
+            {
+              "name": "zonaId",
+              "description": "The unique identifier of the zone."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/empresas_colaboradoras/{empresaColaboradoraId}/instaladores/{instaladorId}",
+        "definition": {
+          "entityName": "Instalador",
+          "schema": {
+            "$ref": "#/backend/entities/Instalador"
+          },
+          "description": "Stores installers associated with collaborating companies. Includes denormalized 'empresaColaboradoraId' for authorization independence. Accessible by Canales, Admins, and the associated EmpresaColaboradora.",
+          "params": [
+            {
+              "name": "empresaColaboradoraId",
+              "description": "The unique identifier of the collaborating company."
+            },
+            {
+              "name": "instaladorId",
+              "description": "The unique identifier of the installer."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/zonas/{zonaId}/gestores_expansion/{gestorExpansionId}",
+        "definition": {
+          "entityName": "GestorExpansion",
+          "schema": {
+            "$ref": "#/backend/entities/GestorExpansion"
+          },
+          "description": "Stores expansion managers associated with zones. Includes denormalized 'zonaId' for authorization independence. Accessible by Canales, Admins, and users with the 'Gestor de Expansion' role in the associated zone.",
+          "params": [
+            {
+              "name": "zonaId",
+              "description": "The unique identifier of the zone."
+            },
+            {
+              "name": "gestorExpansionId",
+              "description": "The unique identifier of the expansion manager."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/empresas_control_calidad/{empresaControlCalidadId}/inspectores/{inspectorId}",
+        "definition": {
+          "entityName": "Inspector",
+          "schema": {
+            "$ref": "#/backend/entities/Inspector"
+          },
+          "description": "Stores inspectors associated with quality control companies. Includes denormalized 'empresaControlCalidadId' for authorization independence. Accessible by Canales, Admins, and the associated EmpresaControlCalidad.",
+          "params": [
+            {
+              "name": "empresaControlCalidadId",
+              "description": "The unique identifier of the quality control company."
+            },
+            {
+              "name": "inspectorId",
+              "description": "The unique identifier of the inspector."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/inspection_requests/{inspectionRequestId}",
+        "definition": {
+          "entityName": "InspectionRequest",
+          "schema": {
+            "$ref": "#/backend/entities/InspectionRequest"
+          },
+          "description": "Stores inspection requests. Accessible by Empresa Colaboradora (if created by them, status 'Pendiente Aprobacion'), Gestor de Expansion (if created by them, status 'Contemplado'), Empresa de Control de Calidad (to Approve/Reject), and Admins. Requires validation on linked entity IDs.",
+          "params": [
+            {
+              "name": "inspectionRequestId",
+              "description": "The unique identifier of the inspection request."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/calendar_events/{calendarEventId}",
+        "definition": {
+          "entityName": "CalendarEvent",
+          "schema": {
+            "$ref": "#/backend/entities/CalendarEvent"
+          },
+          "description": "Stores calendar events associated with inspection requests. Accessible by Empresa de Control de Calidad and Admins.",
+          "params": [
+            {
+              "name": "calendarEventId",
+              "description": "The unique identifier of the calendar event."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/reports/{reportId}",
+        "definition": {
+          "entityName": "Report",
+          "schema": {
+            "$ref": "#/backend/entities/Report"
+          },
+          "description": "Stores reports generated by users. Accessible by the user who created the report and Admins.",
+          "params": [
+            {
+              "name": "reportId",
+              "description": "The unique identifier of the report."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support AERIS's role-based access control, inspection request management, and reporting features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. Authorization Independence is achieved through denormalization. Specifically, access control lists (e.g., `members` maps) and relevant user role information from `/users/{userId}` are copied into documents where authorization checks are required. This eliminates the need for `get()` calls in security rules, enabling atomic operations and simplifying security logic. Structural Segregation ensures that each collection contains documents with similar security requirements, avoiding overly complex rules. Access Modeling is implemented using path-based ownership for user-specific data and membership maps for collaborative entities.\n\n**QAPs Support:**\n\n*   Secure List Operations: Structural Segregation ensures that listing operations can be securely performed on collections because all documents within a collection share the same security requirements. For example, only admins can list users from the `/users` collection.\n*   Role-Based Access Control: Enforced through security rules based on the `rol` field in the `users` collection and denormalized role information in other relevant collections. This ensures that users can only access and modify data according to their assigned roles.\n*   Data Integrity: Timestamps and ownership are enforced via security rules, ensuring the integrity of the data.\n\n**Explanation of Collections:**\n\n*   `/users/{userId}`: Stores user profiles, including roles, associated zones, and account status. This collection uses path-based ownership.\n*   `/roles_admin/{userId}`: Indicates admin privileges. Existence of a document here grants admin rights.\n*   `/empresas_colaboradoras/{empresaColaboradoraId}`: Stores collaborating company information.\n*   `/empresas_control_calidad/{empresaControlCalidadId}`: Stores quality control company information.\n*   `/sectores/{sectorId}`: Stores sector information.\n*   `/zonas/{zonaId}`: Stores zone information.\n*   `/empresas_colaboradoras/{empresaColaboradoraId}/instaladores/{instaladorId}`: Stores installers associated with collaborating companies. Access control denormalizes `empresaColaboradoraId` and relevant attributes.\n*   `/zonas/{zonaId}/gestores_expansion/{gestorExpansionId}`: Stores expansion managers associated with zones. Access control denormalizes `zonaId` and relevant attributes.\n*   `/empresas_control_calidad/{empresaControlCalidadId}/inspectores/{inspectorId}`: Stores inspectors associated with quality control companies. Access control denormalizes `empresaControlCalidadId` and relevant attributes.\n*   `/inspection_requests/{inspectionRequestId}`: Stores inspection requests.  It includes fields such as `empresaColaboradoraId`, `gestorExpansionId`, `instaladorId`, `sectorId`, `empresaControlCalidadId`, and `inspectorId` to link to related entities.\n*   `/calendar_events/{calendarEventId}`: Stores calendar events associated with inspection requests.\n*   `/reports/{reportId}`: Stores reports generated by users. The `userId` field links the report to the user who generated it."
+  }
+}
