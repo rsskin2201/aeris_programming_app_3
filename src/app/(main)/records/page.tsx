@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { InspectionRecord } from "@/lib/mock-data";
-import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, ListTodo, Server } from "lucide-react";
+import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, ListTodo, Server, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppContext } from '@/hooks/use-app-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -25,6 +25,7 @@ import { TIPO_INSPECCION_ESPECIAL, TIPO_INSPECCION_MASIVA, MERCADO } from '@/lib
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
+import { generateReport } from '@/ai/flows/generate-report-flow';
 
 const statusColors: Record<InspectionRecord['status'], string> = {
   [STATUS.REGISTRADA]: 'bg-gray-500/80 border-gray-600 text-white',
@@ -67,6 +68,7 @@ export default function RecordsPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState(initialFilters);
   const [isExporting, setIsExporting] = useState(false);
+  const [isBackendExporting, setIsBackendExporting] = useState(false);
   
   const canModify = user && !viewOnlyRoles.includes(user.role);
   const canExport = user && user.role !== ROLES.CANALES;
@@ -137,12 +139,36 @@ export default function RecordsPage() {
     });
   };
 
-  const handleBackendExport = () => {
+  const handleBackendExport = async () => {
+    setIsBackendExporting(true);
     toast({
         title: "Proceso de Exportación Iniciado",
-        description: "Se está generando el reporte completo en el servidor. Recibirás una notificación cuando esté listo para descargar.",
-        duration: 5000,
+        description: "Generando el reporte completo. Esto puede tardar unos momentos...",
     });
+    try {
+        const result = await generateReport(zone);
+        const blob = new Blob([result], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `reporte_completo_${zone.replace(' ', '_')}_${format(new Date(), 'yyyyMMdd')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast({
+            title: "Reporte Completo Generado",
+            description: "La descarga del reporte completo ha comenzado."
+        });
+    } catch (error) {
+        console.error("Backend export failed:", error);
+        toast({
+            variant: "destructive",
+            title: "Error al Generar Reporte",
+            description: "No se pudo generar el reporte desde el backend.",
+        });
+    } finally {
+        setIsBackendExporting(false);
+    }
   }
 
   return (
@@ -155,9 +181,9 @@ export default function RecordsPage() {
         {canExport && (
           <div className='flex items-center gap-2'>
             {canGenerateBackendReport && (
-              <Button variant="outline" onClick={handleBackendExport}>
-                  <Server className="mr-2 h-4 w-4" />
-                  Generar Reporte Completo (Backend)
+              <Button variant="outline" onClick={handleBackendExport} disabled={isBackendExporting}>
+                  {isBackendExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Server className="mr-2 h-4 w-4" />}
+                  Generar Reporte Completo
               </Button>
             )}
             <Dialog open={isExporting} onOpenChange={setIsExporting}>
