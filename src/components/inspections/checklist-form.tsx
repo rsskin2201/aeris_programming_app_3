@@ -151,6 +151,9 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         mode: "onChange",
     });
 
+    const aparatosConectados = form.watch('aparatosConectados');
+    const numberOfEquipments = useMemo(() => parseInt(aparatosConectados || '0', 10), [aparatosConectados]);
+
     useEffect(() => {
         form.reset(defaultValues);
     }, [defaultValues, form]);
@@ -268,8 +271,25 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                             {/* Equipos Conectados */}
                             <div className="space-y-4 p-4 border rounded-md">
                                 <h3 className="font-semibold text-lg border-b pb-2">Equipos Conectados</h3>
-                                <FormField control={form.control} name="aparatosConectados" render={({ field }) => (<FormItem><FormLabel>APARATOS CONECTADOS</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                {[1, 2, 3, 4, 5].map(i => (
+                                <FormField control={form.control} name="aparatosConectados" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>APARATOS CONECTADOS</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccione la cantidad de equipos" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {['1', '2', '3', '4', '5'].map(num => (
+                                                    <SelectItem key={num} value={num}>{num}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                                {numberOfEquipments > 0 && Array.from({ length: numberOfEquipments }, (_, i) => i + 1).map(i => (
                                     <div key={i} className="p-3 border rounded-md space-y-3">
                                         <h4 className="font-medium">Equipo {i}</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
