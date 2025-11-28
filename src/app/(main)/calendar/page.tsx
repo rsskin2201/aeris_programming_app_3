@@ -25,6 +25,9 @@ import {
   Eye,
   Pencil,
   Calendar as CalendarIcon,
+  File,
+  Files,
+  FileCheck2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
@@ -104,12 +107,15 @@ export default function CalendarPage() {
     addBlockedDay,
     removeBlockedDay,
     records,
+    devModeEnabled,
   } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSchedulingTypeDialogOpen, setIsSchedulingTypeDialogOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{ date: Date, hour: string} | null>(null);
   const [blockReason, setBlockReason] = useState('');
   const router = useRouter();
   const { toast } = useToast();
@@ -194,9 +200,24 @@ export default function CalendarPage() {
     const dateKey = format(date, 'yyyy-MM-dd');
     if (blockedDays[dateKey]) return;
     if (isSunday(date) && !weekendsEnabled) return;
-    const url = `/inspections/individual?date=${format(date, 'yyyy-MM-dd')}&time=${hour}&from=calendar`;
-    router.push(url);
+    
+    if (devModeEnabled) {
+      setSelectedSlot({ date, hour });
+      setIsSchedulingTypeDialogOpen(true);
+    } else {
+      const url = `/inspections/individual?date=${format(date, 'yyyy-MM-dd')}&time=${hour}&from=calendar`;
+      router.push(url);
+    }
   }
+
+  const handleInspectionTypeSelection = (type: 'individual' | 'massive' | 'special') => {
+    if (!selectedSlot) return;
+    const { date, hour } = selectedSlot;
+    const url = `/inspections/${type}?date=${format(date, 'yyyy-MM-dd')}&time=${hour}&from=calendar`;
+    router.push(url);
+    setIsSchedulingTypeDialogOpen(false);
+    setSelectedSlot(null);
+  };
 
   const openBlockDialog = () => {
     const dateKey = format(currentDate, 'yyyy-MM-dd');
@@ -625,6 +646,40 @@ export default function CalendarPage() {
                             Bloquear Día
                         </Button>
                      )}
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+      )}
+
+      {devModeEnabled && (
+        <Dialog open={isSchedulingTypeDialogOpen} onOpenChange={setIsSchedulingTypeDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Seleccionar Tipo de Programación</DialogTitle>
+                    {selectedSlot && (
+                        <DialogDescription>
+                            ¿Qué tipo de inspección deseas programar para el {format(selectedSlot.date, "dd 'de' MMMM", { locale: es })} a las {selectedSlot.hour}?
+                        </DialogDescription>
+                    )}
+                </DialogHeader>
+                <div className="grid grid-cols-1 gap-4 py-4">
+                     <Button variant="outline" onClick={() => handleInspectionTypeSelection('individual')}>
+                        <File className="mr-2" />
+                        Programación Individual de PES
+                    </Button>
+                    <Button variant="outline" onClick={() => handleInspectionTypeSelection('massive')}>
+                        <Files className="mr-2" />
+                        Programación Masiva de PES
+                    </Button>
+                    <Button variant="outline" onClick={() => handleInspectionTypeSelection('special')}>
+                        <FileCheck2 className="mr-2" />
+                        Programaciones Especiales (No PES)
+                    </Button>
+                </div>
+                 <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="ghost">Cancelar</Button>
+                    </DialogClose>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
