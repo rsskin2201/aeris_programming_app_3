@@ -107,7 +107,6 @@ export default function CalendarPage() {
     addBlockedDay,
     removeBlockedDay,
     records,
-    devModeEnabled,
   } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
@@ -201,13 +200,8 @@ export default function CalendarPage() {
     if (blockedDays[dateKey]) return;
     if (isSunday(date) && !weekendsEnabled) return;
     
-    if (devModeEnabled) {
-      setSelectedSlot({ date, hour });
-      setIsSchedulingTypeDialogOpen(true);
-    } else {
-      const url = `/inspections/individual?date=${format(date, 'yyyy-MM-dd')}&time=${hour}&from=calendar`;
-      router.push(url);
-    }
+    setSelectedSlot({ date, hour });
+    setIsSchedulingTypeDialogOpen(true);
   }
 
   const handleInspectionTypeSelection = (type: 'individual' | 'massive' | 'special') => {
@@ -651,39 +645,37 @@ export default function CalendarPage() {
         </Dialog>
       )}
 
-      {devModeEnabled && (
-        <Dialog open={isSchedulingTypeDialogOpen} onOpenChange={setIsSchedulingTypeDialogOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Seleccionar Tipo de Programación</DialogTitle>
-                    {selectedSlot && (
-                        <DialogDescription>
-                            ¿Qué tipo de inspección deseas programar para el {format(selectedSlot.date, "dd 'de' MMMM", { locale: es })} a las {selectedSlot.hour}?
-                        </DialogDescription>
-                    )}
-                </DialogHeader>
-                <div className="grid grid-cols-1 gap-4 py-4">
-                     <Button variant="outline" onClick={() => handleInspectionTypeSelection('individual')}>
-                        <File className="mr-2" />
-                        Programación Individual de PES
-                    </Button>
-                    <Button variant="outline" onClick={() => handleInspectionTypeSelection('massive')}>
-                        <Files className="mr-2" />
-                        Programación Masiva de PES
-                    </Button>
-                    <Button variant="outline" onClick={() => handleInspectionTypeSelection('special')}>
-                        <FileCheck2 className="mr-2" />
-                        Programaciones Especiales (No PES)
-                    </Button>
-                </div>
-                 <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="ghost">Cancelar</Button>
-                    </DialogClose>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={isSchedulingTypeDialogOpen} onOpenChange={setIsSchedulingTypeDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Seleccionar Tipo de Programación</DialogTitle>
+                  {selectedSlot && (
+                      <DialogDescription>
+                          ¿Qué tipo de inspección deseas programar para el {format(selectedSlot.date, "dd 'de' MMMM", { locale: es })} a las {selectedSlot.hour}?
+                      </DialogDescription>
+                  )}
+              </DialogHeader>
+              <div className="grid grid-cols-1 gap-4 py-4">
+                    <Button variant="outline" onClick={() => handleInspectionTypeSelection('individual')}>
+                      <File className="mr-2" />
+                      Programación Individual de PES
+                  </Button>
+                  <Button variant="outline" onClick={() => handleInspectionTypeSelection('massive')}>
+                      <Files className="mr-2" />
+                      Programación Masiva de PES
+                  </Button>
+                  <Button variant="outline" onClick={() => handleInspectionTypeSelection('special')}>
+                      <FileCheck2 className="mr-2" />
+                      Programaciones Especiales (No PES)
+                  </Button>
+              </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                      <Button variant="ghost">Cancelar</Button>
+                  </DialogClose>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-y-2">

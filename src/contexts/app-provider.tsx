@@ -13,8 +13,6 @@ interface AppContextType {
   isZoneConfirmed: boolean;
   formsEnabled: boolean;
   weekendsEnabled: boolean;
-  devModeEnabled: boolean; // Development Mode
-  toggleDevMode: () => void; // Development Mode Toggle
   blockedDays: Record<string, BlockedDay>;
   passwordRequests: PasswordResetRequest[];
   notifications: AppNotification[];
@@ -83,7 +81,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isZoneConfirmed, setIsZoneConfirmed] = useState(false);
   const [formsEnabled, setFormsEnabled] = useState(true);
   const [weekendsEnabled, setWeekendsEnabled] = useState(false);
-  const [devModeEnabled, setDevModeEnabled] = useState(false); // Dev mode state
   const [passwordRequests, setPasswordRequests] = useState<PasswordResetRequest[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   
@@ -142,7 +139,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const toggleForms = useCallback(() => setFormsEnabled(prev => !prev), []);
   const toggleWeekends = useCallback(() => setWeekendsEnabled(prev => !prev), []);
-  const toggleDevMode = useCallback(() => setDevModeEnabled(prev => !prev), []);
 
   const addBlockedDay = useCallback((date: string, reason: string) => {
     setBlockedDays(prev => ({ ...prev, [date]: { reason } }));
@@ -243,8 +239,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isZoneConfirmed,
       formsEnabled,
       weekendsEnabled,
-      devModeEnabled, // Dev Mode
-      toggleDevMode, // Dev Mode
       blockedDays,
       passwordRequests,
       notifications,
@@ -296,7 +290,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markNotificationAsRead,
     }),
     [
-      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, devModeEnabled, toggleDevMode, blockedDays, passwordRequests, notifications, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
+      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
       getRecordById, addRecord, updateRecord, addMultipleRecords, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead,
       addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors
     ]
