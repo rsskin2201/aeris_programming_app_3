@@ -22,6 +22,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import {
   HelpCircle,
@@ -41,6 +42,7 @@ import {
   Clock,
   Bell,
   Check,
+  FlaskConical,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -83,7 +85,7 @@ const moduleIcons = {
 
 export default function Header() {
   const pathname = usePathname();
-  const { user, operatorName, switchRole, logout, passwordRequests, resolvePasswordRequest, notifications, markNotificationAsRead } = useAppContext();
+  const { user, operatorName, switchRole, logout, notifications, markNotificationAsRead, devModeEnabled, toggleDevMode } = useAppContext();
   const { toast } = useToast();
   
 
@@ -214,6 +216,14 @@ export default function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Mi Cuenta ({user.role})</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                 <DropdownMenuCheckboxItem
+                    checked={devModeEnabled}
+                    onCheckedChange={toggleDevMode}
+                  >
+                    <FlaskConical className="mr-2 h-4 w-4" />
+                    Modo Desarrollo
+                </DropdownMenuCheckboxItem>
                 <DropdownMenuSeparator />
                 {user.role === ROLES.ADMIN && (
                   <>
