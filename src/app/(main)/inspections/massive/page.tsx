@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon as CalendarIconLucide, ChevronLeft, Loader2, PlusCircle, Trash2, CheckCircle, AlertCircle, Files } from "lucide-react";
+import { CalendarIcon as CalendarIconLucide, ChevronLeft, Loader2, PlusCircle, Trash2, CheckCircle, AlertCircle, Files, Copy } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse } from "date-fns";
@@ -25,6 +25,7 @@ import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA, mockMunicipalities } from "@/lib/form-options";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 const inspectionDetailSchema = z.object({
   id: z.string(),
@@ -69,11 +70,13 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function MassiveInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, addNotification, users: allUsers } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, addNotification, users: allUsers, devModeEnabled } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
+  const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
 
   const fromParam = searchParams.get('from');
 
@@ -188,6 +191,7 @@ export default function MassiveInspectionPage() {
     
     setTimeout(() => {
         const gestorUser = allUsers.find(u => u.name === values.gestor);
+        const createdIds: string[] = [];
         
         values.inspections.forEach(detail => {
             const recordToSave: InspectionRecord = {
@@ -207,6 +211,7 @@ export default function MassiveInspectionPage() {
                 observaciones: values.observaciones,
             };
             addRecord(recordToSave);
+            createdIds.push(detail.id);
         });
 
         if (gestorUser) {
@@ -215,15 +220,20 @@ export default function MassiveInspectionPage() {
                 message: `${values.inspections.length} nuevas inspecciones masivas te han sido asignadas.`,
             });
         }
-
-        toast({
-            title: "Solicitudes Enviadas",
-            description: `Se crearon ${values.inspections.length} solicitudes masivas con estatus: ${values.status}.`,
-        });
+        
+        if (devModeEnabled) {
+            setCreatedRecordInfo({ ids: createdIds, status: values.status });
+            setIsSuccessDialogOpen(true);
+        } else {
+            toast({
+                title: "Solicitudes Enviadas",
+                description: `Se crearon ${values.inspections.length} solicitudes masivas con estatus: ${values.status}.`,
+            });
+            router.push('/records');
+        }
 
       setIsSubmitting(false);
       setIsConfirming(false);
-      router.push('/records');
     }, 1500);
   }
 
@@ -265,6 +275,14 @@ export default function MassiveInspectionPage() {
         </div>
       );
   }
+  
+  const handleCopyIds = () => {
+    if (createdRecordInfo) {
+      navigator.clipboard.writeText(createdRecordInfo.ids.join(', '));
+      toast({ title: 'IDs Copiados', description: 'Los IDs de las inspecciones se han copiado.' });
+    }
+  };
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -682,6 +700,47 @@ export default function MassiveInspectionPage() {
             </div>
         </form>
       </Form>
+      
+      {devModeEnabled && createdRecordInfo && (
+        <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CheckCircle className="h-6 w-6 text-green-500" />
+                ¡Solicitudes Generadas con Éxito!
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <p>Se han generado las siguientes solicitudes de inspección:</p>
+              <div className="space-y-2">
+                  <Label>IDs de Inspección</Label>
+                  <div className='max-h-32 overflow-y-auto space-y-1 pr-2'>
+                    {createdRecordInfo.ids.map(id => (
+                      <div key={id} className="flex items-center gap-2 rounded-md bg-muted p-2 font-mono text-sm">
+                        <span className="flex-1 truncate">{id}</span>
+                      </div>
+                    ))}
+                  </div>
+                   <Button variant="outline" size="sm" onClick={handleCopyIds} className="w-full">
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copiar IDs
+                    </Button>
+              </div>
+              <div>
+                <Label>Estatus</Label>
+                <p className="font-semibold">{createdRecordInfo.status}</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => {
+                setIsSuccessDialogOpen(false);
+                router.push('/records');
+              }}>Cerrar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </div>
   );
 }

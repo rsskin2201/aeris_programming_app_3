@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon as CalendarIconLucide, ChevronLeft, Loader2, CheckCircle, AlertCircle, FileCheck2 } from "lucide-react";
+import { CalendarIcon as CalendarIconLucide, ChevronLeft, Loader2, CheckCircle, AlertCircle, FileCheck2, Copy } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse } from "date-fns";
@@ -25,6 +25,7 @@ import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO, mockMunicipalities } from "@/lib/form-options";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -63,11 +64,13 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function SpecialInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, addNotification, users: allUsers } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, addNotification, users: allUsers, devModeEnabled } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
+  const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
 
   const fromParam = searchParams.get('from');
 
@@ -209,15 +212,20 @@ export default function SpecialInspectionPage() {
                 message: `Nueva inspección especial (${recordToSave.id}) te ha sido asignada.`,
             });
         }
-
-        toast({
-        title: "Solicitud Enviada",
-        description: `La solicitud especial con ID ${recordToSave.id} se creó con estatus: ${values.status}.`,
-        });
+        
+        if (devModeEnabled) {
+            setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
+            setIsSuccessDialogOpen(true);
+        } else {
+            toast({
+              title: "Solicitud Enviada",
+              description: `La solicitud especial con ID ${recordToSave.id} se creó con estatus: ${values.status}.`,
+            });
+            router.push('/records');
+        }
 
       setIsSubmitting(false);
       setIsConfirming(false);
-      router.push('/records');
     }, 1500);
   }
 
@@ -255,6 +263,13 @@ export default function SpecialInspectionPage() {
         </div>
       );
   }
+  
+  const handleCopyIds = () => {
+    if (createdRecordInfo) {
+      navigator.clipboard.writeText(createdRecordInfo.ids.join(', '));
+      toast({ title: 'IDs Copiados', description: 'Los IDs de las inspecciones se han copiado.' });
+    }
+  };
 
 
   return (
@@ -634,6 +649,45 @@ export default function SpecialInspectionPage() {
             </div>
         </form>
       </Form>
+      
+       {devModeEnabled && createdRecordInfo && (
+        <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CheckCircle className="h-6 w-6 text-green-500" />
+                ¡Solicitud Generada con Éxito!
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <p>Se ha generado la siguiente solicitud de inspección:</p>
+              <div className="space-y-2">
+                  <Label>ID de Inspección</Label>
+                  {createdRecordInfo.ids.map(id => (
+                     <div key={id} className="flex items-center gap-2 rounded-md bg-muted p-2 font-mono text-sm">
+                       <span className="flex-1 truncate">{id}</span>
+                     </div>
+                  ))}
+                   <Button variant="outline" size="sm" onClick={handleCopyIds} className="w-full">
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copiar ID(s)
+                    </Button>
+              </div>
+              <div>
+                <Label>Estatus</Label>
+                <p className="font-semibold">{createdRecordInfo.status}</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => {
+                setIsSuccessDialogOpen(false);
+                router.push('/records');
+              }}>Cerrar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </div>
   );
 }

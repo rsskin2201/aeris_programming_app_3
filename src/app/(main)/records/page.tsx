@@ -43,6 +43,7 @@ const statusColors: Record<InspectionRecord['status'], string> = {
 const allInspectionTypes = [...new Set(['Individual PES', 'Masiva PES', ...TIPO_INSPECCION_MASIVA, ...TIPO_INSPECCION_ESPECIAL])];
 
 const initialFilters = {
+    id: '',
     gestor: '',
     empresa: '',
     sector: '',
@@ -82,6 +83,7 @@ export default function RecordsPage() {
   const filteredRecords = useMemo(() => {
     return records.filter(record => {
       if (zone !== 'Todas las zonas' && record.zone !== zone) return false;
+      if (filters.id && !record.id.toLowerCase().includes(filters.id.toLowerCase())) return false;
       if (filters.gestor && record.gestor !== filters.gestor) return false;
       if (filters.empresa && record.collaboratorCompany !== filters.empresa) return false;
       if (filters.sector && record.sector !== filters.sector) return false;
@@ -198,6 +200,10 @@ export default function RecordsPage() {
         <CollapsibleContent asChild>
             <Card className="mt-2 p-6">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                     <div className="space-y-2 lg:col-span-full">
+                        <Label htmlFor="id">ID de Inspección</Label>
+                        <Input id="id" placeholder="Buscar por ID..." value={filters.id} onChange={(e) => handleFilterChange('id', e.target.value)} />
+                    </div>
                      <div className="space-y-2">
                         <Label htmlFor="gestor">Gestor Asignado</Label>
                         <Select value={filters.gestor} onValueChange={(v) => handleFilterChange('gestor', v)}>
