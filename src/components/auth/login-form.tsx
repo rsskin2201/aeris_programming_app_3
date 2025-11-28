@@ -143,9 +143,9 @@ export function LoginForm() {
             name="operatorName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-bold">Nombre de operador (Opcional)</FormLabel>
+                <FormLabel className="text-base font-bold">Nombre de operador</FormLabel>
                 <FormControl>
-                  <Input placeholder="Tu nombre" {...field} />
+                  <Input placeholder="Se autocompleta con el usuario" {...field} disabled />
                 </FormControl>
                 <FormMessage />
               </FormItem>
