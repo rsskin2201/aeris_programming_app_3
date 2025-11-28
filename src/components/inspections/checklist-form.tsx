@@ -162,11 +162,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         if (!recordZone) return [];
         return inspectors.filter(i => i.zone === recordZone);
     }, [record?.zone, inspectors]);
-
-    const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
-        field.onChange(e.target.value.toUpperCase());
-    };
-
+    
     function onSubmit(values: FormValues) {
         if (!record) return;
 
@@ -205,275 +201,279 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         onClose();
     }
 
+    const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+        field.onChange(e.target.value.toUpperCase());
+    };
+
     if (!record) return null;
 
-  return (
-    <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
-        <DialogHeader>
-            <DialogTitle>Checklist de Inspección en Campo</DialogTitle>
-            <DialogDescription>
-                Formulario para registrar los detalles técnicos de la inspección. ID: {record.id}
-            </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0">
-                <ScrollArea className="flex-1 pr-6">
-                    <div className="space-y-8 py-4">
-                        {/* Datos Programación */}
-                        <div className="space-y-4 p-4 border rounded-md">
-                            <h3 className="font-semibold text-lg">Datos Programación</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <FormField control={form.control} name="inspector" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Inspector</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar inspector" /></SelectTrigger></FormControl>
-                                            <SelectContent>{availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="serieMdd" render={({ field }) => (
-                                    <FormItem><FormLabel>Serie MDD</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="marcaMdd" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Marca MDD</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar marca" /></SelectTrigger></FormControl>
-                                            <SelectContent>{MARCA_MDD.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="tipoMddCampo" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tipo MDD Campo</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger></FormControl>
-                                            <SelectContent>{TIPO_MDD.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="presion" render={({ field }) => (
-                                    <FormItem><FormLabel>Presión (kg/cm2)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="folioIt" render={({ field }) => (
-                                    <FormItem><FormLabel>Folio IT</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="precinto" render={({ field }) => (
-                                    <FormItem><FormLabel>Precinto</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="epp" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>EPP</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                                            <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="controlPrevio" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Control Previo</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                                            <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="mtsInstalados" render={({ field }) => (
-                                    <FormItem><FormLabel>Mts Instalados</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="materialTuberia" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Material Tubería</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar material" /></SelectTrigger></FormControl>
-                                            <SelectContent>{MATERIAL_TUBERIA.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="folioChecklist" render={({ field }) => (
-                                    <FormItem><FormLabel>Folio Check List</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="horaEntrada" render={({ field }) => (
-                                    <FormItem><FormLabel>Hora Entrada</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="horaSalida" render={({ field }) => (
-                                    <FormItem><FormLabel>Hora Salida</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="ventilaPreexistente" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Ventila Preexistente</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                                            <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="ventilacionEcc" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Ventilación ECC</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                                            <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="defectosCorregidos" render={({ field }) => (
-                                    <FormItem className="lg:col-span-2"><FormLabel>Defectos Corregidos</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="defectosNoCorregidos" render={({ field }) => (
-                                    <FormItem className="lg:col-span-2"><FormLabel>Defectos No Corregidos</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                            </div>
-                        </div>
-
-                        {/* Equipos */}
-                        <div className="space-y-4 p-4 border rounded-md">
-                            <h3 className="font-semibold text-lg">Equipos</h3>
-                             <FormField control={form.control} name="numEquipos" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Número de Equipos Conectados</FormLabel>
-                                    <FormControl><Input type="number" min="0" max="5" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                            {fields.map((field, index) => (
-                                <div key={field.id} className="p-3 border rounded-md space-y-3">
-                                    <h4 className="font-medium">Equipo {index + 1}</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                                         <FormField control={form.control} name={`equipos.${index}.equipo`} render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Equipo</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                                                    <SelectContent>{EQUIPO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )} />
-                                        <FormField control={form.control} name={`equipos.${index}.marca`} render={({ field }) => (
-                                            <FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl><FormMessage /></FormItem>
-                                        )} />
-                                        <FormField control={form.control} name={`equipos.${index}.coCor`} render={({ field }) => (
-                                            <FormItem><FormLabel>Co Cor (PPM)</FormLabel><FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl><FormMessage /></FormMessage>
-                                        )} />
-                                        <FormField control={form.control} name={`equipos.${index}.coAmb`} render={({ field }) => (
-                                            <FormItem><FormLabel>Co AMB (PPM)</FormLabel><FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl><FormMessage /></FormMessage>
-                                        )} />
-                                    </div>
+    return (
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+            <DialogHeader>
+                <DialogTitle>Checklist de Inspección en Campo</DialogTitle>
+                <DialogDescription>
+                    Formulario para registrar los detalles técnicos de la inspección. ID: {record.id}
+                </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0">
+                    <ScrollArea className="flex-1 pr-6">
+                        <div className="space-y-8 py-4">
+                            {/* Datos Programación */}
+                            <div className="space-y-4 p-4 border rounded-md">
+                                <h3 className="font-semibold text-lg">Datos Programación</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <FormField control={form.control} name="inspector" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Inspector</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar inspector" /></SelectTrigger></FormControl>
+                                                <SelectContent>{availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="serieMdd" render={({ field }) => (
+                                        <FormItem><FormLabel>Serie MDD</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="marcaMdd" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Marca MDD</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar marca" /></SelectTrigger></FormControl>
+                                                <SelectContent>{MARCA_MDD.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="tipoMddCampo" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Tipo MDD Campo</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger></FormControl>
+                                                <SelectContent>{TIPO_MDD.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="presion" render={({ field }) => (
+                                        <FormItem><FormLabel>Presión (kg/cm2)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="folioIt" render={({ field }) => (
+                                        <FormItem><FormLabel>Folio IT</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="precinto" render={({ field }) => (
+                                        <FormItem><FormLabel>Precinto</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="epp" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>EPP</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="controlPrevio" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Control Previo</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="mtsInstalados" render={({ field }) => (
+                                        <FormItem><FormLabel>Mts Instalados</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="materialTuberia" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Material Tubería</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar material" /></SelectTrigger></FormControl>
+                                                <SelectContent>{MATERIAL_TUBERIA.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="folioChecklist" render={({ field }) => (
+                                        <FormItem><FormLabel>Folio Check List</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="horaEntrada" render={({ field }) => (
+                                        <FormItem><FormLabel>Hora Entrada</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="horaSalida" render={({ field }) => (
+                                        <FormItem><FormLabel>Hora Salida</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="ventilaPreexistente" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Ventila Preexistente</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="ventilacionEcc" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Ventilación ECC</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="defectosCorregidos" render={({ field }) => (
+                                        <FormItem className="lg:col-span-2"><FormLabel>Defectos Corregidos</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="defectosNoCorregidos" render={({ field }) => (
+                                        <FormItem className="lg:col-span-2"><FormLabel>Defectos No Corregidos</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
                                 </div>
-                            ))}
-                        </div>
-                        
-                        {/* Datos Complementarios */}
-                        <div className="space-y-4 p-4 border rounded-md">
-                            <h3 className="font-semibold text-lg">Datos Complementarios</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <FormField control={form.control} name="status" render={({ field }) => (
+                            </div>
+
+                            {/* Equipos */}
+                            <div className="space-y-4 p-4 border rounded-md">
+                                <h3 className="font-semibold text-lg">Equipos</h3>
+                                <FormField control={form.control} name="numEquipos" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Resultado de Inspección</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar resultado" /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                <SelectItem value={STATUS.APROBADA}>Aprobada</SelectItem>
-                                                <SelectItem value={STATUS.NO_APROBADA}>No Aprobada</SelectItem>
-                                                <SelectItem value={STATUS.RECHAZADA}>Rechazada</SelectItem>
-                                                <SelectItem value={STATUS.CANCELADA}>Cancelada</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <FormLabel>Número de Equipos Conectados</FormLabel>
+                                        <FormControl><Input type="number" min="0" max="5" {...field} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
-                                <FormField control={form.control} name="nombreCliente" render={({ field }) => (
-                                    <FormItem><FormLabel>Nombre del Cliente</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="telCliente" render={({ field }) => (
-                                    <FormItem><FormLabel>Tel Cliente</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="formaDePago" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Forma de Pago</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                                            <SelectContent>{FORMA_PAGO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                 <FormField control={form.control} name="equipoExtra" render={({ field }) => (
-                                    <FormItem><FormLabel>Equipo Extra</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                 <FormField control={form.control} name="capturista" render={({ field }) => (
-                                    <FormItem><FormLabel>Capturista</FormLabel><FormControl><Input {...field} disabled readOnly /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="infFormasDePago" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Inf Formas de Pago</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                                            <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="altaSms" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Alta de SMS</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                                            <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="appNaturgy" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>App Naturgy</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                                            <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="entregaGuia" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Entrega de Guía</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                                            <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="motivoCancelacion" render={({ field }) => (
-                                    <FormItem className="md:col-span-2"><FormLabel>Motivo Cancelación/No Aprobación</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="comentariosOca" render={({ field }) => (
-                                    <FormItem className="md:col-span-2"><FormLabel>Comentarios OCA</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
+                                {fields.map((field, index) => (
+                                    <div key={field.id} className="p-3 border rounded-md space-y-3">
+                                        <h4 className="font-medium">Equipo {index + 1}</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                            <FormField control={form.control} name={`equipos.${index}.equipo`} render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Equipo</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                        <SelectContent>{EQUIPO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )} />
+                                            <FormField control={form.control} name={`equipos.${index}.marca`} render={({ field }) => (
+                                                <FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl><FormMessage /></FormItem>
+                                            )} />
+                                            <FormField control={form.control} name={`equipos.${index}.coCor`} render={({ field }) => (
+                                                <FormItem><FormLabel>Co Cor (PPM)</FormLabel><FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl><FormMessage /></FormMessage>
+                                            )} />
+                                            <FormField control={form.control} name={`equipos.${index}.coAmb`} render={({ field }) => (
+                                                <FormItem><FormLabel>Co AMB (PPM)</FormLabel><FormControl><Input {...field} onChange={(e) => handleUpperCase(e, field)} /></FormControl><FormMessage /></FormMessage>
+                                            )} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {/* Datos Complementarios */}
+                            <div className="space-y-4 p-4 border rounded-md">
+                                <h3 className="font-semibold text-lg">Datos Complementarios</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <FormField control={form.control} name="status" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Resultado de Inspección</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar resultado" /></SelectTrigger></FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value={STATUS.APROBADA}>Aprobada</SelectItem>
+                                                    <SelectItem value={STATUS.NO_APROBADA}>No Aprobada</SelectItem>
+                                                    <SelectItem value={STATUS.RECHAZADA}>Rechazada</SelectItem>
+                                                    <SelectItem value={STATUS.CANCELADA}>Cancelada</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="nombreCliente" render={({ field }) => (
+                                        <FormItem><FormLabel>Nombre del Cliente</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="telCliente" render={({ field }) => (
+                                        <FormItem><FormLabel>Tel Cliente</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="formaDePago" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Forma de Pago</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>{FORMA_PAGO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="equipoExtra" render={({ field }) => (
+                                        <FormItem><FormLabel>Equipo Extra</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="capturista" render={({ field }) => (
+                                        <FormItem><FormLabel>Capturista</FormLabel><FormControl><Input {...field} disabled readOnly /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="infFormasDePago" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Inf Formas de Pago</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="altaSms" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Alta de SMS</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="appNaturgy" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>App Naturgy</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="entregaGuia" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Entrega de Guía</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>{SI_NO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="motivoCancelacion" render={({ field }) => (
+                                        <FormItem className="md:col-span-2"><FormLabel>Motivo Cancelación/No Aprobación</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="comentariosOca" render={({ field }) => (
+                                        <FormItem className="md:col-span-2"><FormLabel>Comentarios OCA</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </ScrollArea>
-                <DialogFooter className="pt-6 border-t">
-                    <DialogClose asChild><Button type="button" variant="outline">Cancelar</Button></DialogClose>
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Guardar Checklist
-                    </Button>
-                </DialogFooter>
-            </form>
-        </Form>
-    </DialogContent>
-  );
+                    </ScrollArea>
+                    <DialogFooter className="pt-6 border-t">
+                        <DialogClose asChild><Button type="button" variant="outline">Cancelar</Button></DialogClose>
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Guardar Checklist
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </Form>
+        </DialogContent>
+    );
 }
