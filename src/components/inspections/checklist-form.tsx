@@ -56,7 +56,7 @@ const formSchema = z.object({
   formaDePago: z.string().min(1, "Requerido"),
   equipoExtra: z.string().optional(),
   capturista: z.string(),
-  infFormasDePago: z.string().min(1, "Requerido"),
+  infFormasDePago: zstring().min(1, "Requerido"),
   altaSms: z.string().min(1, "Requerido"),
   appNaturgy: z.string().min(1, "Requerido"),
   entregaGuia: z.string().min(1, "Requerido"),
@@ -459,7 +459,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                                         <FormItem className="md:col-span-2"><FormLabel>Motivo Cancelación/No Aprobación</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                                     )} />
                                     <FormField control={form.control} name="comentariosOca" render={({ field }) => (
-                                        <FormItem className="md:col-span-2"><FormLabel>Comentarios OCA</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem className="md:col-span-2"><FormLabel>Comentarios OCA</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormMessage>
                                     )} />
                                 </div>
                             </div>
