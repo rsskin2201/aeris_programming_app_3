@@ -242,16 +242,8 @@ export default function MassiveInspectionPage() {
             });
         }
         
-        if (devModeEnabled) {
-            setCreatedRecordInfo({ ids: createdIds, status: values.status });
-            setIsSuccessDialogOpen(true);
-        } else {
-            toast({
-                title: "Solicitudes Enviadas",
-                description: `Se crearon ${values.inspections.length} solicitudes masivas con estatus: ${values.status}.`,
-            });
-            router.push('/records');
-        }
+        setCreatedRecordInfo({ ids: createdIds, status: values.status });
+        setIsSuccessDialogOpen(true);
 
       setIsSubmitting(false);
       setIsConfirming(false);
@@ -737,7 +729,7 @@ export default function MassiveInspectionPage() {
         </form>
       </Form>
       
-      {devModeEnabled && createdRecordInfo && (
+      {createdRecordInfo && (
         <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
           <DialogContent>
             <DialogHeader>

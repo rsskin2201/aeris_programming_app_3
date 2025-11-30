@@ -383,17 +383,8 @@ export default function IndividualInspectionPage() {
             }
         }
         
-        if (devModeEnabled) {
-          setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
-          setIsSuccessDialogOpen(true);
-        } else {
-          toast({
-            title: pageMode === 'edit' ? "Solicitud Actualizada" : "Solicitud Enviada",
-            description: `La solicitud con ID ${recordToSave.id} se ${pageMode === 'edit' ? 'actualizó' : 'creó'} con estatus: ${values.status}.`,
-          });
-          router.push(backPath);
-        }
-
+        setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
+        setIsSuccessDialogOpen(true);
         setIsSubmitting(false);
         setIsConfirming(false);
     }, 1500);
@@ -461,7 +452,7 @@ export default function IndividualInspectionPage() {
   const handleCopyIds = () => {
     if (createdRecordInfo) {
       navigator.clipboard.writeText(createdRecordInfo.ids.join(', '));
-      toast({ title: 'IDs Copiados', description: 'Los IDs de las inspecciones se han copiado.' });
+      toast({ title: 'ID Copiado', description: 'El ID de la inspección se ha copiado.' });
     }
   };
 
@@ -900,7 +891,7 @@ export default function IndividualInspectionPage() {
         </form>
       </Form>
       
-      {devModeEnabled && createdRecordInfo && (
+      {createdRecordInfo && (
         <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -920,7 +911,7 @@ export default function IndividualInspectionPage() {
                   ))}
                    <Button variant="outline" size="sm" onClick={handleCopyIds} className="w-full">
                         <Copy className="mr-2 h-4 w-4" />
-                        Copiar ID(s)
+                        Copiar ID
                     </Button>
               </div>
               <div>
