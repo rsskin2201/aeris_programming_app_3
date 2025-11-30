@@ -181,7 +181,7 @@ export default function RecordsPage() {
         {canExport && (
           <div className='flex items-center gap-2'>
             {canGenerateBackendReport && (
-              <Button variant="outline" onClick={handleBackendExport} disabled={isBackendExporting}>
+              <Button variant="outline" onClick={handleBackendExport} disabled={true || isBackendExporting}>
                   {isBackendExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Server className="mr-2 h-4 w-4" />}
                   Generar Reporte Completo
               </Button>
