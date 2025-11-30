@@ -17,9 +17,8 @@ import { Label } from '../ui/label';
 import { ROLES } from '@/lib/types';
 
 const formSchema = z.object({
-  username: z.string().min(1, { message: 'El usuario es requerido.' }),
+  username: z.string().email({ message: 'El usuario debe ser un correo electrónico válido.' }),
   password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' }),
-  operatorName: z.string().optional(),
 });
 
 const forgotPasswordSchema = z.object({
@@ -34,7 +33,7 @@ export function LoginForm() {
   const [forgotUsername, setForgotUsername] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
   const router = useRouter();
-  const { login, addPasswordRequest, users } = useAppContext();
+  const { login, addPasswordRequest } = useAppContext();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -42,43 +41,27 @@ export function LoginForm() {
     defaultValues: {
       username: '',
       password: '',
-      operatorName: '',
     },
   });
 
-  const usernameValue = form.watch('username');
-
-  useEffect(() => {
-    if (usernameValue) {
-      const userFound = users.find(u => u.username.toLowerCase() === usernameValue.toLowerCase());
-      if (userFound) {
-        form.setValue('operatorName', userFound.name);
-      } else {
-        form.setValue('operatorName', '');
-      }
-    }
-  }, [usernameValue, users, form]);
-
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    setTimeout(() => {
-      const user = login(values.username, values.operatorName);
-      if (user) {
-        toast({
-          title: 'Inicio de sesión exitoso',
-          description: `Bienvenido(a), ${values.operatorName || user.name}`,
-          duration: 2000,
-        });
-        router.push('/');
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Error de autenticación',
-          description: 'Usuario o contraseña incorrectos. Intentos restantes: 4',
-        });
-        setIsLoading(false);
-      }
-    }, 2000);
+    const user = await login(values.username, values.password);
+    if (user) {
+      toast({
+        title: 'Inicio de sesión exitoso',
+        description: `Bienvenido(a), ${user.name}`,
+        duration: 2000,
+      });
+      router.push('/');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error de autenticación',
+        description: 'Usuario o contraseña incorrectos.',
+      });
+      setIsLoading(false);
+    }
   }
 
   const handleForgotPasswordSubmit = () => {
@@ -117,9 +100,9 @@ export function LoginForm() {
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-bold">Usuario</FormLabel>
+                <FormLabel className="text-base font-bold">Correo electrónico</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., admin, gestor, visual" {...field} />
+                  <Input placeholder="usuario@ejemplo.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -133,19 +116,6 @@ export function LoginForm() {
                 <FormLabel className="text-base font-bold">Contraseña</FormLabel>
                 <FormControl>
                   <Input type="password" placeholder="******" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="operatorName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-base font-bold">Nombre de operador</FormLabel>
-                <FormControl>
-                  <Input placeholder="Se autocompleta con el usuario" {...field} disabled />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -179,17 +149,17 @@ export function LoginForm() {
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                     <div>
-                        <Label htmlFor="forgot-username">Nombre de Usuario</Label>
+                        <Label htmlFor="forgot-username">Nombre de Usuario (correo)</Label>
                         <Input 
                             id="forgot-username" 
                             value={forgotUsername}
                             onChange={(e) => setForgotUsername(e.target.value)}
-                            placeholder="tu.usuario"
+                            placeholder="tu.usuario@ejemplo.com"
                             className="mt-2"
                         />
                     </div>
                      <div>
-                        <Label htmlFor="forgot-email">Correo Electrónico</Label>
+                        <Label htmlFor="forgot-email">Correo Electrónico de Contacto</Label>
                         <Input 
                             id="forgot-email" 
                             type="email"

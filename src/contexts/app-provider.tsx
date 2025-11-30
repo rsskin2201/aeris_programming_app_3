@@ -1,13 +1,16 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useState, useMemo, useCallback } from 'react';
+import { createContext, useState, useMemo, useCallback, useEffect } from 'react';
 import type { User, Role, Zone, BlockedDay, PasswordResetRequest, UserStatus, AppNotification } from '@/lib/types';
 import { ROLES, ZONES, USER_STATUS } from '@/lib/types';
 import { mockUsers as initialMockUsers, mockRecords as initialMockRecords, InspectionRecord, sampleCollaborators as initialCollaborators, sampleQualityControlCompanies as initialQualityCompanies, sampleInspectors as initialInspectors, sampleInstallers as initialInstallers, sampleExpansionManagers as initialManagers, sampleSectors as initialSectors, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from '@/lib/mock-data';
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
+import { useFirebase } from '@/firebase';
 
 interface AppContextType {
   user: User | null;
+  firebaseUser: any;
   operatorName: string | null;
   zone: Zone;
   isZoneConfirmed: boolean;
@@ -56,7 +59,7 @@ interface AppContextType {
   addMultipleSectors: (newSectors: Sector[]) => void;
 
   // Auth & Settings
-  login: (username: string, operatorName?: string) => User | null;
+  login: (email: string, password: string) => Promise<User | null>;
   logout: () => void;
   setZone: (zone: Zone) => void;
   switchRole: (role: Role) => void;
@@ -76,6 +79,7 @@ export const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   // Auth & Settings State
   const [user, setUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<any>(null);
   const [operatorName, setOperatorName] = useState<string | null>(null);
   const [zone, setZone] = useState<Zone>(ZONES[0]);
   const [isZoneConfirmed, setIsZoneConfirmed] = useState(false);
@@ -98,34 +102,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
       "2024-11-18": { reason: "Revolución Mexicana" },
   });
 
-  // Auth & Settings Callbacks
-  const login = (username: string, opName?: string): User | null => {
-    const foundUser = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
-    
-    const userToLogin = foundUser || (() => {
-        const roleKey = Object.keys(ROLES).find(key => ROLES[key as keyof typeof ROLES].toLowerCase().split(' ')[0] === username.toLowerCase());
-        return roleKey ? users.find(u => u.role === ROLES[key as keyof typeof ROLES]) : undefined;
-    })();
+  const { auth } = useFirebase();
 
-    if (userToLogin) {
-      setUser(userToLogin);
-      setOperatorName(opName || userToLogin.name);
-      setIsZoneConfirmed(false);
-      return userToLogin;
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      if (user) {
+        const appUser = users.find(u => u.username === user.email);
+        if (appUser) {
+          setUser(appUser);
+          setOperatorName(appUser.name);
+        }
+      } else {
+        setUser(null);
+        setOperatorName(null);
+        setIsZoneConfirmed(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [auth, users]);
+
+  // Auth & Settings Callbacks
+  const login = async (email: string, password: string): Promise<User | null> => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+      const appUser = users.find(u => u.username.toLowerCase() === firebaseUser.email?.toLowerCase());
+
+      if (appUser) {
+        setUser(appUser);
+        setOperatorName(appUser.name);
+        setIsZoneConfirmed(false);
+        return appUser;
+      }
+      return null;
+    } catch (error) {
+      console.error("Firebase login error:", error);
+      return null;
     }
-    
-    return null;
   };
 
   const logout = () => {
-    setUser(null);
-    setOperatorName(null);
-    setIsZoneConfirmed(false);
+    auth.signOut();
   };
   
   const switchRole = (role: Role) => {
     const newUser = users.find(u => u.role === role);
     if (newUser) {
+      // This is a mock implementation. In a real scenario, you would handle this differently.
       setUser(newUser);
       setOperatorName(currentOpName => currentOpName || newUser.name);
       setIsZoneConfirmed(false);
@@ -160,7 +184,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     setPasswordRequests(prev => [newRequest, ...prev]);
     
-    // Also send a notification to the admin
     const admins = users.filter(u => u.role === ROLES.ADMIN);
     admins.forEach(admin => {
         addNotification({
@@ -233,6 +256,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(
     () => ({
       user,
+      firebaseUser,
       operatorName,
       zone,
       setZone,
@@ -290,7 +314,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markNotificationAsRead,
     }),
     [
-      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
+      user, firebaseUser, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
       getRecordById, addRecord, updateRecord, addMultipleRecords, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead,
       addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors
     ]
