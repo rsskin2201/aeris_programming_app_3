@@ -5,12 +5,9 @@ import { createContext, useState, useMemo, useCallback, useEffect } from 'react'
 import type { User, Role, Zone, BlockedDay, PasswordResetRequest, UserStatus, AppNotification } from '@/lib/types';
 import { ROLES, ZONES, USER_STATUS } from '@/lib/types';
 import { mockUsers as initialMockUsers, mockRecords as initialMockRecords, InspectionRecord, sampleCollaborators as initialCollaborators, sampleQualityControlCompanies as initialQualityCompanies, sampleInspectors as initialInspectors, sampleInstallers as initialInstallers, sampleExpansionManagers as initialManagers, sampleSectors as initialSectors, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from '@/lib/mock-data';
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
-import { useFirebase } from '@/firebase';
 
 interface AppContextType {
   user: User | null;
-  firebaseUser: any;
   operatorName: string | null;
   zone: Zone;
   isZoneConfirmed: boolean;
@@ -19,6 +16,7 @@ interface AppContextType {
   blockedDays: Record<string, BlockedDay>;
   passwordRequests: PasswordResetRequest[];
   notifications: AppNotification[];
+  devModeEnabled: boolean;
   
   // Records
   records: InspectionRecord[];
@@ -59,7 +57,7 @@ interface AppContextType {
   addMultipleSectors: (newSectors: Sector[]) => void;
 
   // Auth & Settings
-  login: (email: string, password: string) => Promise<User | null>;
+  login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
   setZone: (zone: Zone) => void;
   switchRole: (role: Role) => void;
@@ -72,6 +70,7 @@ interface AppContextType {
   resolvePasswordRequest: (id: string) => void;
   addNotification: (notification: Omit<AppNotification, 'id' | 'date' | 'read'>) => void;
   markNotificationAsRead: (id: string) => void;
+  toggleDevMode: () => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -79,7 +78,6 @@ export const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   // Auth & Settings State
   const [user, setUser] = useState<User | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<any>(null);
   const [operatorName, setOperatorName] = useState<string | null>(null);
   const [zone, setZone] = useState<Zone>(ZONES[0]);
   const [isZoneConfirmed, setIsZoneConfirmed] = useState(false);
@@ -87,6 +85,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [weekendsEnabled, setWeekendsEnabled] = useState(false);
   const [passwordRequests, setPasswordRequests] = useState<PasswordResetRequest[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [devModeEnabled, setDevModeEnabled] = useState(false);
   
   // Data State
   const [records, setRecords] = useState<InspectionRecord[]>(initialMockRecords);
@@ -102,48 +101,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       "2024-11-18": { reason: "Revolución Mexicana" },
   });
 
-  const { auth } = useFirebase();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setFirebaseUser(user);
-      if (user) {
-        const appUser = users.find(u => u.username === user.email);
-        if (appUser) {
-          setUser(appUser);
-          setOperatorName(appUser.name);
-        }
-      } else {
-        setUser(null);
-        setOperatorName(null);
-        setIsZoneConfirmed(false);
-      }
-    });
-    return () => unsubscribe();
-  }, [auth, users]);
-
   // Auth & Settings Callbacks
-  const login = async (email: string, password: string): Promise<User | null> => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-      const appUser = users.find(u => u.username.toLowerCase() === firebaseUser.email?.toLowerCase());
-
-      if (appUser) {
-        setUser(appUser);
-        setOperatorName(appUser.name);
-        setIsZoneConfirmed(false);
-        return appUser;
-      }
-      return null;
-    } catch (error) {
-      console.error("Firebase login error:", error);
-      return null;
+  const login = async (username: string, password: string): Promise<User | null> => {
+    // This is a mock login. In a real app, you'd call Firebase Auth.
+    const foundUser = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    
+    // In this mock, we'll just check if the user exists. We are not checking passwords.
+    if (foundUser) {
+      setUser(foundUser);
+      setOperatorName(foundUser.name);
+      setIsZoneConfirmed(false); // Force zone selection on new login
+      return foundUser;
     }
+    return null;
   };
 
   const logout = () => {
-    auth.signOut();
+    setUser(null);
+    setOperatorName(null);
+    setIsZoneConfirmed(false);
   };
   
   const switchRole = (role: Role) => {
@@ -163,6 +139,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const toggleForms = useCallback(() => setFormsEnabled(prev => !prev), []);
   const toggleWeekends = useCallback(() => setWeekendsEnabled(prev => !prev), []);
+  const toggleDevMode = useCallback(() => setDevModeEnabled(prev => !prev), []);
 
   const addBlockedDay = useCallback((date: string, reason: string) => {
     setBlockedDays(prev => ({ ...prev, [date]: { reason } }));
@@ -256,7 +233,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(
     () => ({
       user,
-      firebaseUser,
       operatorName,
       zone,
       setZone,
@@ -266,6 +242,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       blockedDays,
       passwordRequests,
       notifications,
+      devModeEnabled,
       records,
       collaborators,
       qualityCompanies,
@@ -306,6 +283,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       confirmZone,
       toggleForms,
       toggleWeekends,
+      toggleDevMode,
       addBlockedDay,
       removeBlockedDay,
       addPasswordRequest,
@@ -314,8 +292,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markNotificationAsRead,
     }),
     [
-      user, firebaseUser, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
-      getRecordById, addRecord, updateRecord, addMultipleRecords, confirmZone, toggleForms, toggleWeekends, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead,
+      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, devModeEnabled, records, collaborators, qualityCompanies, inspectors, installers, expansionManagers, sectors, users,
+      getRecordById, addRecord, updateRecord, addMultipleRecords, confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addCollaborator, updateCollaborator, addQualityCompany, updateQualityCompany, addInspector, updateInspector, addInstaller, updateInstaller, addExpansionManager, updateExpansionManager, addSector, updateSector, addUser, updateUser, deleteUser, login, logout, switchRole, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead,
       addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors
     ]
   );

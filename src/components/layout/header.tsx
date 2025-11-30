@@ -43,7 +43,6 @@ import {
   Bell,
   Check,
   FlaskConical,
-  KeyRound,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -86,7 +85,7 @@ const moduleIcons = {
 
 export default function Header() {
   const pathname = usePathname();
-  const { user, firebaseUser, operatorName, switchRole, logout, notifications, markNotificationAsRead, devModeEnabled, toggleDevMode } = useAppContext();
+  const { user, operatorName, switchRole, logout, notifications, markNotificationAsRead, devModeEnabled, toggleDevMode } = useAppContext();
   const { toast } = useToast();
   
 
@@ -94,43 +93,6 @@ export default function Header() {
 
   const userNotifications = notifications.filter(n => n.recipientUsername === user.username);
   const unreadCount = userNotifications.filter(n => !n.read).length;
-  
-  const handleGetToken = async () => {
-    if (firebaseUser) {
-      try {
-        const token = await firebaseUser.getIdToken();
-        toast({
-          title: "Firebase ID Token",
-          description: (
-            <div className="flex flex-col gap-2">
-              <p className="font-mono text-xs break-all bg-muted p-2 rounded-md">{token}</p>
-              <Button size="sm" onClick={() => {
-                navigator.clipboard.writeText(token);
-                toast({ title: 'Copiado', description: 'Token copiado al portapapeles.' });
-              }}>
-                <Copy className="mr-2" />
-                Copiar Token
-              </Button>
-            </div>
-          ),
-          duration: 10000,
-        });
-      } catch (error) {
-        console.error("Error getting ID token:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No se pudo obtener el token de ID.",
-        });
-      }
-    } else {
-        toast({
-            variant: "destructive",
-            title: "Usuario no autenticado",
-            description: "No se encontró un usuario de Firebase para obtener el token.",
-        });
-    }
-  };
 
 
   const NotificationBell = () => {
@@ -262,10 +224,6 @@ export default function Header() {
                     <FlaskConical className="mr-2 h-4 w-4" />
                     Modo Desarrollo
                 </DropdownMenuCheckboxItem>
-                 <DropdownMenuItem onClick={handleGetToken}>
-                    <KeyRound className="mr-2 h-4 w-4" />
-                    Obtener Token
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {user.role === ROLES.ADMIN && (
                   <>

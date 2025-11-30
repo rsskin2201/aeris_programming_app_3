@@ -17,7 +17,7 @@ import { Label } from '../ui/label';
 import { ROLES } from '@/lib/types';
 
 const formSchema = z.object({
-  username: z.string().email({ message: 'El usuario debe ser un correo electrónico válido.' }),
+  username: z.string().min(1, { message: 'El nombre de usuario es requerido.' }),
   password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' }),
 });
 
@@ -100,9 +100,9 @@ export function LoginForm() {
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-bold">Correo electrónico</FormLabel>
+                <FormLabel className="text-base font-bold">Nombre de usuario</FormLabel>
                 <FormControl>
-                  <Input placeholder="usuario@ejemplo.com" {...field} />
+                  <Input placeholder="usuario.alias" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -149,12 +149,12 @@ export function LoginForm() {
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                     <div>
-                        <Label htmlFor="forgot-username">Nombre de Usuario (correo)</Label>
+                        <Label htmlFor="forgot-username">Nombre de Usuario</Label>
                         <Input 
                             id="forgot-username" 
                             value={forgotUsername}
                             onChange={(e) => setForgotUsername(e.target.value)}
-                            placeholder="tu.usuario@ejemplo.com"
+                            placeholder="tu.usuario.alias"
                             className="mt-2"
                         />
                     </div>
