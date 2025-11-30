@@ -175,10 +175,32 @@ export default function IndividualInspectionPage() {
             setPageMode(mode === 'view' ? 'view' : 'edit');
             form.reset({
                 ...record,
-                fechaProgramacion: parse(record.requestDate, 'yyyy-MM-dd', new Date()),
-                horarioProgramacion: record.horarioProgramacion || '09:00', // Ensure this exists
+                id: record.id,
                 zone: record.zone,
+                sector: record.sector,
+                poliza: record.poliza,
+                caso: record.caso,
+                municipality: record.municipality,
+                colonia: record.colonia,
+                calle: record.calle,
+                numero: record.numero,
+                portal: record.portal,
+                escalera: record.escalera,
+                piso: record.piso,
+                puerta: record.puerta,
+                tipoInspeccion: record.tipoInspeccion,
+                tipoProgramacion: record.tipoProgramacion,
+                tipoMdd: record.tipoMdd,
+                mercado: record.mercado,
+                oferta: record.oferta,
+                observaciones: record.observaciones,
+                empresaColaboradora: record.collaboratorCompany,
+                fechaProgramacion: parse(record.requestDate, 'yyyy-MM-dd', new Date()),
+                horarioProgramacion: record.horarioProgramacion || '09:00',
+                instalador: record.instalador,
                 inspector: record.inspector || '',
+                gestor: record.gestor,
+                status: record.status,
             });
         }
     } else {
@@ -344,6 +366,7 @@ export default function IndividualInspectionPage() {
             serieMdd: currentRecord?.serieMdd,
             mercado: values.mercado,
             observaciones: values.observaciones,
+            collaboratorCompany: values.empresaColaboradora,
         };
 
         if (pageMode === 'edit' && currentRecord) {
