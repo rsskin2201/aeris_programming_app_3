@@ -3,8 +3,6 @@
  * @fileOverview A flow for generating a CSV report of all inspection records.
  * 
  * - generateReport - A function that fetches all records and returns them as a CSV string.
- * - ReportInputSchema - The input type (zone filter).
- * - ReportOutputSchema - The output type (CSV string).
  */
 
 import { ai } from '@/ai/genkit';
@@ -12,10 +10,10 @@ import { z } from 'genkit';
 import Papa from 'papaparse';
 import { mockRecords } from '@/lib/mock-data';
 
-export const ReportInputSchema = z.string().describe('The zone to filter records by, or "Todas las zonas" for all.');
+const ReportInputSchema = z.string().describe('The zone to filter records by, or "Todas las zonas" for all.');
 export type ReportInput = z.infer<typeof ReportInputSchema>;
 
-export const ReportOutputSchema = z.string().describe('The generated report in CSV format.');
+const ReportOutputSchema = z.string().describe('The generated report in CSV format.');
 export type ReportOutput = z.infer<typeof ReportOutputSchema>;
 
 export async function generateReport(input: ReportInput): Promise<ReportOutput> {
