@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import Papa from 'papaparse';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '../ui/dialog';
-import { ScrollArea } from '../ui/scroll-area';
+import { ScrollArea, ScrollBar } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 export interface FieldDefinition<T> {
@@ -166,52 +166,53 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
     return (
         <>
             <ScrollArea className="flex-1 overflow-auto border rounded-lg">
-              <div className="relative w-full overflow-auto">
-                <Table className="relative">
-                    <TableHeader className="sticky top-0 bg-muted z-10">
-                        <TableRow>
-                            {headers.map((header, index) => (
-                                <TableHead key={index} className='min-w-[250px] align-top'>
-                                    <p className="font-bold text-foreground truncate">{header}</p>
-                                    <Select 
-                                      value={String(mapping[header] || '')}
-                                      onValueChange={(value) => handleMappingChange(header, value as keyof T | '' | 'no-map')}
-                                    >
-                                        <SelectTrigger className="h-8 mt-1">
-                                            <SelectValue placeholder="Mapear a..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="no-map">No Mapear</SelectItem>
-                                            {fields.map(field => (
-                                                <SelectItem key={String(field.key)} value={String(field.key)}>{field.label}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {data.map((row, rowIndex) => (
-                            <TableRow key={rowIndex}>
-                                {row.map((cell, colIndex) => {
-                                    const error = errors[rowIndex]?.[headers[colIndex]];
-                                    return (
-                                        <TableCell key={colIndex}>
-                                            <Input 
-                                                value={cell || ''}
-                                                onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                                                className={cn(error ? 'border-destructive focus-visible:ring-destructive' : 'focus-visible:ring-ring')}
-                                            />
-                                            {error && <p className="text-xs text-destructive mt-1">{error}</p>}
-                                        </TableCell>
-                                    )
-                                })}
+                <div className="relative w-full">
+                    <Table className="relative">
+                        <TableHeader className="sticky top-0 bg-muted z-10">
+                            <TableRow>
+                                {headers.map((header, index) => (
+                                    <TableHead key={index} className='min-w-[250px] align-top'>
+                                        <p className="font-bold text-foreground truncate">{header}</p>
+                                        <Select 
+                                          value={String(mapping[header] || '')}
+                                          onValueChange={(value) => handleMappingChange(header, value as keyof T | '' | 'no-map')}
+                                        >
+                                            <SelectTrigger className="h-8 mt-1">
+                                                <SelectValue placeholder="Mapear a..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="no-map">No Mapear</SelectItem>
+                                                {fields.map(field => (
+                                                    <SelectItem key={String(field.key)} value={String(field.key)}>{field.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </TableHead>
+                                ))}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-              </div>
+                        </TableHeader>
+                        <TableBody>
+                            {data.map((row, rowIndex) => (
+                                <TableRow key={rowIndex}>
+                                    {row.map((cell, colIndex) => {
+                                        const error = errors[rowIndex]?.[headers[colIndex]];
+                                        return (
+                                            <TableCell key={colIndex}>
+                                                <Input 
+                                                    value={cell || ''}
+                                                    onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
+                                                    className={cn(error ? 'border-destructive focus-visible:ring-destructive' : 'focus-visible:ring-ring')}
+                                                />
+                                                {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+                                            </TableCell>
+                                        )
+                                    })}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+                <ScrollBar orientation="horizontal" />
             </ScrollArea>
             <div className="flex-shrink-0 pt-4 space-y-2">
                  {globalError && hasErrors && (
