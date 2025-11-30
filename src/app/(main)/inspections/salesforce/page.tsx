@@ -12,7 +12,26 @@ import { InspectionRecord } from '@/lib/mock-data';
 import { ROLES, STATUS } from '@/lib/types';
 import { CsvEditor, FieldDefinition } from '@/components/shared/csv-editor';
 import { MERCADO } from '@/lib/form-options';
-import { isValid, parse } from 'date-fns';
+import { isValid, parse, format as formatDate } from 'date-fns';
+
+const isValidDate = (dateStr: string) => {
+    const formats = ['yyyy-MM-dd', 'dd/MM/yyyy'];
+    for (const fmt of formats) {
+        if (isValid(parse(dateStr, fmt, new Date()))) {
+            return true;
+        }
+    }
+    return false;
+};
+
+const parseToUniformDate = (dateStr: string): string => {
+    if (isValid(parse(dateStr, 'dd/MM/yyyy', new Date()))) {
+        const parsedDate = parse(dateStr, 'dd/MM/yyyy', new Date());
+        return formatDate(parsedDate, 'yyyy-MM-dd');
+    }
+    // Assume it's already yyyy-MM-dd or let validation handle it
+    return dateStr;
+}
 
 const recordFields: FieldDefinition<InspectionRecord>[] = [
     { key: 'poliza', label: 'POLIZA' },
@@ -32,7 +51,7 @@ const recordFields: FieldDefinition<InspectionRecord>[] = [
       key: 'mercado', 
       label: 'MERCADO', 
       required: true, 
-      validation: (val) => Object.values(MERCADO).includes(val) || `Mercado inválido. Válidos: ${Object.values(MERCADO).join(', ')}`
+      validation: (val) => Object.values(MERCADO).includes(val as any) || `Mercado inválido. Válidos: ${Object.values(MERCADO).join(', ')}`
     },
     { key: 'oferta', label: 'OFERTA/CAMPAÑA' },
     { key: 'collaboratorCompany', label: 'EMPRESA COLABORADORA', required: true },
@@ -40,7 +59,7 @@ const recordFields: FieldDefinition<InspectionRecord>[] = [
       key: 'requestDate', 
       label: 'FECHA PROGRAMACION', 
       required: true,
-      validation: (val) => isValid(parse(val, 'yyyy-MM-dd', new Date())) || 'Formato de fecha debe ser AAAA-MM-DD.'
+      validation: (val) => isValidDate(val) || 'Formato de fecha debe ser AAAA-MM-DD o DD/MM/AAAA.'
     },
     { key: 'horarioProgramacion', label: 'HORARIO PROGRAMACION' },
     { key: 'instalador', label: 'INSTALADOR' },
@@ -52,7 +71,7 @@ const recordFields: FieldDefinition<InspectionRecord>[] = [
       key: 'status', 
       label: 'STATUS', 
       required: true,
-      validation: (val) => Object.values(STATUS).includes(val) || 'Estatus inválido.'
+      validation: (val) => Object.values(STATUS).includes(val as any) || 'Estatus inválido.'
     },
     { key: 'serieMdd', label: 'SERIE MDD' },
     { key: 'marcaMdd', label: 'MARCA MDD' },
@@ -168,6 +187,7 @@ export default function SalesforceUploadPage() {
                     createdBy: rec.capturista || user?.username || 'desconocido',
                     status: rec.status || STATUS.REGISTRADA,
                     zone: rec.zone || zone,
+                    requestDate: rec.requestDate ? parseToUniformDate(rec.requestDate) : '',
                 } as InspectionRecord;
             });
 
