@@ -166,6 +166,7 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
     return (
         <>
             <ScrollArea className="flex-1 overflow-auto border rounded-lg">
+              <div className="relative w-full overflow-auto">
                 <Table className="relative">
                     <TableHeader className="sticky top-0 bg-muted z-10">
                         <TableRow>
@@ -210,6 +211,7 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
                         ))}
                     </TableBody>
                 </Table>
+              </div>
             </ScrollArea>
             <div className="flex-shrink-0 pt-4 space-y-2">
                  {globalError && hasErrors && (
