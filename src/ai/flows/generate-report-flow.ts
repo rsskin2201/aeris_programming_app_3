@@ -11,10 +11,10 @@ import Papa from 'papaparse';
 import { mockRecords } from '@/lib/mock-data';
 
 const ReportInputSchema = z.string().describe('The zone to filter records by, or "Todas las zonas" for all.');
-export type ReportInput = z.infer<typeof ReportInputSchema>;
+type ReportInput = z.infer<typeof ReportInputSchema>;
 
 const ReportOutputSchema = z.string().describe('The generated report in CSV format.');
-export type ReportOutput = z.infer<typeof ReportOutputSchema>;
+type ReportOutput = z.infer<typeof ReportOutputSchema>;
 
 export async function generateReport(input: ReportInput): Promise<ReportOutput> {
   return generateReportFlow(input);
