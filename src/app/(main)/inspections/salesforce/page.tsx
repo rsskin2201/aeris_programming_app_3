@@ -183,7 +183,7 @@ export default function SalesforceUploadPage() {
                     type: rec.tipoInspeccion || 'Masiva Salesforce',
                     client: rec.nombreCliente || 'Cliente por definir',
                     address: fullAddress,
-                    createdAt: new Date().toISOString(),
+                    createdAt: formatDate(new Date(), 'yyyy-MM-dd HH:mm:ss'),
                     createdBy: rec.capturista || user?.username || 'desconocido',
                     status: rec.status || STATUS.REGISTRADA,
                     zone: rec.zone || zone,

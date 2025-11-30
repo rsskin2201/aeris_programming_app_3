@@ -81,7 +81,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
     const dataToSave: ExpansionManager = {
         ...values,
         id: values.id!,
-        createdAt: manager?.createdAt || format(new Date(), 'yyyy-MM-dd'),
+        createdAt: manager?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
     };
 
     if (isEditMode) {
@@ -201,7 +201,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
                <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border bg-muted/50 p-4 text-xs text-muted-foreground">
                    <p><span className="font-semibold">Fecha Alta:</span> {manager.createdAt}</p>
                    <p><span className="font-semibold">Usuario Alta:</span> N/A</p>
-                   <p><span className="font-semibold">Fecha Últ. Mod.:</span> {format(new Date(), 'yyyy-MM-dd HH:mm')}</p>
+                   <p><span className="font-semibold">Fecha Últ. Mod.:</span> {format(new Date(), 'yyyy-MM-dd HH:mm:ss')}</p>
                    <p><span className="font-semibold">Usuario Últ. Mod.:</span> {user?.username}</p>
                </div>
            )}
