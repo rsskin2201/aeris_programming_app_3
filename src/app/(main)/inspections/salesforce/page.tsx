@@ -11,6 +11,8 @@ import { useAppContext } from '@/hooks/use-app-context';
 import { InspectionRecord } from '@/lib/mock-data';
 import { ROLES, STATUS } from '@/lib/types';
 import { CsvEditor, FieldDefinition } from '@/components/shared/csv-editor';
+import { MERCADO } from '@/lib/form-options';
+import { isValid, parse } from 'date-fns';
 
 const recordFields: FieldDefinition<InspectionRecord>[] = [
     { key: 'poliza', label: 'POLIZA' },
@@ -26,17 +28,32 @@ const recordFields: FieldDefinition<InspectionRecord>[] = [
     { key: 'tipoInspeccion', label: 'TIPO DE INSPECCION' },
     { key: 'tipoProgramacion', label: 'TIPO DE PROGRAMACION' },
     { key: 'tipoMdd', label: 'TIPO MDD' },
-    { key: 'mercado', label: 'MERCADO', required: true },
+    { 
+      key: 'mercado', 
+      label: 'MERCADO', 
+      required: true, 
+      validation: (val) => Object.values(MERCADO).includes(val) || `Mercado inválido. Válidos: ${Object.values(MERCADO).join(', ')}`
+    },
     { key: 'oferta', label: 'OFERTA/CAMPAÑA' },
     { key: 'collaboratorCompany', label: 'EMPRESA COLABORADORA', required: true },
-    { key: 'requestDate', label: 'FECHA PROGRAMACION', required: true },
+    { 
+      key: 'requestDate', 
+      label: 'FECHA PROGRAMACION', 
+      required: true,
+      validation: (val) => isValid(parse(val, 'yyyy-MM-dd', new Date())) || 'Formato de fecha debe ser AAAA-MM-DD.'
+    },
     { key: 'horarioProgramacion', label: 'HORARIO PROGRAMACION' },
     { key: 'instalador', label: 'INSTALADOR' },
     { key: 'gestor', label: 'GESTOR', required: true },
     { key: 'grupoMercado', label: 'GRUPO DE MERCADO' },
     { key: 'semana', label: 'SEMANA' },
     { key: 'inspector', label: 'INSPECTOR' },
-    { key: 'status', label: 'STATUS', required: true },
+    { 
+      key: 'status', 
+      label: 'STATUS', 
+      required: true,
+      validation: (val) => Object.values(STATUS).includes(val) || 'Estatus inválido.'
+    },
     { key: 'serieMdd', label: 'SERIE MDD' },
     { key: 'marcaMdd', label: 'MARCA MDD' },
     { key: 'tipoMddCampo', label: 'TIPO MDD CAMPO' },
@@ -92,15 +109,6 @@ const recordFields: FieldDefinition<InspectionRecord>[] = [
     { key: 'observacionesSoporte', label: 'OBSERVACIONES SOPORTE' },
     { key: 'tipoRechazo', label: 'TIPO RECHAZO' },
     { key: 'motivoRechazo', label: 'MOTIVO RECHAZO' },
-    // Fields that are not in the list but are required for the record
-    { key: 'id', label: 'ID', required: true },
-    { key: 'type', label: 'Tipo', required: true },
-    { key: 'address', label: 'Dirección', required: true },
-    { key: 'client', label: 'Cliente', required: true },
-    { key: 'createdAt', label: 'Fecha Alta', required: true },
-    { key: 'createdBy', label: 'Usuario Alta', required: true },
-    { key: 'zone', label: 'Zona', required: true },
-    { key: 'sector', label: 'Sector', required: true },
     { key: 'observaciones', label: 'Observaciones' },
 ];
 
@@ -143,17 +151,25 @@ export default function SalesforceUploadPage() {
     }
   };
 
-  const handleFinalUpload = (newRecords: InspectionRecord[]) => {
+  const handleFinalUpload = (newRecords: Partial<InspectionRecord>[]) => {
     setIsUploading(true);
     
     setTimeout(() => {
         try {
-            const recordsToSave = newRecords.map(rec => ({
-                ...rec,
-                createdBy: rec.createdBy || user?.username || 'desconocido',
-                status: rec.status || STATUS.REGISTRADA,
-                zone: rec.zone || zone,
-            }));
+            const recordsToSave = newRecords.map(rec => {
+                const fullAddress = [rec.calle, rec.numero, rec.colonia].filter(Boolean).join(', ');
+                return {
+                    ...rec,
+                    id: `SF-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+                    type: rec.tipoInspeccion || 'Masiva Salesforce',
+                    client: rec.nombreCliente || 'Cliente por definir',
+                    address: fullAddress,
+                    createdAt: new Date().toISOString(),
+                    createdBy: rec.capturista || user?.username || 'desconocido',
+                    status: rec.status || STATUS.REGISTRADA,
+                    zone: rec.zone || zone,
+                } as InspectionRecord;
+            });
 
             addMultipleRecords(recordsToSave);
 

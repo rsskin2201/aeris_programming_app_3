@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import Papa from 'papaparse';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '../ui/dialog';
+import { ScrollArea } from '../ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 export interface FieldDefinition<T> {
     key: keyof T;
@@ -43,7 +45,7 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
 
                 const initialMapping: Record<string, keyof T | ''> = {};
                 headerRow.forEach(h => {
-                    const foundField = fields.find(f => f.label.toLowerCase() === h.toLowerCase() || String(f.key).toLowerCase() === h.toLowerCase());
+                    const foundField = fields.find(f => f.label.toLowerCase() === h.toLowerCase().trim() || String(f.key).toLowerCase() === h.toLowerCase().trim());
                     initialMapping[h] = foundField ? foundField.key : '';
                 });
                 setMapping(initialMapping);
@@ -62,9 +64,11 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
         for (const field of fields) {
             if (field.required && !mappedFields.includes(field.key)) {
                 setGlobalError(`El campo requerido "${field.label}" no ha sido mapeado a ninguna columna.`);
-                return false;
+                isValid = false;
             }
         }
+
+        if(!isValid) return false;
         setGlobalError(null);
 
         data.forEach((row, rowIndex) => {
@@ -77,15 +81,19 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
                     const fieldDef = fields.find(f => f.key === mappedKey);
                     const value = row[colIndex];
 
-                    if (fieldDef?.required && !value) {
+                    if (fieldDef?.required && (value === undefined || value === null || value === '')) {
                         rowErrors[header] = 'Campo requerido.';
                         rowHasError = true;
-                    } else if (fieldDef?.validation) {
+                    } else if (value && fieldDef?.validation) {
                         const validationResult = fieldDef.validation(value);
                         if (typeof validationResult === 'string') {
                             rowErrors[header] = validationResult;
                             rowHasError = true;
+                        } else {
+                            rowErrors[header] = null;
                         }
+                    } else {
+                        rowErrors[header] = null;
                     }
                 }
             });
@@ -122,9 +130,17 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
        }
     };
 
+    const hasErrors = useMemo(() => errors.some(row => Object.values(row).some(err => err !== null)), [errors]);
+
     const handleConfirmUpload = () => {
+        if(hasErrors) {
+            setGlobalError('No se puede cargar el archivo porque contiene errores. Por favor, corríjalos.');
+            setIsConfirming(false);
+            return;
+        }
+
         const newRecords = data.map(row => {
-            const record: any = {};
+            const record: Partial<T> = {};
             headers.forEach((header, index) => {
                 const mappedField = mapping[header];
                 if (mappedField && mappedField !== 'no-map') {
@@ -137,7 +153,7 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
         setIsConfirming(false);
     }
     
-    if (globalError) {
+    if (globalError && !hasErrors) { // Only show global structural errors if there are no data errors
         return (
              <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -149,12 +165,12 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
 
     return (
         <>
-            <div className="flex-1 overflow-auto border rounded-lg">
+            <ScrollArea className="flex-1 overflow-auto border rounded-lg">
                 <Table className="relative">
                     <TableHeader className="sticky top-0 bg-muted z-10">
                         <TableRow>
                             {headers.map((header, index) => (
-                                <TableHead key={index} className='min-w-[200px]'>
+                                <TableHead key={index} className='min-w-[250px] align-top'>
                                     <p className="font-bold text-foreground truncate">{header}</p>
                                     <Select 
                                       value={String(mapping[header] || '')}
@@ -184,7 +200,7 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
                                             <Input 
                                                 value={cell || ''}
                                                 onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                                                className={error ? 'border-destructive focus-visible:ring-destructive' : 'border-none focus-visible:ring-1'}
+                                                className={cn(error ? 'border-destructive focus-visible:ring-destructive' : 'focus-visible:ring-ring')}
                                             />
                                             {error && <p className="text-xs text-destructive mt-1">{error}</p>}
                                         </TableCell>
@@ -194,10 +210,17 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
                         ))}
                     </TableBody>
                 </Table>
-            </div>
-            <div className="flex-shrink-0">
-                <Button onClick={handleProcessUpload} disabled={isUploading || !!globalError} className='w-full'>
-                    Cargar {data.length} Registros
+            </ScrollArea>
+            <div className="flex-shrink-0 pt-4 space-y-2">
+                 {globalError && hasErrors && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Errores de Validación</AlertTitle>
+                        <AlertDescription>{globalError}</AlertDescription>
+                    </Alert>
+                )}
+                <Button onClick={handleProcessUpload} disabled={isUploading || hasErrors} className='w-full'>
+                    {hasErrors ? 'Corrija los errores para continuar' : `Cargar ${data.length} Registros`}
                 </Button>
             </div>
             <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
