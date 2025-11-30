@@ -55,16 +55,25 @@ const formSchema = z.object({
   fechaProgramacion: z.date({ required_error: "La fecha de programación es requerida." }),
   horarioProgramacion: z.string().min(1, "El horario es requerido."),
   instalador: z.string().min(1, "El instalador es requerido."),
+  inspector: z.string().optional(),
   gestor: z.string().min(1, "El gestor es requerido."),
   
   status: z.string(),
+}).refine(data => {
+    if (data.status === STATUS.PROGRAMADA) {
+        return !!data.inspector;
+    }
+    return true;
+}, {
+    message: "El campo Inspector es requerido para el estatus 'Programada'.",
+    path: ["inspector"],
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function SpecialInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, addNotification, users: allUsers, devModeEnabled } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, inspectors, addNotification, users: allUsers, devModeEnabled } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(false);
@@ -113,6 +122,7 @@ export default function SpecialInspectionPage() {
       empresaColaboradora: isCollaborator ? collaboratorCompany : "",
       horarioProgramacion: timeParam || "",
       instalador: "",
+      inspector: "",
       gestor: "",
       sector: "",
       status: getInitialStatus(user?.role),
@@ -128,6 +138,10 @@ export default function SpecialInspectionPage() {
   });
   
   const formData = form.watch();
+
+  const isInspectorFieldDisabled = useMemo(() => {
+    return ![ROLES.ADMIN, ROLES.CALIDAD].includes(user!.role);
+  }, [user]);
 
   const availableSectors = useMemo(() => {
     const currentZone = formData.zone;
@@ -150,6 +164,13 @@ export default function SpecialInspectionPage() {
             m.status === 'Activo'
         );
     }, [formData.zone, expansionManagers]);
+
+    const availableInspectors = useMemo(() => {
+        return inspectors.filter(m => 
+            (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
+            m.status === 'Activo'
+        );
+    }, [formData.zone, inspectors]);
 
     const availableStatusOptions = useMemo(() => {
         if (isCollaborator) {
@@ -194,7 +215,7 @@ export default function SpecialInspectionPage() {
             type: 'Especial',
             createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
             createdBy: user?.username || 'desconocido',
-            inspector: 'N/A',
+            inspector: values.inspector || 'N/A',
             horarioProgramacion: values.horarioProgramacion,
             zone: values.zone,
             id: values.id || generateId(),
@@ -491,87 +512,101 @@ export default function SpecialInspectionPage() {
                 <CardTitle>Asignación y Estatus</CardTitle>
                 <CardDescription>Asignación de responsables y fecha de ejecución.</CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-6 md:grid-cols-2">
-                 <FormField control={form.control} name="empresaColaboradora" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Empresa Colaboradora</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isCollaborator}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                 <FormField control={form.control} name="instalador" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Instalador</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="fechaProgramacion" render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Fecha Programación</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                             <div className="relative">
-                               <Input
-                                value={field.value ? format(field.value, "PPP", { locale: es }) : ''}
-                                readOnly
-                                placeholder="Elige una fecha"
-                                className={cn("pl-3 pr-10 text-left font-normal", !field.value && "text-muted-foreground")}
-                                />
-                                <CalendarIconLucide className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
-                            </div>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                         <Calendar 
-                           mode="single" 
-                           selected={field.value} 
-                           onSelect={field.onChange} 
-                           disabled={(date) => {
-                            const dateKey = format(date, 'yyyy-MM-dd');
-                            if (blockedDays[dateKey]) return true;
-                            if (isSunday(date) && !weekendsEnabled) return true;
-                            return date < new Date(new Date().setDate(new Date().getDate() - 1));
-                          }}
-                           initialFocus />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="horarioProgramacion" render={({ field }) => (
+              <CardContent className="grid gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="empresaColaboradora" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Horario Programación</FormLabel>
-                        <FormControl>
-                            <Input type="time" {...field} />
-                        </FormControl>
+                        <FormLabel>Empresa Colaboradora</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isCollaborator}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                        </Select>
                         <FormMessage />
                     </FormItem>
-                )} />
-                <FormField control={form.control} name="gestor" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gestor</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un gestor" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {availableManagers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                 <FormField control={form.control} name="status" render={({ field }) => (
+                    )} />
+                    <FormField control={form.control} name="gestor" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Gestor</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un gestor" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {availableManagers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )} />
+                    <FormField control={form.control} name="instalador" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Instalador</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )} />
+                    <FormField control={form.control} name="inspector" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Inspector</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isInspectorFieldDisabled}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un inspector" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                            </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="fechaProgramacion" render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Fecha Programación</FormLabel>
+                        <Popover>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                                <div className="relative">
+                                <Input
+                                    value={field.value ? format(field.value, "PPP", { locale: es }) : ''}
+                                    readOnly
+                                    placeholder="Elige una fecha"
+                                    className={cn("pl-3 pr-10 text-left font-normal", !field.value && "text-muted-foreground")}
+                                />
+                                <CalendarIconLucide className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
+                                </div>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar 
+                            mode="single" 
+                            selected={field.value} 
+                            onSelect={field.onChange} 
+                            disabled={(date) => {
+                                const dateKey = format(date, 'yyyy-MM-dd');
+                                if (blockedDays[dateKey]) return true;
+                                if (isSunday(date) && !weekendsEnabled) return true;
+                                return date < new Date(new Date().setDate(new Date().getDate() - 1));
+                            }}
+                            initialFocus />
+                        </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                    )} />
+                    <FormField control={form.control} name="horarioProgramacion" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Horario Programación</FormLabel>
+                            <FormControl>
+                                <Input type="time" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                </div>
+                <FormField control={form.control} name="status" render={({ field }) => (
                    <FormItem>
                     <FormLabel>Status</FormLabel>
                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isCollaborator}>
@@ -630,6 +665,7 @@ export default function SpecialInspectionPage() {
                             <h3 className="font-semibold text-lg mb-2 mt-4">Asignación y Estatus</h3>
                             {renderFieldWithFeedback('empresaColaboradora', 'Empresa Colaboradora', formData.empresaColaboradora)}
                             {renderFieldWithFeedback('instalador', 'Instalador', formData.instalador)}
+                            {renderFieldWithFeedback('inspector', 'Inspector', formData.inspector)}
                             {renderFieldWithFeedback('fechaProgramacion', 'Fecha Programación', formData.fechaProgramacion)}
                             {renderFieldWithFeedback('horarioProgramacion', 'Horario', formData.horarioProgramacion)}
                             {renderFieldWithFeedback('gestor', 'Gestor', formData.gestor)}
