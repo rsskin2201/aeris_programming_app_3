@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,9 +15,6 @@ import { useAppContext } from '@/hooks/use-app-context';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { ROLES } from '@/lib/types';
-import { mockUsers } from '@/lib/mock-data';
-import { Badge } from '../ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'El nombre de usuario es requerido.' }),
@@ -35,8 +32,9 @@ export function LoginForm() {
   const [isSubmittingForgot, setIsSubmittingForgot] = useState(false);
   const [forgotUsername, setForgotUsername] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
+  const [operatorFullName, setOperatorFullName] = useState('');
   const router = useRouter();
-  const { login, addPasswordRequest } = useAppContext();
+  const { login, addPasswordRequest, users } = useAppContext();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -46,6 +44,14 @@ export function LoginForm() {
       password: '',
     },
   });
+
+  const watchedUsername = form.watch('username');
+
+  useEffect(() => {
+    const foundUser = users.find(u => u.username.toLowerCase() === watchedUsername.toLowerCase());
+    setOperatorFullName(foundUser ? foundUser.name : '');
+  }, [watchedUsername, users]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -124,7 +130,11 @@ export function LoginForm() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full" disabled={isLoading}>
+           <div className="space-y-2">
+            <Label className="text-base font-bold">Nombre</Label>
+            <Input value={operatorFullName} disabled placeholder="El nombre aparecerá aquí" className="bg-muted/70"/>
+           </div>
+          <Button type="submit" className="w-full !mt-6" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -183,28 +193,6 @@ export function LoginForm() {
             </DialogContent>
         </Dialog>
       </div>
-
-       <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center text-base gap-2">
-            <Users className="h-5 w-5" />
-            Usuarios de Prueba
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Usa cualquier contraseña para iniciar sesión (ej: `password`).
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {mockUsers.map(user => (
-              <div key={user.username} className="flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted">
-                <span className="font-mono text-muted-foreground">{user.username}</span>
-                <Badge variant="secondary">{user.role}</Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </>
   );
 }
