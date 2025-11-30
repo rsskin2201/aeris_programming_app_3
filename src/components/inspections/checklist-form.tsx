@@ -20,7 +20,6 @@ import { ScrollArea } from "../ui/scroll-area";
 import { STATUS } from "@/lib/types";
 
 const formSchema = z.object({
-  inspector: z.string().min(1, "El inspector es requerido."),
   serieMdd: z.string().min(1, "Requerido"),
   marcaMdd: z.string().min(1, "Requerido"),
   tipoMddCampo: z.string().optional(),
@@ -89,7 +88,6 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
     const { user, inspectors } = useAppContext();
 
     const defaultValues = useMemo(() => ({
-        inspector: record?.inspector || '',
         serieMdd: record?.serieMdd || '',
         marcaMdd: record?.marcaMdd || '',
         tipoMddCampo: record?.tipoMddCampo || '',
@@ -159,12 +157,6 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
     }, [defaultValues, form]);
 
     const { isSubmitting } = form.formState;
-
-    const availableInspectors = useMemo(() => {
-        const recordZone = record?.zone;
-        if (!recordZone) return [];
-        return inspectors.filter(i => i.zone === recordZone && i.status === 'Activo');
-    }, [record?.zone, inspectors]);
     
     function onSubmit(values: FormValues) {
         if (!record) return;
@@ -207,16 +199,6 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                             <div className="space-y-4 p-4 border rounded-md">
                                 <h3 className="font-semibold text-lg border-b pb-2">Datos de Inspección y Medidor</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <FormField control={form.control} name="inspector" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Inspector</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar inspector" /></SelectTrigger></FormControl>
-                                                <SelectContent>{availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}</SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
                                     <FormField control={form.control} name="serieMdd" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>SERIE MDD</FormLabel>
