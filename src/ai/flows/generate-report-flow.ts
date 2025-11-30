@@ -9,9 +9,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
 import Papa from 'papaparse';
+import { mockRecords } from '@/lib/mock-data';
 
 export const ReportInputSchema = z.string().describe('The zone to filter records by, or "Todas las zonas" for all.');
 export type ReportInput = z.infer<typeof ReportInputSchema>;
@@ -30,19 +29,13 @@ const generateReportFlow = ai.defineFlow(
     outputSchema: ReportOutputSchema,
   },
   async (zone) => {
-    // This flow runs on the server, so we can use server-side Firebase access
-    const { firestore } = initializeFirebase();
-    const recordsCol = collection(firestore, 'inspection_requests');
+    // NOTE: This flow uses mock data because Firebase is not integrated.
+    // In a real application, this would fetch data from Firestore.
+    let records = mockRecords;
     
-    let recordsQuery;
     if (zone && zone !== 'Todas las zonas') {
-        recordsQuery = query(recordsCol, where("zone", "==", zone));
-    } else {
-        recordsQuery = query(recordsCol);
+        records = mockRecords.filter(record => record.zone === zone);
     }
-
-    const snapshot = await getDocs(recordsQuery);
-    const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     if (records.length === 0) {
       return "No records found for the selected criteria.";
