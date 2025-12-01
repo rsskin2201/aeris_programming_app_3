@@ -25,7 +25,6 @@ import { TIPO_INSPECCION_ESPECIAL, TIPO_INSPECCION_MASIVA, MERCADO } from '@/lib
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
-import { generateReport } from '@/ai/flows/generate-report-flow';
 
 const statusColors: Record<InspectionRecord['status'], string> = {
   [STATUS.REGISTRADA]: 'bg-gray-500/80 border-gray-600 text-white',
@@ -68,11 +67,9 @@ export default function RecordsPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState(initialFilters);
   const [isExporting, setIsExporting] = useState(false);
-  const [isBackendExporting, setIsBackendExporting] = useState(false);
   
   const canModify = user && !viewOnlyRoles.includes(user.role);
   const canExport = user && user.role !== ROLES.CANALES;
-  const canGenerateBackendReport = user && [ROLES.ADMIN, ROLES.COORDINADOR_SSPP].includes(user.role);
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value || '' }));
@@ -139,38 +136,6 @@ export default function RecordsPage() {
     });
   };
 
-  const handleBackendExport = async () => {
-    setIsBackendExporting(true);
-    toast({
-        title: "Proceso de Exportación Iniciado",
-        description: "Generando el reporte completo. Esto puede tardar unos momentos...",
-    });
-    try {
-        const result = await generateReport(zone);
-        const blob = new Blob([result], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `reporte_completo_${zone.replace(' ', '_')}_${format(new Date(), 'yyyyMMdd')}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast({
-            title: "Reporte Completo Generado",
-            description: "La descarga del reporte completo ha comenzado."
-        });
-    } catch (error) {
-        console.error("Backend export failed:", error);
-        toast({
-            variant: "destructive",
-            title: "Error al Generar Reporte",
-            description: "No se pudo generar el reporte desde el backend.",
-        });
-    } finally {
-        setIsBackendExporting(false);
-    }
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -180,12 +145,6 @@ export default function RecordsPage() {
         </h1>
         {canExport && (
           <div className='flex items-center gap-2'>
-            {canGenerateBackendReport && (
-              <Button variant="outline" onClick={handleBackendExport} disabled={true || isBackendExporting}>
-                  {isBackendExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Server className="mr-2 h-4 w-4" />}
-                  Generar Reporte Completo
-              </Button>
-            )}
             <Dialog open={isExporting} onOpenChange={setIsExporting}>
               <DialogTrigger asChild>
                 <Button
