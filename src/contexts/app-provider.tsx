@@ -2,11 +2,11 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback, useEffect } from 'react';
-import { getDoc, doc } from 'firebase/firestore';
+import { getDoc, doc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser } from '@/firebase';
 import type { User, Role, Zone, BlockedDay, AppNotification } from '@/lib/types';
-import { ZONES } from '@/lib/types';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { ZONES, ROLES, USER_STATUS } from '@/lib/types';
+import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
 
 interface AppContextType {
   // Auth State
@@ -38,6 +38,18 @@ interface AppContextType {
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const mockUsersSeed: Omit<User, 'id'>[] = [
+  { name: 'Admin User', username: 'admin', email: 'admin@aeris.com', role: ROLES.ADMIN, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { name: 'Gerardo Gestor', username: 'gestor', email: 'gestor@aeris.com', role: ROLES.GESTOR, zone: 'Zona Norte', status: USER_STATUS.ACTIVO },
+  { name: 'Ana Colaboradora', username: 'colaboradora', email: 'colaborador@aeris.com', role: ROLES.COLABORADOR, zone: 'Bajio Norte', status: USER_STATUS.ACTIVO },
+  { name: 'Sofia Soporte', username: 'soporte', email: 'soporte@aeris.com', role: ROLES.SOPORTE, zone: 'Zona Centro', status: USER_STATUS.ACTIVO },
+  { name: 'Samuel Coordinador', username: 'coordinador', email: 'coordinador@aeris.com', role: ROLES.COORDINADOR_SSPP, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { name: 'Carla Calidad', username: 'calidad', email: 'calidad@aeris.com', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
+  { name: 'Carlos Canales', username: 'canales', email: 'canales@aeris.com', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { name: 'Victor Visual', username: 'visual', email: 'visual@aeris.com', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+];
+const defaultPassword = 'password123';
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [operatorName, setOperatorName] = useState<string | null>(null);
@@ -56,6 +68,55 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const firestore = useFirestore();
   const { user: firebaseUser, loading: isUserLoading } = useFirebaseAuthUser();
+
+  useEffect(() => {
+    const seedUsers = async () => {
+        if (!firestore || !auth) return;
+        
+        console.log("Checking if user seeding is necessary...");
+        const usersCollectionRef = collection(firestore, "users");
+        const querySnapshot = await getDocs(query(usersCollectionRef, where("username", "==", "admin")));
+        
+        if (querySnapshot.empty) {
+            console.log("Seeding initial users...");
+            for (const mockUser of mockUsersSeed) {
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, defaultPassword);
+                    const uid = userCredential.user.uid;
+                    const userProfile: User = { ...mockUser, id: uid };
+                    await setDoc(doc(firestore, "users", uid), userProfile);
+                    console.log(`Successfully created user: ${mockUser.username}`);
+                } catch (error: any) {
+                    // If user already exists in Auth but not in Firestore, sign them in to create profile
+                    if (error.code === 'auth/email-already-in-use') {
+                        try {
+                            const tempCredential = await signInWithEmailAndPassword(auth, mockUser.email, defaultPassword);
+                             const uid = tempCredential.user.uid;
+                             const userProfile: User = { ...mockUser, id: uid };
+                             await setDoc(doc(firestore, "users", uid), userProfile, { merge: true });
+                             console.log(`Successfully synced profile for existing auth user: ${mockUser.username}`);
+                             await signOut(auth); // Sign out temporary user
+                        } catch (signInError) {
+                            console.error(`Error signing in existing user ${mockUser.email} to create profile:`, signInError);
+                        }
+                    } else {
+                        console.error(`Error creating user ${mockUser.username}:`, error);
+                    }
+                }
+            }
+            // Sign out the last created user to ensure clean state
+            if (auth.currentUser) {
+              await signOut(auth);
+            }
+            console.log("User seeding finished.");
+        } else {
+            console.log("Users already exist. Skipping seeding.");
+        }
+    };
+
+    seedUsers();
+}, [firestore, auth]);
+
 
   useEffect(() => {
     const fetchUserProfile = async (uid: string) => {
