@@ -85,13 +85,13 @@ const moduleIcons = {
 
 export default function Header() {
   const pathname = usePathname();
-  const { user, operatorName, switchRole, logout, notifications, markNotificationAsRead, devModeEnabled, toggleDevMode } = useAppContext();
+  const { userProfile, operatorName, logout, notifications, markNotificationAsRead, devModeEnabled, toggleDevMode } = useAppContext();
   const { toast } = useToast();
   
 
-  if (!user) return null;
+  if (!userProfile) return null;
 
-  const userNotifications = notifications.filter(n => n.recipientUsername === user.username);
+  const userNotifications = notifications.filter(n => n.recipientUsername === userProfile.username);
   const unreadCount = userNotifications.filter(n => !n.read).length;
 
 
@@ -215,7 +215,7 @@ export default function Header() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Mi Cuenta ({user.role})</DropdownMenuLabel>
+                <DropdownMenuLabel>Mi Cuenta ({userProfile.role})</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                  <DropdownMenuCheckboxItem
                     checked={devModeEnabled}
@@ -225,25 +225,6 @@ export default function Header() {
                     Modo Desarrollo
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuSeparator />
-                {user.role === ROLES.ADMIN && (
-                  <>
-                    <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>Cambiar Rol (Demo)</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                            <DropdownMenuRadioGroup value={user?.role} onValueChange={(value) => switchRole(value as any)}>
-                                {Object.values(ROLES).map((role) => (
-                                    <DropdownMenuRadioItem key={role} value={role}>
-                                        {role}
-                                    </DropdownMenuRadioItem>
-                                ))}
-                            </DropdownMenuRadioGroup>
-                        </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                    </DropdownMenuSub>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
                 <DropdownMenuItem onClick={logout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Cerrar sesión</span>

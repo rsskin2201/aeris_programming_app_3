@@ -6,18 +6,21 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/hooks/use-app-context';
+import { useAuth, useFirestore } from '@/firebase';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Label } from '../ui/label';
-import { ROLES } from '@/lib/types';
+import { ROLES, type User } from '@/lib/types';
 
 const formSchema = z.object({
-  username: z.string().min(1, { message: 'El nombre de usuario es requerido.' }),
+  email: z.string().email({ message: 'Por favor, ingresa un correo electrónico válido.' }),
   password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' }),
 });
 
@@ -32,38 +35,45 @@ export function LoginForm() {
   const [isSubmittingForgot, setIsSubmittingForgot] = useState(false);
   const [forgotUsername, setForgotUsername] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
-  const [operatorFullName, setOperatorFullName] = useState('');
+  
   const router = useRouter();
-  const { login, addPasswordRequest, users } = useAppContext();
+  const { addPasswordRequest, setUserProfile } = useAppContext();
+  const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: '',
+      email: '',
       password: '',
     },
   });
 
-  const watchedUsername = form.watch('username');
-
-  useEffect(() => {
-    const foundUser = users.find(u => u.username.toLowerCase() === watchedUsername.toLowerCase());
-    setOperatorFullName(foundUser ? foundUser.name : '');
-  }, [watchedUsername, users]);
-
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const user = await login(values.username, values.password);
-    if (user) {
-      toast({
-        title: 'Inicio de sesión exitoso',
-        description: `Bienvenido(a), ${user.name}`,
-        duration: 2000,
-      });
-      router.push('/');
-    } else {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const firebaseUser = userCredential.user;
+
+      // Fetch user profile from Firestore
+      const userDocRef = doc(firestore, 'users', firebaseUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userProfile = userDocSnap.data() as User;
+        setUserProfile(userProfile); // Store profile in context
+        toast({
+          title: 'Inicio de sesión exitoso',
+          description: `Bienvenido(a), ${userProfile.name}`,
+          duration: 2000,
+        });
+        router.push('/');
+      } else {
+        throw new Error("No se encontró el perfil de usuario en la base de datos.");
+      }
+    } catch (error: any) {
+      console.error(error);
       toast({
         variant: 'destructive',
         title: 'Error de autenticación',
@@ -106,12 +116,12 @@ export function LoginForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="username"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-bold">Nombre de usuario</FormLabel>
+                <FormLabel className="text-base font-bold">Correo Electrónico</FormLabel>
                 <FormControl>
-                  <Input placeholder="usuario.alias" {...field} />
+                  <Input placeholder="tu@correo.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -130,10 +140,6 @@ export function LoginForm() {
               </FormItem>
             )}
           />
-           <div className="space-y-2">
-            <Label className="text-base font-bold">Nombre</Label>
-            <Input value={operatorFullName} disabled placeholder="El nombre aparecerá aquí" className="bg-muted/70"/>
-           </div>
           <Button type="submit" className="w-full !mt-6" disabled={isLoading}>
             {isLoading ? (
               <>

@@ -2,7 +2,9 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAppContext } from '@/hooks/use-app-context';
+import { useFirestore } from '@/firebase';
 import Header from '@/components/layout/header';
 import { WelcomeZoneSelector } from '@/components/layout/welcome-zone-selector';
 import { Button } from '@/components/ui/button';
@@ -11,10 +13,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Copy, HelpCircle, User as UserIcon } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
+import { User } from '@/lib/types';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { user, isZoneConfirmed } = useAppContext();
+  const { authUser, isAuthLoading, userProfile, setUserProfile, isZoneConfirmed } = useAppContext();
   const router = useRouter();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const supportAvatar = PlaceHolderImages.find(img => img.id === 'support-avatar');
 
@@ -24,12 +28,29 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }
 
   useEffect(() => {
-    if (!user) {
+    if (!isAuthLoading && !authUser) {
       router.push('/login');
     }
-  }, [user, router]);
+  }, [authUser, isAuthLoading, router]);
+
+  useEffect(() => {
+    if (authUser && !userProfile) {
+      const fetchUserProfile = async () => {
+        const userDocRef = doc(firestore, 'users', authUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          setUserProfile(userDocSnap.data() as User);
+        } else {
+          // Handle case where user is authenticated but has no profile
+          console.error("No user profile found in Firestore!");
+          // Optional: redirect to a profile creation page or show an error
+        }
+      };
+      fetchUserProfile();
+    }
+  }, [authUser, userProfile, firestore, setUserProfile]);
   
-  if (!user) {
+  if (isAuthLoading || !userProfile) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <p>Cargando...</p>

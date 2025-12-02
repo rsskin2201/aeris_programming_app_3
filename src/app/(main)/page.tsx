@@ -24,11 +24,11 @@ const moduleList: ModuleInfo[] = [
 ];
 
 export default function DashboardPage() {
-  const { user, operatorName } = useAppContext();
+  const { userProfile, operatorName } = useAppContext();
 
-  if (!user) return null;
+  if (!userProfile) return null;
 
-  const userPermissions = PERMISSIONS[user.role] || [];
+  const userPermissions = PERMISSIONS[userProfile.role] || [];
   // Exclude dashboard itself from the cards
   const visibleModules = moduleList.filter(module => userPermissions.includes(module.id) && module.id !== MODULES.DASHBOARD);
 
@@ -36,7 +36,7 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="font-headline text-3xl font-semibold">Bienvenido, {operatorName}</h1>
-        <p className="text-muted-foreground">Tu rol actual es: {user.role}. Estos son tus módulos disponibles.</p>
+        <p className="text-muted-foreground">Tu rol actual es: {userProfile.role}. Estos son tus módulos disponibles.</p>
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {visibleModules.map((module) => (
