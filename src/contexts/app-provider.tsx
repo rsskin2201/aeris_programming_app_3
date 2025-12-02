@@ -2,18 +2,18 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback, useEffect } from 'react';
-import { getDoc, doc, setDoc } from 'firebase/firestore';
-import { useAuth, useFirestore } from '@/firebase';
+import { getDoc, doc } from 'firebase/firestore';
+import { useAuth, useFirestore, useUser as useFirebaseAuthUser } from '@/firebase';
 import type { User, Role, Zone, BlockedDay, PasswordResetRequest, AppNotification } from '@/lib/types';
 import { ROLES, ZONES } from '@/lib/types';
-import { mockRecords as initialMockRecords, InspectionRecord, mockUsers } from '@/lib/mock-data';
-import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 interface AppContextType {
-  // SIMULATED Auth State
+  // Auth State
   user: User | null;
-  setUserProfile: (profile: User | null) => void;
+  isUserLoading: boolean;
+  login: (username: string, password: string) => Promise<User | null>;
+  logout: () => void;
 
   operatorName: string | null;
   zone: Zone;
@@ -25,15 +25,7 @@ interface AppContextType {
   notifications: AppNotification[];
   devModeEnabled: boolean;
   
-  // Mock Data for Entities
-  records: InspectionRecord[];
-  addRecord: (record: InspectionRecord) => void;
-  updateRecord: (record: InspectionRecord) => void;
-  getRecordById: (id: string) => InspectionRecord | undefined;
-  addMultipleRecords: (records: InspectionRecord[]) => void;
-  
-  // Auth & Settings
-  logout: () => void;
+  // Settings
   setZone: (zone: Zone) => void;
   confirmZone: (zone: Zone) => void;
   toggleForms: () => void;
@@ -50,7 +42,6 @@ interface AppContextType {
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  // App-specific State
   const [user, setUser] = useState<User | null>(null);
   const [operatorName, setOperatorName] = useState<string | null>(null);
   const [zone, setZone] = useState<Zone>(ZONES[0]);
@@ -61,20 +52,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [devModeEnabled, setDevModeEnabled] = useState(false);
   const firestore = useFirestore();
-  const { user: authUser, isUserLoading } = useAuth();
+  const auth = useAuth();
+  const { user: authUser, isUserLoading } = useFirebaseAuthUser();
   
-  // Mock Data States
-  const [records, setRecords] = useState<InspectionRecord[]>(initialMockRecords);
- 
   const [blockedDays, setBlockedDays] = useState<Record<string, BlockedDay>>({
       "2024-09-16": { reason: "Día de la Independencia" },
       "2024-11-18": { reason: "Revolución Mexicana" },
   });
 
-  const setUserProfile = useCallback((profile: User | null) => {
-    setUser(profile);
-  }, []);
-  
+  const login = useCallback(async (email: string, password: string): Promise<User | null> => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+    
+    const userDocRef = doc(firestore, 'users', firebaseUser.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      const userProfile = userDoc.data() as User;
+      setUser(userProfile);
+      return userProfile;
+    }
+    
+    // If no profile, logout the user from firebase auth
+    await signOut(auth);
+    return null;
+  }, [auth, firestore]);
+
+  const logout = useCallback(async () => {
+    await signOut(auth);
+    setUser(null);
+    setIsZoneConfirmed(false);
+  }, [auth]);
+
   useEffect(() => {
     if (isUserLoading) return;
 
@@ -84,17 +93,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (docSnap.exists()) {
           setUser(docSnap.data() as User);
         } else {
-          // This case might happen if user exists in Auth but not in Firestore.
-          // You might want to log them out or create a default profile.
           console.warn("User profile not found in Firestore for UID:", authUser.uid);
-          setUser(null); // Or handle appropriately
+          logout();
         }
       });
     } else {
       setUser(null);
     }
-  }, [authUser, isUserLoading, firestore]);
-
+  }, [authUser, isUserLoading, firestore, logout]);
   
   useEffect(() => {
     if (user) {
@@ -103,12 +109,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setOperatorName(null);
     }
   }, [user]);
-
-  // Auth & Settings Callbacks
-  const logout = () => {
-    setUserProfile(null);
-    setIsZoneConfirmed(false);
-  };
 
   const confirmZone = useCallback((newZone: Zone) => {
     setZone(newZone);
@@ -138,15 +138,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         date: new Date(),
     };
     setPasswordRequests(prev => [newRequest, ...prev]);
-    
-    // This part should be handled by a backend function in a real app
-    mockUsers.filter(u => u.role === ROLES.ADMIN).forEach(adminUser => {
-        addNotification({
-            recipientUsername: adminUser.username,
-            message: `Nueva solicitud de reseteo de contraseña de ${request.username}.`
-        });
-    });
-
   }, []);
 
   const resolvePasswordRequest = useCallback((id: string) => {
@@ -167,17 +158,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   }, []);
 
-  // CRUD Records
-  const addRecord = (record: InspectionRecord) => setRecords(prev => [record, ...prev]);
-  const updateRecord = (record: InspectionRecord) => setRecords(prev => prev.map(r => r.id === record.id ? record : r));
-  const addMultipleRecords = (newRecords: InspectionRecord[]) => setRecords(prev => [...newRecords, ...prev]);
-  const getRecordById = (id: string) => records.find(r => r.id === id);
-
-
   const contextValue = useMemo(
     () => ({
       user,
-      setUserProfile,
+      isUserLoading,
+      login,
+      logout,
       operatorName,
       zone,
       setZone,
@@ -188,12 +174,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       passwordRequests,
       notifications,
       devModeEnabled,
-      records,
-      addRecord,
-      updateRecord,
-      getRecordById,
-      addMultipleRecords,
-      logout,
       confirmZone,
       toggleForms,
       toggleWeekends,
@@ -206,8 +186,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markNotificationAsRead,
     }),
     [
-      user, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, devModeEnabled, records,
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, logout, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead, setUserProfile
+      user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, devModeEnabled, 
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead
     ]
   );
 

@@ -20,7 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { ROLES, Role, STATUS } from "@/lib/types";
+import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, mockMunicipalities } from "@/lib/form-options";
@@ -28,6 +28,9 @@ import { ChecklistForm } from "@/components/inspections/checklist-form";
 import { SupportValidationForm } from "@/components/inspections/support-validation-form";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useCollection, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { collection, doc } from "firebase/firestore";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -84,29 +87,34 @@ export default function IndividualInspectionPage() {
     user, 
     weekendsEnabled, 
     blockedDays, 
-    getRecordById, 
-    addRecord, 
-    updateRecord, 
     zone, 
-    collaborators, 
-    installers, 
-    expansionManagers, 
-    sectors,
-    inspectors,
     addNotification,
-    users: allUsers,
     devModeEnabled,
   } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const firestore = useFirestore();
+
+  const recordId = searchParams.get('id');
+  const mode = searchParams.get('mode');
+
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [isSupportFormOpen, setIsSupportFormOpen] = useState(false);
   const [pageMode, setPageMode] = useState<'new' | 'view' | 'edit'>('new');
-  const [currentRecord, setCurrentRecord] = useState<InspectionRecord | null>(null);
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
+
+  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemoFirebase(() => collection(firestore, 'empresas_colaboradoras'), [firestore]));
+  const { data: installers } = useCollection<any>(useMemoFirebase(() => collection(firestore, 'instaladores'), [firestore]));
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => collection(firestore, 'gestores_expansion'), [firestore]));
+  const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => collection(firestore, 'sectores'), [firestore]));
+  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => collection(firestore, 'inspectores'), [firestore]));
+  const { data: allUsers } = useCollection<AppUser>(useMemoFirebase(() => collection(firestore, 'users'), [firestore]));
+
+  const docRef = useMemoFirebase(() => recordId ? doc(firestore, 'inspections', recordId) : null, [firestore, recordId]);
+  const { data: currentRecord, isLoading: isRecordLoading } = useDoc<InspectionRecord>(docRef);
   
   const fromParam = searchParams.get('from');
   
@@ -165,42 +173,37 @@ export default function IndividualInspectionPage() {
   });
   
   useEffect(() => {
-    const recordId = searchParams.get('id');
-    const mode = searchParams.get('mode');
-
     if (recordId) {
-        const record = getRecordById(recordId);
-        if (record) {
-            setCurrentRecord(record);
-            setPageMode(mode === 'view' ? 'view' : 'edit');
-            form.reset({
-                ...record,
-                id: record.id,
-                zone: record.zone,
-                sector: record.sector,
-                poliza: record.poliza,
-                caso: record.caso,
-                municipality: record.municipality,
-                colonia: record.colonia,
-                calle: record.calle,
-                numero: record.numero,
-                portal: record.portal,
-                escalera: record.escalera,
-                piso: record.piso,
-                puerta: record.puerta,
-                tipoInspeccion: record.tipoInspeccion,
-                tipoProgramacion: record.tipoProgramacion,
-                tipoMdd: record.tipoMdd,
-                mercado: record.mercado,
-                oferta: record.oferta,
-                observaciones: record.observaciones,
-                empresaColaboradora: record.collaboratorCompany,
-                fechaProgramacion: parse(record.requestDate, 'yyyy-MM-dd', new Date()),
-                horarioProgramacion: record.horarioProgramacion || '09:00',
-                instalador: record.instalador,
-                inspector: record.inspector || '',
-                gestor: record.gestor,
-                status: record.status,
+        setPageMode(mode === 'view' ? 'view' : 'edit');
+        if (currentRecord) {
+             form.reset({
+                ...currentRecord,
+                id: currentRecord.id,
+                zone: currentRecord.zone,
+                sector: currentRecord.sector,
+                poliza: currentRecord.poliza,
+                caso: currentRecord.caso,
+                municipality: currentRecord.municipality,
+                colonia: currentRecord.colonia,
+                calle: currentRecord.calle,
+                numero: currentRecord.numero,
+                portal: currentRecord.portal,
+                escalera: currentRecord.escalera,
+                piso: currentRecord.piso,
+                puerta: currentRecord.puerta,
+                tipoInspeccion: currentRecord.tipoInspeccion,
+                tipoProgramacion: currentRecord.tipoProgramacion,
+                tipoMdd: currentRecord.tipoMdd,
+                mercado: currentRecord.mercado,
+                oferta: currentRecord.oferta,
+                observaciones: currentRecord.observaciones,
+                empresaColaboradora: currentRecord.collaboratorCompany,
+                fechaProgramacion: parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()),
+                horarioProgramacion: currentRecord.horarioProgramacion || '09:00',
+                instalador: currentRecord.instalador,
+                inspector: currentRecord.inspector || '',
+                gestor: currentRecord.gestor,
+                status: currentRecord.status,
             });
         }
     } else {
@@ -213,7 +216,7 @@ export default function IndividualInspectionPage() {
             empresaColaboradora: isCollaborator ? user.name : '', // Assuming user.name is the company name
         });
     }
-}, [searchParams, getRecordById, form, user, defaultValues, zone, isCollaborator]);
+}, [recordId, mode, currentRecord, form, user, defaultValues, zone, isCollaborator]);
 
 
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
@@ -285,6 +288,7 @@ export default function IndividualInspectionPage() {
   const formData = form.watch();
   
   const availableSectors = useMemo(() => {
+    if (!sectors) return [];
     const currentZone = formData.zone;
     if (currentZone === 'Todas las zonas') {
         return sectors;
@@ -293,6 +297,7 @@ export default function IndividualInspectionPage() {
   }, [formData.zone, sectors]);
 
     const availableInstallers = useMemo(() => {
+        if (!installers) return [];
         if (!isCollaborator) return installers.filter(i => i.status === 'Activo');
         return installers.filter(i => 
             i.collaboratorCompany === collaboratorCompany && i.status === 'Activo'
@@ -300,6 +305,7 @@ export default function IndividualInspectionPage() {
     }, [isCollaborator, collaboratorCompany, installers]);
     
     const availableManagers = useMemo(() => {
+        if (!expansionManagers) return [];
         return expansionManagers.filter(m => 
             (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
             m.status === 'Activo'
@@ -307,6 +313,7 @@ export default function IndividualInspectionPage() {
     }, [formData.zone, expansionManagers]);
 
     const availableInspectors = useMemo(() => {
+        if (!inspectors) return [];
         return inspectors.filter(m => 
             (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
             m.status === 'Activo'
@@ -349,68 +356,65 @@ export default function IndividualInspectionPage() {
   function onFinalSubmit(values: FormValues) {
     setIsSubmitting(true);
     
-    setTimeout(() => {
-        const recordToSave: InspectionRecord = {
-            ...currentRecord,
-            ...values,
-            client: currentRecord?.client || 'Cliente (TBD)',
-            address: `${values.calle} ${values.numero}, ${values.colonia}`,
-            requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
-            type: 'Individual PES',
-            createdAt: currentRecord?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-            createdBy: currentRecord?.createdBy || user?.username || 'desconocido',
-            inspector: values.inspector || currentRecord?.inspector || 'N/A',
-            horarioProgramacion: values.horarioProgramacion,
-            zone: values.zone,
-            id: values.id || generateId(),
-            serieMdd: currentRecord?.serieMdd,
-            mercado: values.mercado,
-            observaciones: values.observaciones,
-            collaboratorCompany: values.empresaColaboradora,
-        };
+    const recordToSave: InspectionRecord = {
+        ...currentRecord,
+        ...values,
+        client: currentRecord?.client || 'Cliente (TBD)',
+        address: `${values.calle} ${values.numero}, ${values.colonia}`,
+        requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
+        type: 'Individual PES',
+        createdAt: currentRecord?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        createdBy: currentRecord?.createdBy || user?.username || 'desconocido',
+        inspector: values.inspector || currentRecord?.inspector || 'N/A',
+        horarioProgramacion: values.horarioProgramacion,
+        zone: values.zone,
+        id: values.id || generateId(),
+        serieMdd: currentRecord?.serieMdd,
+        mercado: values.mercado,
+        observaciones: values.observaciones,
+        collaboratorCompany: values.empresaColaboradora,
+    };
 
-        if (pageMode === 'edit' && currentRecord) {
-            updateRecord(recordToSave);
-            // Notify on status change
-             if (values.status !== currentRecord.status) {
-                const creator = allUsers.find(u => u.username === recordToSave.createdBy);
-                const gestor = allUsers.find(u => u.name === recordToSave.gestor);
+    const docRef = doc(firestore, 'inspections', recordToSave.id);
+    setDocumentNonBlocking(docRef, recordToSave, { merge: true });
 
-                if (values.status === STATUS.APROBADA) {
-                    const coordinators = allUsers.filter(u => u.role === ROLES.COORDINADOR_SSPP && (u.zone === recordToSave.zone || u.zone === 'Todas las zonas'));
-                    coordinators.forEach(c => addNotification({
-                        recipientUsername: c.username,
-                        message: `Inspección ${recordToSave.id} aprobada en zona ${recordToSave.zone}.`,
-                    }));
-                } else if (values.status === STATUS.NO_APROBADA || values.status === STATUS.RECHAZADA) {
-                    const statusText = values.status === STATUS.NO_APROBADA ? 'no aprobada' : 'rechazada';
-                    if (creator) addNotification({
-                         recipientUsername: creator.username,
-                         message: `Tu solicitud de inspección ${recordToSave.id} ha sido ${statusText}.`,
-                    });
-                    if (gestor) addNotification({
-                        recipientUsername: gestor.username,
-                        message: `La inspección ${recordToSave.id} asignada a ti ha sido ${statusText}.`,
-                    });
-                }
-            }
-        } else {
-            addRecord(recordToSave);
-            // Notify gestor of new inspection
-            const gestorUser = allUsers.find(u => u.name === values.gestor);
-            if (gestorUser) {
-                addNotification({
-                    recipientUsername: gestorUser.username,
-                    message: `Nueva inspección individual (${recordToSave.id}) te ha sido asignada.`,
+    if (pageMode === 'edit' && currentRecord) {
+         if (values.status !== currentRecord.status) {
+            const creator = allUsers?.find(u => u.username === recordToSave.createdBy);
+            const gestor = allUsers?.find(u => u.name === recordToSave.gestor);
+
+            if (values.status === STATUS.APROBADA) {
+                const coordinators = allUsers?.filter(u => u.role === ROLES.COORDINADOR_SSPP && (u.zone === recordToSave.zone || u.zone === 'Todas las zonas'));
+                coordinators?.forEach(c => addNotification({
+                    recipientUsername: c.username,
+                    message: `Inspección ${recordToSave.id} aprobada en zona ${recordToSave.zone}.`,
+                }));
+            } else if (values.status === STATUS.NO_APROBADA || values.status === STATUS.RECHAZADA) {
+                const statusText = values.status === STATUS.NO_APROBADA ? 'no aprobada' : 'rechazada';
+                if (creator) addNotification({
+                     recipientUsername: creator.username,
+                     message: `Tu solicitud de inspección ${recordToSave.id} ha sido ${statusText}.`,
+                });
+                if (gestor) addNotification({
+                    recipientUsername: gestor.username,
+                    message: `La inspección ${recordToSave.id} asignada a ti ha sido ${statusText}.`,
                 });
             }
         }
-        
-        setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
-        setIsSuccessDialogOpen(true);
-        setIsSubmitting(false);
-        setIsConfirming(false);
-    }, 1500);
+    } else {
+        const gestorUser = allUsers?.find(u => u.name === values.gestor);
+        if (gestorUser) {
+            addNotification({
+                recipientUsername: gestorUser.username,
+                message: `Nueva inspección individual (${recordToSave.id}) te ha sido asignada.`,
+            });
+        }
+    }
+    
+    setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
+    setIsSuccessDialogOpen(true);
+    setIsSubmitting(false);
+    setIsConfirming(false);
   }
 
   const handleReset = () => {
@@ -463,8 +467,9 @@ export default function IndividualInspectionPage() {
             lastModifiedBy: user?.username,
             lastModifiedAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
         };
-        updateRecord(newRecord);
-        setCurrentRecord(newRecord); // Update local state for immediate feedback
+        const docRef = doc(firestore, 'inspections', newRecord.id);
+        setDocumentNonBlocking(docRef, newRecord, { merge: true });
+        
         form.reset({ // Re-sync main form if needed
             ...newRecord,
             fechaProgramacion: parse(newRecord.requestDate, 'yyyy-MM-dd', new Date()),
@@ -478,6 +483,14 @@ export default function IndividualInspectionPage() {
       toast({ title: 'ID Copiado', description: 'El ID de la inspección se ha copiado.' });
     }
   };
+
+  if (isRecordLoading && recordId) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -743,7 +756,7 @@ export default function IndividualInspectionPage() {
                         <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isFieldDisabled('empresaColaboradora')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                            {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />
@@ -755,7 +768,7 @@ export default function IndividualInspectionPage() {
                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('gestor')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un gestor" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {availableManagers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                            {availableManagers?.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />
@@ -767,7 +780,7 @@ export default function IndividualInspectionPage() {
                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('instalador')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                            {availableInstallers?.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />
@@ -779,7 +792,7 @@ export default function IndividualInspectionPage() {
                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFieldDisabled('inspector')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un inspector" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                            {availableInspectors?.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />

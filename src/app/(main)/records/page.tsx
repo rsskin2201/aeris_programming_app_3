@@ -20,11 +20,13 @@ import { addDays, format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { STATUS, ROLES, User } from '@/lib/types';
+import { STATUS, ROLES, User, CollaboratorCompany, Sector, ExpansionManager } from '@/lib/types';
 import { TIPO_INSPECCION_ESPECIAL, TIPO_INSPECCION_MASIVA, MERCADO } from '@/lib/form-options';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
 const statusColors: Record<InspectionRecord['status'], string> = {
   [STATUS.REGISTRADA]: 'bg-gray-500/80 border-gray-600 text-white',
@@ -59,14 +61,20 @@ const initialFilters = {
 const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
 
 export default function RecordsPage() {
-  const { user, zone, records, expansionManagers, collaborators, sectors } = useAppContext();
+  const { user, zone } = useAppContext();
   const router = useRouter();
   const { toast } = useToast();
+  const firestore = useFirestore();
+
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState(initialFilters);
   const [isExporting, setIsExporting] = useState(false);
+
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => collection(firestore, 'gestores_expansion'), [firestore]));
+  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemoFirebase(() => collection(firestore, 'empresas_colaboradoras'), [firestore]));
+  const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => collection(firestore, 'sectores'), [firestore]));
   
   const canModify = user && !viewOnlyRoles.includes(user.role);
   const canExport = user && user.role !== ROLES.CANALES;
@@ -79,15 +87,28 @@ export default function RecordsPage() {
     setFilters(initialFilters);
   }
 
+  const inspectionsQuery = useMemoFirebase(() => {
+    const baseQuery = collection(firestore, 'inspections');
+    let q = query(baseQuery);
+
+    if (zone !== 'Todas las zonas') {
+      q = query(q, where('zone', '==', zone));
+    }
+    // Note: More complex client-side filtering is still needed for text search on un-indexed fields
+    return q;
+  }, [firestore, zone]);
+
+  const { data: records, isLoading } = useCollection<InspectionRecord>(inspectionsQuery);
+
   const filteredRecords = useMemo(() => {
+    if (!records) return [];
     return records.filter(record => {
-      if (zone !== 'Todas las zonas' && record.zone !== zone) return false;
       if (filters.id && !record.id.toLowerCase().includes(filters.id.toLowerCase())) return false;
       if (filters.gestor && record.gestor !== filters.gestor) return false;
       if (filters.empresa && record.collaboratorCompany !== filters.empresa) return false;
       if (filters.sector && record.sector !== filters.sector) return false;
-      if (filters.poliza && !record.poliza.includes(filters.poliza)) return false;
-      if (filters.caso && !record.caso.includes(filters.caso)) return false;
+      if (filters.poliza && record.poliza && !record.poliza.includes(filters.poliza)) return false;
+      if (filters.caso && record.caso && !record.caso.includes(filters.caso)) return false;
       if (filters.serieMdd && record.serieMdd !== filters.serieMdd) return false;
       if (filters.status && record.status !== filters.status) return false;
       if (filters.tipoInspeccion && record.type !== filters.tipoInspeccion) return false;
@@ -96,7 +117,7 @@ export default function RecordsPage() {
       if (filters.date?.to && parse(record.requestDate, 'yyyy-MM-dd', new Date()) > addDays(filters.date.to, 1)) return false;
       return true;
     });
-  }, [zone, records, filters]);
+  }, [records, filters]);
   
   const paginatedRecords = useMemo(() => {
     const startIndex = (page - 1) * rowsPerPage;
@@ -113,7 +134,15 @@ export default function RecordsPage() {
   }
 
   const handleAction = (recordId: string, mode: 'view' | 'edit') => {
-    router.push(`/inspections/individual?id=${recordId}&mode=${mode}&from=records`);
+    // This part might need adjustment depending on the inspection type
+    const record = records?.find(r => r.id === recordId);
+    let path = '/inspections/individual'; // Default path
+    if (record?.type === 'Masiva PES') {
+      path = '/inspections/massive';
+    } else if (record?.type === 'Especial') {
+      path = '/inspections/special';
+    }
+    router.push(`${path}?id=${recordId}&mode=${mode}&from=records`);
   }
 
   const handleExport = () => {
@@ -194,7 +223,7 @@ export default function RecordsPage() {
                         <Select value={filters.gestor} onValueChange={(v) => handleFilterChange('gestor', v)}>
                             <SelectTrigger id="gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
-                                {expansionManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
+                                {expansionManagers?.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -203,7 +232,7 @@ export default function RecordsPage() {
                         <Select value={filters.empresa} onValueChange={(v) => handleFilterChange('empresa', v)}>
                             <SelectTrigger id="empresa"><SelectValue placeholder="Todas" /></SelectTrigger>
                             <SelectContent>
-                                 {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                                 {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -212,7 +241,7 @@ export default function RecordsPage() {
                          <Select value={filters.sector} onValueChange={(v) => handleFilterChange('sector', v)}>
                             <SelectTrigger id="sector"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
-                                {sectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
+                                {sectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -303,67 +332,72 @@ export default function RecordsPage() {
         </CollapsibleContent>
       </Collapsible>
 
-
       <Card>
         <CardHeader>
           <CardTitle>Listado de Inspecciones</CardTitle>
           <CardDescription>Muestra todos los registros de inspecciones, tanto de formulario como de carga masiva.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[150px]">ID</TableHead>
-                <TableHead>Estatus</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Dirección</TableHead>
-                <TableHead>Fecha Sol.</TableHead>
-                <TableHead>Fecha Alta</TableHead>
-                <TableHead>Usuario Alta</TableHead>
-                <TableHead>Zona</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedRecords.map((record) => (
-                <TableRow key={record.id} className="transition-colors hover:bg-muted/60">
-                  <TableCell className="py-2 px-4 font-mono text-xs">{record.id}</TableCell>
-                   <TableCell className="py-2 px-4">
-                    <Badge className={cn('whitespace-nowrap', statusColors[record.status] || 'bg-gray-400')}>{record.status}</Badge>
-                  </TableCell>
-                  <TableCell className="py-2 px-4">{record.type}</TableCell>
-                  <TableCell className="py-2 px-4">{record.address}</TableCell>
-                  <TableCell className="py-2 px-4">{record.requestDate}</TableCell>
-                  <TableCell className="py-2 px-4">{record.createdAt}</TableCell>
-                  <TableCell className="py-2 px-4">{record.createdBy}</TableCell>
-                  <TableCell className="py-2 px-4">{record.zone}</TableCell>
-                  <TableCell className="py-2 px-4 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleAction(record.id, 'view')}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Visualizar
-                        </DropdownMenuItem>
-                        {canModify && (
-                            <DropdownMenuItem onClick={() => handleAction(record.id, 'edit')}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Modificar
-                            </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[150px]">ID</TableHead>
+                  <TableHead>Estatus</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Dirección</TableHead>
+                  <TableHead>Fecha Sol.</TableHead>
+                  <TableHead>Fecha Alta</TableHead>
+                  <TableHead>Usuario Alta</TableHead>
+                  <TableHead>Zona</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedRecords.map((record) => (
+                  <TableRow key={record.id} className="transition-colors hover:bg-muted/60">
+                    <TableCell className="py-2 px-4 font-mono text-xs">{record.id}</TableCell>
+                    <TableCell className="py-2 px-4">
+                      <Badge className={cn('whitespace-nowrap', statusColors[record.status] || 'bg-gray-400')}>{record.status}</Badge>
+                    </TableCell>
+                    <TableCell className="py-2 px-4">{record.type}</TableCell>
+                    <TableCell className="py-2 px-4">{record.address}</TableCell>
+                    <TableCell className="py-2 px-4">{record.requestDate}</TableCell>
+                    <TableCell className="py-2 px-4">{record.createdAt}</TableCell>
+                    <TableCell className="py-2 px-4">{record.createdBy}</TableCell>
+                    <TableCell className="py-2 px-4">{record.zone}</TableCell>
+                    <TableCell className="py-2 px-4 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleAction(record.id, 'view')}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              Visualizar
+                          </DropdownMenuItem>
+                          {canModify && (
+                              <DropdownMenuItem onClick={() => handleAction(record.id, 'edit')}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Modificar
+                              </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
         <CardFooter className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
