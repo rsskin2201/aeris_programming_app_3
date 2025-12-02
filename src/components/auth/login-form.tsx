@@ -13,31 +13,21 @@ import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/hooks/use-app-context';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Label } from '../ui/label';
-import { ROLES, type User } from '@/lib/types';
-import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, ingresa un correo electrónico válido.' }),
   password: z.string().min(1, { message: 'Por favor, ingresa tu contraseña.' }),
 });
 
-const forgotPasswordSchema = z.object({
-    username: z.string().min(1, { message: 'Por favor, ingresa tu nombre de usuario.' }),
-    email: z.string().email({ message: 'Por favor, ingresa un correo electrónico válido.' }),
-});
-
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isForgotPassOpen, setIsForgotPassOpen] = useState(false);
   const [isSubmittingForgot, setIsSubmittingForgot] = useState(false);
-  const [forgotUsername, setForgotUsername] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
   
   const router = useRouter();
   const { login } = useAppContext();
   const { toast } = useToast();
-  const auth = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,10 +49,11 @@ export function LoginForm() {
         });
         router.push('/');
       } else {
+        // This case might not be reached if login throws an error, but it's a good fallback.
         throw new Error("No se encontró el perfil de usuario.");
       }
     } catch (error: any) {
-      console.error(error);
+      console.error("Login failed:", error);
       let description = 'Ocurrió un error inesperado.';
       if (error.code) {
         switch (error.code) {
@@ -77,12 +68,15 @@ export function LoginForm() {
           default:
             description = 'Error de autenticación. Por favor, inténtalo de nuevo.';
         }
+      } else {
+        description = error.message || description;
       }
       toast({
         variant: 'destructive',
         title: 'Error de autenticación',
         description,
       });
+    } finally {
       setIsLoading(false);
     }
   }

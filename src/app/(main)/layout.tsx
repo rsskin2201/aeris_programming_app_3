@@ -8,13 +8,12 @@ import { WelcomeZoneSelector } from '@/components/layout/welcome-zone-selector';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Copy, HelpCircle, User as UserIcon } from 'lucide-react';
+import { Clock, Copy, HelpCircle, User as UserIcon, Loader2 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
-import { User } from '@/lib/types';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { user, isZoneConfirmed } = useAppContext();
+  const { user, isUserLoading, isZoneConfirmed } = useAppContext();
   const router = useRouter();
   const { toast } = useToast();
   const supportAvatar = PlaceHolderImages.find(img => img.id === 'support-avatar');
@@ -25,17 +24,22 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }
 
   useEffect(() => {
-    if (!user) {
+    if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [user, router]);
+  }, [user, isUserLoading, router]);
   
-  if (!user) {
-    return (
+  if (isUserLoading) {
+     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
-        <p>Redirigiendo al inicio de sesión...</p>
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-lg">Cargando datos de usuario...</p>
       </div>
     );
+  }
+
+  if (!user) {
+    return null; // Redirection is handled by the useEffect
   }
 
   if (!isZoneConfirmed) {

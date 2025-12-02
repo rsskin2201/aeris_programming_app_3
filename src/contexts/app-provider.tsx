@@ -14,7 +14,6 @@ interface AppContextType {
   isUserLoading: boolean;
   login: (email: string, password: string) => Promise<User | null>;
   logout: () => void;
-  setUserProfile: (user: User | null) => void;
 
   operatorName: string | null;
   zone: Zone;
@@ -68,10 +67,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const userDocRef = doc(firestore, "users", uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
-            setUser(userDoc.data() as User);
+            const userProfile = userDoc.data() as User;
+            setUser(userProfile);
+            setOperatorName(userProfile.name);
         } else {
             console.error("No user profile found in Firestore for UID:", uid);
-            setUser(null); // Or handle as an error state
+            setUser(null);
+            await signOut(auth);
         }
     };
 
@@ -79,12 +81,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         fetchUserProfile(firebaseUser.uid);
     } else {
         setUser(null);
+        setOperatorName(null);
+        setIsZoneConfirmed(false);
     }
-  }, [firebaseUser, firestore]);
+  }, [firebaseUser, firestore, auth]);
   
 
   const login = useCallback(async (email: string, password: string): Promise<User | null> => {
-    if (!auth || !firestore) return null;
+    if (!auth || !firestore) throw new Error("Firebase services not available.");
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const authedUser = userCredential.user;
     
@@ -94,35 +98,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (userDoc.exists()) {
         const userProfile = userDoc.data() as User;
         setUser(userProfile);
+        setOperatorName(userProfile.name);
         return userProfile;
+    } else {
+        await signOut(auth);
+        throw new Error("User profile does not exist in Firestore.");
     }
-    return null;
   }, [auth, firestore]);
 
   const logout = useCallback(async () => {
     if (!auth) return;
     await signOut(auth);
     setUser(null);
+    setOperatorName(null);
     setIsZoneConfirmed(false);
   }, [auth]);
-
-  const setUserProfile = (userProfile: User | null) => {
-    setUser(userProfile);
-    if(userProfile){
-      setOperatorName(userProfile.name);
-    } else {
-      setOperatorName(null);
-      setIsZoneConfirmed(false);
-    }
-  }
-
-  useEffect(() => {
-    if (user) {
-        setOperatorName(user.name);
-    } else {
-        setOperatorName(null);
-    }
-  }, [user]);
 
   const confirmZone = useCallback((newZone: Zone) => {
     setZone(newZone);
@@ -178,7 +168,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isUserLoading,
       login,
       logout,
-      setUserProfile,
       operatorName,
       zone,
       setZone,
@@ -202,7 +191,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead, setZone
     ]
   );
 
