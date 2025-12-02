@@ -95,7 +95,7 @@ service cloud.firestore {
      * Checks if the user has the 'Administrator' role.
      */
     function isAdmin() {
-      return isSignedIn() && userRole() == 'Administrator';
+      return isSignedIn() && userRole() == 'Administrador';
     }
 
     /**
@@ -105,7 +105,7 @@ service cloud.firestore {
     function canReadData() {
       let role = userRole();
       return isSignedIn() && (
-        role == 'Administrator' ||
+        role == 'Administrador' ||
         role == 'Visual User' ||
         role == 'Empresa Colaboradora' ||
         role == 'Gestor de Expansión' ||
@@ -122,7 +122,7 @@ service cloud.firestore {
     function canWriteData() {
       let role = userRole();
       return isSignedIn() && (
-        role == 'Administrator' ||
+        role == 'Administrador' ||
         role == 'Empresa Colaboradora' ||
         role == 'Gestor de Expansión' ||
         role == 'Empresa de Control de Calidad'
