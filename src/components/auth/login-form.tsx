@@ -14,10 +14,11 @@ import { useAppContext } from '@/hooks/use-app-context';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { ROLES, type User } from '@/lib/types';
-import { mockUsers } from '@/lib/mock-data'; // Usaremos los datos simulados
+import { useAuth } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const formSchema = z.object({
-  username: z.string().min(1, { message: 'Por favor, ingresa tu nombre de usuario.' }),
+  email: z.string().email({ message: 'Por favor, ingresa un correo electrónico válido.' }),
   password: z.string().min(1, { message: 'Por favor, ingresa tu contraseña.' }),
 });
 
@@ -34,70 +35,70 @@ export function LoginForm() {
   const [forgotEmail, setForgotEmail] = useState('');
   
   const router = useRouter();
-  const { addPasswordRequest, setUserProfile } = useAppContext();
+  const { login } = useAppContext();
   const { toast } = useToast();
+  const auth = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: '',
+      email: '',
       password: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    
-    // Simulación de autenticación
-    setTimeout(() => {
-        // En una app real, la contraseña no estaría en el cliente.
-        // Aquí usamos 'admin' como contraseña universal para la simulación.
-        const foundUser = mockUsers.find(u => u.username === values.username);
-
-        if (foundUser && values.password === 'admin') { 
-            setUserProfile(foundUser);
-            toast({
-                title: 'Inicio de sesión exitoso (Simulado)',
-                description: `Bienvenido(a), ${foundUser.name}`,
-                duration: 2000,
-            });
-            router.push('/');
-        } else {
-            toast({
-                variant: 'destructive',
-                title: 'Error de autenticación',
-                description: 'Usuario o contraseña incorrectos.',
-            });
-            setIsLoading(false);
+    try {
+      const userProfile = await login(values.email, values.password);
+      if (userProfile) {
+        toast({
+          title: 'Inicio de sesión exitoso',
+          description: `Bienvenido(a), ${userProfile.name}`,
+          duration: 2000,
+        });
+        router.push('/');
+      } else {
+        throw new Error("No se encontró el perfil de usuario.");
+      }
+    } catch (error: any) {
+      console.error(error);
+      let description = 'Ocurrió un error inesperado.';
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/user-not-found':
+          case 'auth/wrong-password':
+          case 'auth/invalid-credential':
+            description = 'Correo electrónico o contraseña incorrectos.';
+            break;
+          case 'auth/invalid-email':
+            description = 'El formato del correo electrónico no es válido.';
+            break;
+          default:
+            description = 'Error de autenticación. Por favor, inténtalo de nuevo.';
         }
-    }, 1000);
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Error de autenticación',
+        description,
+      });
+      setIsLoading(false);
+    }
   }
 
   const handleForgotPasswordSubmit = () => {
-    const result = forgotPasswordSchema.safeParse({ username: forgotUsername, email: forgotEmail });
-
-    if (!result.success) {
-        const errors = result.error.format();
-        toast({
-            variant: 'destructive',
-            title: 'Campos inválidos',
-            description: errors.username?._errors[0] || errors.email?._errors[0] || 'Por favor revisa los campos.',
-        });
-        return;
-    }
-
+    // This functionality would require a backend function to send a reset email.
+    // For now, it will just show a confirmation toast.
     setIsSubmittingForgot(true);
     setTimeout(() => {
-        addPasswordRequest({ username: forgotUsername, email: forgotEmail, recipientRole: ROLES.ADMIN });
         toast({
-            title: 'Solicitud Enviada',
-            description: 'Se ha enviado una notificación al administrador. Se pondrá en contacto contigo en breve.'
+            title: 'Funcionalidad no implementada',
+            description: 'La recuperación de contraseña se implementará en una futura versión.'
         });
         setIsSubmittingForgot(false);
         setIsForgotPassOpen(false);
-        setForgotUsername('');
-        setForgotEmail('');
-    }, 1500);
+    }, 1000);
   }
 
   return (
@@ -106,12 +107,12 @@ export function LoginForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="username"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-bold">Nombre de Usuario</FormLabel>
+                <FormLabel className="text-base font-bold">Correo Electrónico</FormLabel>
                 <FormControl>
-                  <Input placeholder="tu.usuario" {...field} />
+                  <Input placeholder="tu@correo.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -130,9 +131,6 @@ export function LoginForm() {
               </FormItem>
             )}
           />
-          <div className='text-xs text-muted-foreground pt-2'>
-            (Tip: usa cualquier usuario de la lista simulada con la contraseña `admin`)
-          </div>
           <Button type="submit" className="w-full !mt-6" disabled={isLoading}>
             {isLoading ? (
               <>
@@ -156,22 +154,12 @@ export function LoginForm() {
                 <DialogHeader>
                     <DialogTitle>Recuperar Contraseña</DialogTitle>
                     <DialogDescription>
-                        Ingresa tus datos para solicitar un reseteo. Se enviará una notificación al administrador.
+                        Esta función enviará un correo para restablecer tu contraseña.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4 space-y-4">
-                    <div>
-                        <Label htmlFor="forgot-username">Nombre de Usuario</Label>
-                        <Input 
-                            id="forgot-username" 
-                            value={forgotUsername}
-                            onChange={(e) => setForgotUsername(e.target.value)}
-                            placeholder="tu.usuario.alias"
-                            className="mt-2"
-                        />
-                    </div>
+                 <div className="py-4 space-y-4">
                      <div>
-                        <Label htmlFor="forgot-email">Correo Electrónico de Contacto</Label>
+                        <Label htmlFor="forgot-email">Correo Electrónico Registrado</Label>
                         <Input 
                             id="forgot-email" 
                             type="email"
