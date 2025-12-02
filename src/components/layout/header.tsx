@@ -85,13 +85,13 @@ const moduleIcons = {
 
 export default function Header() {
   const pathname = usePathname();
-  const { userProfile, operatorName, logout, notifications, markNotificationAsRead, devModeEnabled, toggleDevMode } = useAppContext();
+  const { user, operatorName, logout, notifications, markNotificationAsRead, devModeEnabled, toggleDevMode } = useAppContext();
   const { toast } = useToast();
   
 
-  if (!userProfile) return null;
+  if (!user) return null;
 
-  const userNotifications = notifications.filter(n => n.recipientUsername === userProfile.username);
+  const userNotifications = notifications.filter(n => n.recipientUsername === user.username);
   const unreadCount = userNotifications.filter(n => !n.read).length;
 
 
@@ -215,7 +215,7 @@ export default function Header() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Mi Cuenta ({userProfile.role})</DropdownMenuLabel>
+                <DropdownMenuLabel>Mi Cuenta ({user.role})</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                  <DropdownMenuCheckboxItem
                     checked={devModeEnabled}

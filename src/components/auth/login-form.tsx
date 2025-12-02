@@ -1,27 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/hooks/use-app-context';
-import { useAuth, useFirestore } from '@/firebase';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { ROLES, type User } from '@/lib/types';
+import { mockUsers } from '@/lib/mock-data'; // Usaremos los datos simulados
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'Por favor, ingresa un correo electrónico válido.' }),
-  password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' }),
+  username: z.string().min(1, { message: 'Por favor, ingresa tu nombre de usuario.' }),
+  password: z.string().min(1, { message: 'Por favor, ingresa tu contraseña.' }),
 });
 
 const forgotPasswordSchema = z.object({
@@ -38,49 +35,42 @@ export function LoginForm() {
   
   const router = useRouter();
   const { addPasswordRequest, setUserProfile } = useAppContext();
-  const auth = useAuth();
-  const firestore = useFirestore();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const firebaseUser = userCredential.user;
+    
+    // Simulación de autenticación
+    setTimeout(() => {
+        // En una app real, la contraseña no estaría en el cliente.
+        // Aquí usamos 'admin' como contraseña universal para la simulación.
+        const foundUser = mockUsers.find(u => u.username === values.username);
 
-      // Fetch user profile from Firestore
-      const userDocRef = doc(firestore, 'users', firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (userDocSnap.exists()) {
-        const userProfile = userDocSnap.data() as User;
-        setUserProfile(userProfile); // Store profile in context
-        toast({
-          title: 'Inicio de sesión exitoso',
-          description: `Bienvenido(a), ${userProfile.name}`,
-          duration: 2000,
-        });
-        router.push('/');
-      } else {
-        throw new Error("No se encontró el perfil de usuario en la base de datos.");
-      }
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Error de autenticación',
-        description: 'Usuario o contraseña incorrectos.',
-      });
-      setIsLoading(false);
-    }
+        if (foundUser && values.password === 'admin') { 
+            setUserProfile(foundUser);
+            toast({
+                title: 'Inicio de sesión exitoso (Simulado)',
+                description: `Bienvenido(a), ${foundUser.name}`,
+                duration: 2000,
+            });
+            router.push('/');
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Error de autenticación',
+                description: 'Usuario o contraseña incorrectos.',
+            });
+            setIsLoading(false);
+        }
+    }, 1000);
   }
 
   const handleForgotPasswordSubmit = () => {
@@ -116,12 +106,12 @@ export function LoginForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="email"
+            name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-bold">Correo Electrónico</FormLabel>
+                <FormLabel className="text-base font-bold">Nombre de Usuario</FormLabel>
                 <FormControl>
-                  <Input placeholder="tu@correo.com" {...field} />
+                  <Input placeholder="tu.usuario" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -140,6 +130,9 @@ export function LoginForm() {
               </FormItem>
             )}
           />
+          <div className='text-xs text-muted-foreground pt-2'>
+            (Tip: usa cualquier usuario de la lista simulada con la contraseña `admin`)
+          </div>
           <Button type="submit" className="w-full !mt-6" disabled={isLoading}>
             {isLoading ? (
               <>

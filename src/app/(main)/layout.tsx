@@ -2,9 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
 import { useAppContext } from '@/hooks/use-app-context';
-import { useFirestore } from '@/firebase';
 import Header from '@/components/layout/header';
 import { WelcomeZoneSelector } from '@/components/layout/welcome-zone-selector';
 import { Button } from '@/components/ui/button';
@@ -16,9 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/types';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { authUser, isAuthLoading, userProfile, setUserProfile, isZoneConfirmed } = useAppContext();
+  const { user, isZoneConfirmed } = useAppContext();
   const router = useRouter();
-  const firestore = useFirestore();
   const { toast } = useToast();
   const supportAvatar = PlaceHolderImages.find(img => img.id === 'support-avatar');
 
@@ -28,32 +25,15 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }
 
   useEffect(() => {
-    if (!isAuthLoading && !authUser) {
+    if (!user) {
       router.push('/login');
     }
-  }, [authUser, isAuthLoading, router]);
-
-  useEffect(() => {
-    if (authUser && !userProfile) {
-      const fetchUserProfile = async () => {
-        const userDocRef = doc(firestore, 'users', authUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          setUserProfile(userDocSnap.data() as User);
-        } else {
-          // Handle case where user is authenticated but has no profile
-          console.error("No user profile found in Firestore!");
-          // Optional: redirect to a profile creation page or show an error
-        }
-      };
-      fetchUserProfile();
-    }
-  }, [authUser, userProfile, firestore, setUserProfile]);
+  }, [user, router]);
   
-  if (isAuthLoading || !userProfile) {
+  if (!user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
-        <p>Cargando...</p>
+        <p>Redirigiendo al inicio de sesión...</p>
       </div>
     );
   }
