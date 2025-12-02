@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from "react";
+import { collection, doc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,11 +13,12 @@ import { CollaboratorCompanyForm } from "@/components/entities/collaborator-comp
 import { QualityControlCompanyForm } from "@/components/entities/quality-control-company-form";
 import { InspectorForm } from "@/components/entities/inspector-form";
 import { InstallerForm } from "@/components/entities/installer-form";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import type { CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from "@/lib/mock-data";
 import { ExpansionManagerForm } from "@/components/entities/expansion-manager-form";
 import { SectorForm } from "@/components/entities/sector-form";
 import { useAppContext } from "@/hooks/use-app-context";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -35,16 +37,9 @@ const statusColors: Record<string, string> = {
 };
 
 export default function EntitiesPage() {
-  const { 
-    zone, 
-    collaborators, 
-    installers, 
-    expansionManagers, 
-    qualityCompanies, 
-    inspectors, 
-    sectors 
-  } = useAppContext();
-  
+  const { zone } = useAppContext();
+  const firestore = useFirestore();
+
   const [collaboratorDialogOpen, setCollaboratorDialogOpen] = useState(false);
   const [qualityDialogOpen, setQualityDialogOpen] = useState(false);
   const [inspectorDialogOpen, setInspectorDialogOpen] = useState(false);
@@ -59,28 +54,46 @@ export default function EntitiesPage() {
   const [selectedManager, setSelectedManager] = useState<ExpansionManager | null>(null);
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
 
+  const collaboratorsQuery = useMemoFirebase(() => collection(firestore, 'empresas_colaboradoras'), [firestore]);
+  const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
+
+  const installersQuery = useMemoFirebase(() => collection(firestore, 'instaladores'), [firestore]);
+  const { data: installers } = useCollection<Installer>(installersQuery);
+
+  const managersQuery = useMemoFirebase(() => collection(firestore, 'gestores_expansion'), [firestore]);
+  const { data: expansionManagers } = useCollection<ExpansionManager>(managersQuery);
+  
+  const qualityQuery = useMemoFirebase(() => collection(firestore, 'empresas_control_calidad'), [firestore]);
+  const { data: qualityCompanies } = useCollection<QualityControlCompany>(qualityQuery);
+  
+  const inspectorsQuery = useMemoFirebase(() => collection(firestore, 'inspectores'), [firestore]);
+  const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
+  
+  const sectorsQuery = useMemoFirebase(() => collection(firestore, 'sectores'), [firestore]);
+  const { data: sectors } = useCollection<Sector>(sectorsQuery);
+
   const filteredCollaborators = useMemo(() => 
-    collaborators.filter(c => zone === 'Todas las zonas' || c.zone === zone), 
+    collaborators?.filter(c => zone === 'Todas las zonas' || c.zone === zone) || [],
     [zone, collaborators]
   );
   const filteredInstallers = useMemo(() => 
-    installers.filter(i => zone === 'Todas las zonas' || i.zone === zone), 
+    installers?.filter(i => zone === 'Todas las zonas' || i.zone === zone) || [],
     [zone, installers]
   );
   const filteredExpansionManagers = useMemo(() => 
-    expansionManagers.filter(m => zone === 'Todas las zonas' || m.zone === zone), 
+    expansionManagers?.filter(m => zone === 'Todas las zonas' || m.zone === zone) || [],
     [zone, expansionManagers]
   );
   const filteredQualityCompanies = useMemo(() => 
-    qualityCompanies.filter(c => zone === 'Todas las zonas' || c.zone === zone), 
+    qualityCompanies?.filter(c => zone === 'Todas las zonas' || c.zone === zone) || [],
     [zone, qualityCompanies]
   );
   const filteredInspectors = useMemo(() => 
-    inspectors.filter(i => zone === 'Todas las zonas' || i.zone === zone), 
+    inspectors?.filter(i => zone === 'Todas las zonas' || i.zone === zone) || [],
     [zone, inspectors]
   );
   const filteredSectors = useMemo(() => 
-    sectors.filter(s => zone === 'Todas las zonas' || s.zone === zone), 
+    sectors?.filter(s => zone === 'Todas las zonas' || s.zone === zone) || [],
     [zone, sectors]
   );
 
@@ -144,12 +157,10 @@ export default function EntitiesPage() {
     setSectorDialogOpen(true);
   };
 
-
   const handleStatusChange = (item: any, newStatus: string) => {
     // Logic to change status, maybe with a confirmation dialog
     alert(`Cambiando estatus de ${item.name || item.sector} a ${newStatus}`);
   };
-
 
   return (
     <div className="flex flex-col gap-6">

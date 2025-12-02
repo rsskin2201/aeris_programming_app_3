@@ -14,6 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ZONES, ROLES } from '@/lib/types';
 import { useAppContext } from '@/hooks/use-app-context';
 import type { Sector } from '@/lib/mock-data';
+import { useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -41,12 +44,13 @@ const restrictedRoles = [
 
 export function SectorForm({ sector, onClose }: SectorFormProps) {
   const { toast } = useToast();
-  const { user, addSector, updateSector } = useAppContext();
+  const { user } = useAppContext();
+  const firestore = useFirestore();
 
   const isEditMode = !!sector;
 
   const defaultValues = useMemo(() => ({
-    id: sector?.id || `SEC-${Math.floor(1000 + Math.random() * 9000)}`,
+    id: sector?.id || `SEC-${Date.now()}`,
     zone: sector?.zone || '',
     assignment: sector?.assignment || '',
     subAssignment: sector?.subAssignment || '',
@@ -84,11 +88,8 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
         createdAt: sector?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
     };
     
-    if (isEditMode) {
-        updateSector(dataToSave);
-    } else {
-        addSector(dataToSave);
-    }
+    const docRef = doc(firestore, 'sectores', dataToSave.id);
+    setDocumentNonBlocking(docRef, dataToSave, { merge: true });
 
     toast({
       title: isEditMode ? 'Sector Actualizado' : 'Sector Creado',

@@ -14,6 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ZONES, ROLES } from '@/lib/types';
 import { useAppContext } from '@/hooks/use-app-context';
 import type { ExpansionManager } from '@/lib/mock-data';
+import { useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -41,12 +44,13 @@ const restrictedRoles = [
 
 export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormProps) {
   const { toast } = useToast();
-  const { user, addExpansionManager, updateExpansionManager } = useAppContext();
+  const { user } = useAppContext();
+  const firestore = useFirestore();
 
   const isEditMode = !!manager;
 
   const defaultValues = useMemo(() => ({
-    id: manager?.id || `GE-${Math.floor(1000 + Math.random() * 9000)}`,
+    id: manager?.id || `GE-${Date.now()}`,
     name: manager?.name || '',
     position: 'Gestor de Expansion',
     zone: manager?.zone || '',
@@ -84,11 +88,8 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
         createdAt: manager?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
     };
 
-    if (isEditMode) {
-        updateExpansionManager(dataToSave);
-    } else {
-        addExpansionManager(dataToSave);
-    }
+    const docRef = doc(firestore, 'gestores_expansion', dataToSave.id);
+    setDocumentNonBlocking(docRef, dataToSave, { merge: true });
 
     toast({
       title: isEditMode ? 'Gestor Actualizado' : 'Gestor Creado',

@@ -13,12 +13,16 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/hooks/use-app-context';
-import { type Installer } from '@/lib/mock-data';
+import { type Installer, type CollaboratorCompany } from '@/lib/mock-data';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { ZONES } from '@/lib/types';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -40,7 +44,11 @@ interface InstallerFormProps {
 
 export function InstallerForm({ installer, onClose }: InstallerFormProps) {
   const { toast } = useToast();
-  const { user, collaborators, addInstaller, updateInstaller } = useAppContext();
+  const { user } = useAppContext();
+  const firestore = useFirestore();
+
+  const collaboratorsQuery = useMemoFirebase(() => collection(firestore, 'empresas_colaboradoras'), [firestore]);
+  const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
 
   const isEditMode = !!installer;
   const currentYear = new Date().getFullYear();
@@ -48,7 +56,7 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
   const defaultValues = useMemo(() => {
     const parseDate = (dateStr: string | undefined) => dateStr ? parse(dateStr, 'yyyy-MM-dd', new Date()) : new Date();
     return {
-      id: installer?.id || `INST-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: installer?.id || `INST-${Date.now()}`,
       name: installer?.name || '',
       position: 'Instalador',
       collaboratorCompany: installer?.collaboratorCompany || '',
@@ -83,11 +91,8 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
         createdAt: installer?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
     };
     
-    if (isEditMode) {
-        updateInstaller(dataToSave);
-    } else {
-        addInstaller(dataToSave);
-    }
+    const docRef = doc(firestore, 'instaladores', dataToSave.id);
+    setDocumentNonBlocking(docRef, dataToSave, { merge: true });
     
     toast({
       title: isEditMode ? 'Instalador Actualizado' : 'Instalador Creado',
@@ -162,7 +167,7 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
-                        {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                     <FormMessage />

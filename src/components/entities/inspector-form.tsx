@@ -13,12 +13,16 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/hooks/use-app-context';
-import { type Inspector } from '@/lib/mock-data';
+import { type Inspector, QualityControlCompany } from '@/lib/mock-data';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { ZONES } from '@/lib/types';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -40,7 +44,11 @@ interface InspectorFormProps {
 
 export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
   const { toast } = useToast();
-  const { user, qualityCompanies, addInspector, updateInspector } = useAppContext();
+  const { user } = useAppContext();
+  const firestore = useFirestore();
+
+  const qualityCompaniesQuery = useMemoFirebase(() => collection(firestore, 'empresas_control_calidad'), [firestore]);
+  const { data: qualityCompanies } = useCollection<QualityControlCompany>(qualityCompaniesQuery);
 
   const isEditMode = !!inspector;
   const currentYear = new Date().getFullYear();
@@ -48,7 +56,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
   const defaultValues = useMemo(() => {
     const parseDate = (dateStr: string | undefined) => dateStr ? parse(dateStr, 'yyyy-MM-dd', new Date()) : new Date();
     return {
-      id: inspector?.id || `INSP-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: inspector?.id || `INSP-${Date.now()}`,
       name: inspector?.name || '',
       position: 'Inspector',
       qualityCompany: inspector?.qualityCompany || '',
@@ -83,11 +91,8 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
         createdAt: inspector?.createdAt || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
     };
     
-    if (isEditMode) {
-        updateInspector(dataToSave);
-    } else {
-        addInspector(dataToSave);
-    }
+    const docRef = doc(firestore, 'inspectores', dataToSave.id);
+    setDocumentNonBlocking(docRef, dataToSave, { merge: true });
 
     toast({
       title: isEditMode ? 'Inspector Actualizado' : 'Inspector Creado',
@@ -162,7 +167,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
-                        {qualityCompanies.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        {qualityCompanies?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                     <FormMessage />

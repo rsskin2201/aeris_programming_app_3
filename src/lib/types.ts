@@ -27,12 +27,13 @@ export const USER_STATUS = {
 export type UserStatus = (typeof USER_STATUS)[keyof typeof USER_STATUS];
 
 export type User = {
+  id: string; // Firebase Auth UID
   name: string;
   username: string;
+  email: string;
   role: Role;
   zone: Zone;
   status: UserStatus;
-  password?: string;
 };
 
 export const MODULES = {

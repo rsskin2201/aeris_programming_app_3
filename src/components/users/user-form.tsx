@@ -15,10 +15,17 @@ import type { User } from '@/lib/types';
 import { ROLES, ZONES, USER_STATUS } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RotateCcw, ShieldAlert } from 'lucide-react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { useAuth } from '@/firebase';
+
 
 const formSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido.'),
   username: z.string().min(1, 'El nombre de usuario es requerido.'),
+  email: z.string().email('El correo electrónico no es válido.'),
   role: z.nativeEnum(ROLES),
   zone: z.nativeEnum(ZONES),
   status: z.nativeEnum(USER_STATUS),
@@ -34,7 +41,11 @@ interface UserFormProps {
 
 export function UserForm({ user, onClose }: UserFormProps) {
   const { toast } = useToast();
-  const { addUser, updateUser, users } = useAppContext();
+  const firestore = useFirestore();
+  const auth = useAuth();
+  const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+  const { data: users } = useCollection<User>(usersQuery);
+
   const [newPassword, setNewPassword] = useState('');
 
   const isEditMode = !!user;
@@ -42,6 +53,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
   const defaultValues = useMemo(() => ({
     name: user?.name || '',
     username: user?.username || '',
+    email: user?.email || '',
     role: user?.role || ROLES.GESTOR,
     zone: user?.zone || ZONES[0],
     status: user?.status || USER_STATUS.ACTIVO,
@@ -70,37 +82,57 @@ export function UserForm({ user, onClose }: UserFormProps) {
     form.setValue('password', password, { shouldValidate: true });
   }
   
-  function onSubmit(values: FormValues) {
-    if (!isEditMode && users.some(u => u.username === values.username)) {
+  async function onSubmit(values: FormValues) {
+    if (!isEditMode && users?.some(u => u.username === values.username)) {
       form.setError('username', { type: 'manual', message: 'Este nombre de usuario ya existe.' });
       return;
     }
     
-    if (!isEditMode && !values.password) {
-        form.setError('password', { type: 'manual', message: 'La contraseña es requerida para nuevos usuarios.' });
+    if (!isEditMode && (!values.password || values.password.length < 6)) {
+        form.setError('password', { type: 'manual', message: 'La contraseña es requerida y debe tener al menos 6 caracteres.' });
         return;
     }
-
-    const dataToSave: User = {
-        name: values.name,
-        username: values.username,
-        role: values.role,
-        zone: values.zone,
-        status: values.status,
-    };
     
-    if (isEditMode) {
-        updateUser(dataToSave);
-    } else {
-        addUser(dataToSave);
+    try {
+        let userId = user?.id;
+        if (!isEditMode) {
+            const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password!);
+            userId = userCredential.user.uid;
+        }
+
+        if (!userId) {
+            toast({ variant: 'destructive', title: 'Error', description: 'No se pudo obtener el ID del usuario.'});
+            return;
+        }
+
+        const dataToSave: User = {
+            id: userId,
+            name: values.name,
+            username: values.username,
+            email: values.email,
+            role: values.role,
+            zone: values.zone,
+            status: values.status,
+        };
+        
+        const userDocRef = doc(firestore, 'users', userId);
+        setDocumentNonBlocking(userDocRef, dataToSave, { merge: isEditMode });
+        
+        toast({
+          title: isEditMode ? 'Usuario Actualizado' : 'Usuario Creado',
+          description: `Los datos de "${values.name}" se han guardado correctamente.`,
+        });
+
+        onClose();
+
+    } catch (error: any) {
+        console.error("Error saving user:", error);
+        toast({
+            variant: "destructive",
+            title: "Error al guardar",
+            description: error.message || "Ocurrió un error inesperado.",
+        })
     }
-    
-    toast({
-      title: isEditMode ? 'Usuario Actualizado' : 'Usuario Creado',
-      description: `Los datos de "${values.name}" se han guardado correctamente.`,
-    });
-
-    onClose();
   }
   
   const handleReset = () => {
@@ -129,6 +161,13 @@ export function UserForm({ user, onClose }: UserFormProps) {
                 <FormItem>
                     <FormLabel>Nombre de Usuario</FormLabel>
                     <FormControl><Input {...field} placeholder="alias.de.usuario" disabled={isEditMode} /></FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
+            <FormField control={form.control} name="email" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Correo Electrónico</FormLabel>
+                    <FormControl><Input type="email" {...field} placeholder="usuario@ejemplo.com" disabled={isEditMode} /></FormControl>
                     <FormMessage />
                 </FormItem>
             )} />

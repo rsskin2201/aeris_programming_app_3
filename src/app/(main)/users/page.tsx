@@ -21,6 +21,9 @@ import { cn } from "@/lib/utils";
 import Papa from "papaparse";
 import { format } from 'date-fns';
 import Link from "next/link";
+import { collection, doc } from "firebase/firestore";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const initialFilters = {
     name: '',
@@ -36,9 +39,13 @@ const statusColors: Record<string, string> = {
 };
 
 export default function UsersPage() {
-    const { user, users, deleteUser } = useAppContext();
+    const { user: currentUser } = useAppContext();
     const router = useRouter();
     const { toast } = useToast();
+    const firestore = useFirestore();
+
+    const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+    const { data: users, isLoading } = useCollection<User>(usersQuery);
 
     const [dialogState, setDialogState] = useState({
         isCreateOpen: false,
@@ -56,10 +63,10 @@ export default function UsersPage() {
     const [isExporting, setIsExporting] = useState(false);
 
     useEffect(() => {
-        if (user && user.role !== ROLES.ADMIN) {
+        if (currentUser && currentUser.role !== ROLES.ADMIN) {
             router.push('/');
         }
-    }, [user, router]);
+    }, [currentUser, router]);
     
     const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
         setFilters(prev => ({ ...prev, [key]: value || '' }));
@@ -72,6 +79,7 @@ export default function UsersPage() {
     }
     
     const filteredUsers = useMemo(() => {
+        if (!users) return [];
         return users.filter(u => {
             if (filters.name && !u.name.toLowerCase().includes(filters.name.toLowerCase())) return false;
             if (filters.username && !u.username.toLowerCase().includes(filters.username.toLowerCase())) return false;
@@ -116,9 +124,10 @@ export default function UsersPage() {
     }
     
     const handleConfirmPasswordReset = () => {
-        // Here you would typically call an API to update the user's password.
+        // This is a client-side simulation. A real implementation would use a backend function.
+        // For now, we just show the password to the admin.
         toast({
-            title: "Contraseña Restablecida",
+            title: "Contraseña Restablecida (Simulado)",
             description: `Se ha generado una nueva contraseña para ${selectedUser?.name}.`,
         });
         setNewPassword('');
@@ -127,7 +136,8 @@ export default function UsersPage() {
 
     const handleConfirmDelete = () => {
         if (selectedUser) {
-            deleteUser(selectedUser.username);
+            const userDocRef = doc(firestore, 'users', selectedUser.username); // Assuming username is doc ID
+            deleteDocumentNonBlocking(userDocRef);
             toast({
                 variant: 'destructive',
                 title: "Usuario Eliminado",
@@ -141,7 +151,7 @@ export default function UsersPage() {
         if (selectedUser) {
             // Logic to disable user would go here. For now, just a toast.
             toast({
-                title: "Usuario Deshabilitado",
+                title: "Usuario Deshabilitado (Simulado)",
                 description: `El usuario ${selectedUser.name} ha sido deshabilitado.`,
             });
             handleCloseDialog('isDisableOpen');
@@ -169,7 +179,7 @@ export default function UsersPage() {
     };
 
 
-    if (!user || user.role !== ROLES.ADMIN) {
+    if (!currentUser || currentUser.role !== ROLES.ADMIN) {
         return <div className="flex h-full items-center justify-center"><p>Acceso denegado.</p></div>;
     }
   

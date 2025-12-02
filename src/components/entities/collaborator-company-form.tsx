@@ -14,6 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 import { ZONES, ROLES } from '@/lib/types';
 import { useAppContext } from '@/hooks/use-app-context';
 import type { CollaboratorCompany } from '@/lib/mock-data';
+import { useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -39,12 +43,13 @@ const restrictedRoles = [
 
 export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompanyFormProps) {
   const { toast } = useToast();
-  const { user, addCollaborator, updateCollaborator } = useAppContext();
+  const { user } = useAppContext();
+  const firestore = useFirestore();
 
   const isEditMode = !!company;
 
   const defaultValues = useMemo(() => ({
-    id: company?.id || `EC-${Math.floor(1000 + Math.random() * 9000)}`,
+    id: company?.id || `EC-${Date.now()}`,
     name: company?.name || '',
     rfc: company?.rfc || '',
     zone: company?.zone || '',
@@ -80,11 +85,8 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
         created_at: company?.created_at || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
     };
     
-    if (isEditMode) {
-        updateCollaborator(dataToSave);
-    } else {
-        addCollaborator(dataToSave);
-    }
+    const docRef = doc(firestore, 'empresas_colaboradoras', dataToSave.id);
+    setDocumentNonBlocking(docRef, dataToSave, { merge: true });
     
     toast({
       title: isEditMode ? 'Empresa Actualizada' : 'Empresa Creada',
