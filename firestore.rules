@@ -1,8 +1,257 @@
+/**
+ * # Firestore Security Rules
+ *
+ * ## Core Philosophy
+ * This ruleset enforces a strict Role-Based Access Control (RBAC) model for an
+ * inspection management application. A user's permissions are determined by the
+ * 'role' and 'zone' fields stored in their user document (`/users/{userId}`).
+ * The default security posture is to deny all access unless explicitly granted.
+ * Administrators have broad access, while other roles have specific, limited
+ * permissions.
+ *
+ * ## Data Structure
+ * The data is organized into flat, top-level collections for each major entity
+ * (e.g., /inspections, /users, /empresas_colaboradoras). This structure avoids
+ * complex hierarchical lookups and simplifies security logic. User-specific
+ * data is secured via ownership checks, while shared data like inspections
+ * relies on fetching the user's role from their profile.
+ *
+ * ## Key Security Decisions
+ * - User Isolation: Users can only create, read, and modify their own document
+ *   in the `/users` collection. Listing all users is strictly forbidden for
+ *   non-administrators to protect user privacy.
+ * - Role-Based Access: All access to the core `/inspections` collection is
+ *   governed by the requesting user's role. This requires a `get` call to the
+ *   user's profile, a deliberate trade-off for centralized role management.
+ * - Read-Only Catalogs: Collections containing reference data (like companies,
+ *   inspectors, sectors) are readable by any authenticated user but are only
+ *   writable by users with the 'Administrator' role.
+ * - Query Constraints: The rules cannot filter data. For `list` operations
+ *   on inspections, the client application is responsible for adding a `where`
+ *   clause to filter by the user's assigned zone (e.g.,
+ *   `where("zone", "==", user.zone)`). The rules grant list permission, but
+ *   the client must correctly scope the query.
+ *
+ * ## Denormalization for Authorization
+ * While this ruleset centralizes role definitions in the `/users` collection for
+ * manageability (requiring a `get` call), it relies on the principle that
+ * authorization data should be readily available. The `/inspections` documents
+ * themselves contain all necessary foreign keys (e.g., `sectorId`, `inspectorId`),
+ * which simplifies logic by avoiding additional lookups to those collections.
+ *
+ * ## Structural Segregation
+ * This ruleset does not currently require structural segregation (e.g., separate
+ * collections for private vs. public data) as the access patterns are primarily
+ * defined by user roles rather than content state.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+
+    //-------------------------------------------------------------------------
+    // Helper Functions
+    //-------------------------------------------------------------------------
+
+    /**
+     * Returns true if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Returns true if the authenticated user's UID matches the provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Returns true if the document being operated on already exists.
+     * Crucial for protecting against writes on non-existent paths.
+     */
+    function isExistingDoc() {
+      return resource != null;
+    }
+
+    /**
+     * Retrieves the user's profile document from the /users collection.
+     * Used to access role and zone information for authorization decisions.
+     */
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    /**
+     * Extracts the user's role from their profile document.
+     * Returns null if the user or role does not exist.
+     */
+    function userRole() {
+      let userData = getUserData();
+      return userData.data.role;
+    }
+
+    /**
+     * Checks if the user has the 'Administrator' role.
+     */
+    function isAdmin() {
+      return isSignedIn() && userRole() == 'Administrator';
+    }
+
+    /**
+     * Checks if the user's role grants them permission to read inspections.
+     * Includes administrators and visual users.
+     */
+    function canReadData() {
+      let role = userRole();
+      return isSignedIn() && (
+        role == 'Administrator' ||
+        role == 'Visual User' ||
+        role == 'Empresa Colaboradora' ||
+        role == 'Gestor de Expansión' ||
+        role == 'Empresa de Control de Calidad' ||
+        role == 'Soporte a Procesos' ||
+        role == 'Canales'
+      );
+    }
+
+    /**
+     * Checks if the user's role grants them permission to write inspections.
+     * Restricted to specific operational roles and administrators.
+     */
+    function canWriteData() {
+      let role = userRole();
+      return isSignedIn() && (
+        role == 'Administrator' ||
+        role == 'Empresa Colaboradora' ||
+        role == 'Gestor de Expansión' ||
+        role == 'Empresa de Control de Calidad'
+      );
+    }
+
+
+    //-------------------------------------------------------------------------
+    // Collection Rules
+    //-------------------------------------------------------------------------
+
+    /**
+     * @description Manages user profiles. Users can manage their own profile.
+     * @path /users/{userId}
+     * @allow (create) A new user creates their own profile document. `auth.uid == userId`.
+     * @deny (get) A user attempts to read another user's profile. `auth.uid != userId`.
+     * @principle Restricts access to a user's own data tree and enforces relational integrity.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if (isOwner(userId) || isAdmin()) && isExistingDoc() && request.resource.data.id == resource.data.id;
+      allow delete: if (isOwner(userId) || isAdmin()) && isExistingDoc();
+    }
+
+    /**
+     * @description Stores inspection records for the workflow. Access is role-based.
+     * @path /inspections/{inspectionId}
+     * @allow (get) An authenticated user with a 'Visual User' role reads an inspection.
+     * @deny (create) A user with a 'Visual User' role attempts to create an inspection.
+     * @principle Enforces Role-Based Access Control (RBAC) for shared business data.
+     */
+    match /inspections/{inspectionId} {
+      allow get: if canReadData();
+      allow list: if canReadData();
+      allow create: if canWriteData();
+      allow update: if canWriteData() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Stores collaborating company records. Publicly readable, admin-only writes.
+     * @path /empresas_colaboradoras/{empresaColaboradoraId}
+     * @allow (list) Any authenticated user lists all collaborating companies.
+     * @deny (create) A non-admin user attempts to add a new company.
+     * @principle Protects critical reference data while allowing it to be read by all users.
+     */
+    match /empresas_colaboradoras/{empresaColaboradoraId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Stores expansion manager records. Publicly readable, admin-only writes.
+     * @path /gestores_expansion/{gestorExpansionId}
+     * @allow (list) Any authenticated user lists all expansion managers.
+     * @deny (create) A non-admin user attempts to add a new manager.
+     * @principle Protects critical reference data while allowing it to be read by all users.
+     */
+    match /gestores_expansion/{gestorExpansionId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Stores quality control company records. Publicly readable, admin-only writes.
+     * @path /empresas_control_calidad/{empresaControlCalidadId}
+     * @allow (list) Any authenticated user lists all quality control companies.
+     * @deny (create) A non-admin user attempts to add a new company.
+     * @principle Protects critical reference data while allowing it to be read by all users.
+     */
+    match /empresas_control_calidad/{empresaControlCalidadId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Stores installer records. Publicly readable, admin-only writes.
+     * @path /instaladores/{instaladorId}
+     * @allow (list) Any authenticated user lists all installers.
+     * @deny (create) A non-admin user attempts to add a new installer.
+     * @principle Protects critical reference data while allowing it to be read by all users.
+     */
+    match /instaladores/{instaladorId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Stores inspector records. Publicly readable, admin-only writes.
+     * @path /inspectores/{inspectorId}
+     * @allow (list) Any authenticated user lists all inspectors.
+     * @deny (create) A non-admin user attempts to add a new inspector.
+     * @principle Protects critical reference data while allowing it to be read by all users.
+     */
+    match /inspectores/{inspectorId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Stores sector records. Publicly readable, admin-only writes.
+     * @path /sectores/{sectorId}
+     * @allow (list) Any authenticated user lists all sectors.
+     * @deny (create) A non-admin user attempts to add a new sector.
+     * @principle Protects critical reference data while allowing it to be read by all users.
+     */
+    match /sectores/{sectorId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
     }
   }
 }

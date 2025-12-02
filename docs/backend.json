@@ -1,66 +1,467 @@
 {
   "entities": {
-    "UserProfile": {
-      "title": "User Profile",
-      "description": "Represents a user's public profile information.",
+    "Inspection": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Inspection",
       "type": "object",
+      "description": "Represents an inspection request, capturing details about the inspection and its status.",
       "properties": {
-        "name": {
+        "id": {
           "type": "string",
-          "description": "The user's full name."
+          "description": "Unique identifier for the inspection record."
         },
-        "role": {
+        "requestType": {
           "type": "string",
-          "description": "The user's role in the application."
-        },
-        "zone": {
-          "type": "string",
-          "description": "The geographical zone the user belongs to."
-        }
-      },
-      "required": ["name", "role", "zone"]
-    },
-    "InspectionRecord": {
-      "title": "Inspection Record",
-      "description": "Represents a single inspection record.",
-      "type": "object",
-      "properties": {
-        "address": {
-          "type": "string",
-          "description": "The address of the inspection."
-        },
-        "client": {
-          "type": "string",
-          "description": "The client for the inspection."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the inspection."
+          "description": "Type of inspection request (e.g., Individual PES, Mass PES, Special)."
         },
         "requestDate": {
           "type": "string",
-          "format": "date",
-          "description": "The requested date for the inspection."
+          "description": "Date the inspection was requested.",
+          "format": "date-time"
+        },
+        "address": {
+          "type": "string",
+          "description": "Address where the inspection is to take place."
+        },
+        "buildingNumber": {
+          "type": "string",
+          "description": "Building number of the property to be inspected."
+        },
+        "apartmentNumber": {
+          "type": "string",
+          "description": "Apartment number of the property to be inspected."
+        },
+        "sectorId": {
+          "type": "string",
+          "description": "Reference to Sector. (Relationship: Sector 1:N Inspection)"
+        },
+        "collaboratorCompanyId": {
+          "type": "string",
+          "description": "Reference to EmpresaColaboradora. (Relationship: EmpresaColaboradora 1:N Inspection)"
+        },
+        "expansionManagerId": {
+          "type": "string",
+          "description": "Reference to GestorExpansion. (Relationship: GestorExpansion 1:N Inspection)"
+        },
+        "qualityControlCompanyId": {
+          "type": "string",
+          "description": "Reference to EmpresaControlCalidad. (Relationship: EmpresaControlCalidad 1:N Inspection)"
+        },
+        "installerId": {
+          "type": "string",
+          "description": "Reference to Instalador. (Relationship: Instalador 1:N Inspection)"
+        },
+        "inspectorId": {
+          "type": "string",
+          "description": "Reference to Inspector assigned to the inspection. (Relationship: Inspector 1:N Inspection)"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the inspection (e.g., Pending Approval, Contemplated, Approved, Rejected, Scheduled, Completed)."
+        },
+        "scheduledDate": {
+          "type": "string",
+          "description": "Date the inspection is scheduled to occur.",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes or comments regarding the inspection."
+        },
+        "zone": {
+          "type": "string",
+          "description": "Geographic zone of the inspection (e.g., Zona Norte, Zona Centro, Bajio Norte, Bajio Sur)."
         }
       },
-      "required": ["address", "client", "status", "requestDate"]
+      "required": [
+        "id",
+        "requestType",
+        "requestDate",
+        "address",
+        "sectorId",
+        "status"
+      ]
+    },
+    "EmpresaColaboradora": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EmpresaColaboradora",
+      "type": "object",
+      "description": "Represents a collaborating company involved in the inspection process.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the collaborating company."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the collaborating company."
+        },
+        "contactName": {
+          "type": "string",
+          "description": "Contact person at the collaborating company."
+        },
+        "contactEmail": {
+          "type": "string",
+          "description": "Email address of the contact person.",
+          "format": "email"
+        },
+        "contactPhone": {
+          "type": "string",
+          "description": "Phone number of the contact person."
+        },
+        "isEnabled": {
+          "type": "boolean",
+          "description": "Indicates if the company is currently enabled for use in the system."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "GestorExpansion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GestorExpansion",
+      "type": "object",
+      "description": "Represents an expansion manager responsible for validating inspection requests.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the expansion manager."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the expansion manager."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the expansion manager.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the expansion manager."
+        },
+        "isEnabled": {
+          "type": "boolean",
+          "description": "Indicates if the expansion manager is currently enabled for use in the system."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "EmpresaControlCalidad": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EmpresaControlCalidad",
+      "type": "object",
+      "description": "Represents a quality control company responsible for approving or rejecting inspection requests.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the quality control company."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the quality control company."
+        },
+        "contactName": {
+          "type": "string",
+          "description": "Contact person at the quality control company."
+        },
+        "contactEmail": {
+          "type": "string",
+          "description": "Email address of the contact person.",
+          "format": "email"
+        },
+        "contactPhone": {
+          "type": "string",
+          "description": "Phone number of the contact person."
+        },
+        "isEnabled": {
+          "type": "boolean",
+          "description": "Indicates if the company is currently enabled for use in the system."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Instalador": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Instalador",
+      "type": "object",
+      "description": "Represents an installer who performs the installation being inspected.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the installer."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the installer."
+        },
+        "licenseNumber": {
+          "type": "string",
+          "description": "License number of the installer."
+        },
+        "contactPhone": {
+          "type": "string",
+          "description": "Phone number of the installer."
+        },
+        "isEnabled": {
+          "type": "boolean",
+          "description": "Indicates if the installer is currently enabled for use in the system."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Inspector": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Inspector",
+      "type": "object",
+      "description": "Represents an inspector who conducts the inspection.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the inspector."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the inspector."
+        },
+        "employeeId": {
+          "type": "string",
+          "description": "Employee ID of the inspector."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the inspector.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the inspector."
+        },
+        "isEnabled": {
+          "type": "boolean",
+          "description": "Indicates if the inspector is currently enabled for use in the system."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Sector": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Sector",
+      "type": "object",
+      "description": "Represents a sector or region where inspections take place.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the sector."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the sector."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the sector."
+        },
+        "isEnabled": {
+          "type": "boolean",
+          "description": "Indicates if the sector is currently enabled for use in the system."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the AERIS application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "Unique username for the user."
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user (e.g., Empresa Colaboradora, Gestor de Expansión, Empresa de Control de Calidad, Soporte a Procesos, Canales, Visual User, Administrator)."
+        },
+        "zone": {
+          "type": "string",
+          "description": "Assigned zone for the user (e.g., Zona Norte, Zona Centro, Bajio Norte, Bajio Sur, Todas las zonas)."
+        },
+        "isEnabled": {
+          "type": "boolean",
+          "description": "Indicates if the user account is currently enabled."
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "name",
+        "role"
+      ]
     }
   },
   "auth": {
-    "providers": []
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/UserProfile"
+    "structure": [
+      {
+        "path": "/inspections/{inspectionId}",
+        "definition": {
+          "entityName": "Inspection",
+          "schema": {
+            "$ref": "#/backend/entities/Inspection"
+          },
+          "description": "Stores inspection records. Includes denormalized fields for `collaboratorCompanyId`, `expansionManagerId`, `qualityControlCompanyId`, `installerId`, and `inspectorId` for authorization independence.",
+          "params": [
+            {
+              "name": "inspectionId",
+              "description": "Unique identifier for the inspection record."
+            }
+          ]
+        }
       },
-      "description": "Stores public profile information for each user."
-    },
-    "/inspectionRecords/{recordId}": {
-      "schema": {
-        "$ref": "#/entities/InspectionRecord"
+      {
+        "path": "/empresas_colaboradoras/{empresaColaboradoraId}",
+        "definition": {
+          "entityName": "EmpresaColaboradora",
+          "schema": {
+            "$ref": "#/backend/entities/EmpresaColaboradora"
+          },
+          "description": "Stores collaborating company records.",
+          "params": [
+            {
+              "name": "empresaColaboradoraId",
+              "description": "Unique identifier for the collaborating company."
+            }
+          ]
+        }
       },
-      "description": "Stores all inspection records for the application."
-    }
+      {
+        "path": "/gestores_expansion/{gestorExpansionId}",
+        "definition": {
+          "entityName": "GestorExpansion",
+          "schema": {
+            "$ref": "#/backend/entities/GestorExpansion"
+          },
+          "description": "Stores expansion manager records.",
+          "params": [
+            {
+              "name": "gestorExpansionId",
+              "description": "Unique identifier for the expansion manager."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/empresas_control_calidad/{empresaControlCalidadId}",
+        "definition": {
+          "entityName": "EmpresaControlCalidad",
+          "schema": {
+            "$ref": "#/backend/entities/EmpresaControlCalidad"
+          },
+          "description": "Stores quality control company records.",
+          "params": [
+            {
+              "name": "empresaControlCalidadId",
+              "description": "Unique identifier for the quality control company."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/instaladores/{instaladorId}",
+        "definition": {
+          "entityName": "Instalador",
+          "schema": {
+            "$ref": "#/backend/entities/Instalador"
+          },
+          "description": "Stores installer records.",
+          "params": [
+            {
+              "name": "instaladorId",
+              "description": "Unique identifier for the installer."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/inspectores/{inspectorId}",
+        "definition": {
+          "entityName": "Inspector",
+          "schema": {
+            "$ref": "#/backend/entities/Inspector"
+          },
+          "description": "Stores inspector records.",
+          "params": [
+            {
+              "name": "inspectorId",
+              "description": "Unique identifier for the inspector."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sectores/{sectorId}",
+        "definition": {
+          "entityName": "Sector",
+          "schema": {
+            "$ref": "#/backend/entities/Sector"
+          },
+          "description": "Stores sector records.",
+          "params": [
+            {
+              "name": "sectorId",
+              "description": "Unique identifier for the sector."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user records. Includes 'role' and 'zone' for authorization and data filtering.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the AERIS application's inspection request workflow, role-based access control, and entity management features. It prioritizes authorization independence and efficient data access, aligning with the specified core design principles.\n\n**Authorization Independence:**\n\n*   Authorization is enforced through a combination of path-based ownership and denormalized membership maps. For instance, inspections are stored within a top-level collection (`/inspections`) and include denormalized fields like `collaboratorCompanyId`, `expansionManagerId`, `qualityControlCompanyId`, `installerId`, and `inspectorId`. This allows rules to validate authorization based on the user's ID and assigned roles without needing to perform costly `get()` operations on parent documents. The `User` document contains the `role` and `zone` allowing granular filtering and access control.\n\n*   For example, to ensure that only an `EmpresaColaboradora` can create an inspection, the rules can check if `request.auth.uid` corresponds to the `collaboratorCompanyId` on the `inspection` document being created. This design eliminates hierarchical authorization dependencies, improving scalability and debuggability.\n\n*   The segregation of data into collections based on entity type (e.g., `/empresas_colaboradoras`, `/gestores_expansion`) simplifies the rules, as each collection can have a homogenous security posture.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations through the use of the `User` document's `role` and `zone` attributes. For example, rules can allow listing inspections based on the user's `zone` in their `User` document, without exposing other zones' data. This ensures that rules are not used as filters and that users can only access data they are authorized to see.\n\n*   By storing global roles in the `users` collection, list operations can be secured by verifying the user's `role` without needing to perform complex queries or data filtering in the rules themselves.\n\n**Data Clarity and Predictability:**\n\n*   Explicit state modeling is used via the `status` field in the `Inspection` document, which allows for straightforward filtering and management of inspection workflows.\n\n*   The schema is predictable, with well-defined fields and naming conventions across all entities, which contributes to maintainability and makes it easier to reason about the data structure and security rules.\n\n**Invariants:**\n\n*   The data structure supports the integrity of ownership by explicitly referencing related entities like `Sector`, `EmpresaColaboradora`, `GestorExpansion`, `EmpresaControlCalidad`, `Instalador`, and `Inspector` within the `Inspection` document. This makes it possible to enforce rules that ensure these relationships are maintained correctly.\n\n*   Timestamp management (although not explicitly included in the schema) can be easily added using server timestamps upon creation or update, providing an audit trail and enabling time-based filtering and sorting of data."
   }
 }
