@@ -4,8 +4,8 @@ import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { getDoc, doc } from 'firebase/firestore';
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser } from '@/firebase';
-import type { User, Role, Zone, BlockedDay, PasswordResetRequest, AppNotification } from '@/lib/types';
-import { ROLES, ZONES } from '@/lib/types';
+import type { User, Role, Zone, BlockedDay, AppNotification } from '@/lib/types';
+import { ZONES } from '@/lib/types';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 interface AppContextType {
@@ -21,7 +21,6 @@ interface AppContextType {
   formsEnabled: boolean;
   weekendsEnabled: boolean;
   blockedDays: Record<string, BlockedDay>;
-  passwordRequests: PasswordResetRequest[];
   notifications: AppNotification[];
   devModeEnabled: boolean;
   
@@ -32,8 +31,6 @@ interface AppContextType {
   toggleWeekends: () => void;
   addBlockedDay: (date: string, reason: string) => void;
   removeBlockedDay: (date: string) => void;
-  addPasswordRequest: (request: Omit<PasswordResetRequest, 'id' | 'date'>) => void;
-  resolvePasswordRequest: (id: string) => void;
   addNotification: (notification: Omit<AppNotification, 'id' | 'date' | 'read'>) => void;
   markNotificationAsRead: (id: string) => void;
   toggleDevMode: () => void;
@@ -48,7 +45,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isZoneConfirmed, setIsZoneConfirmed] = useState(false);
   const [formsEnabled, setFormsEnabled] = useState(true);
   const [weekendsEnabled, setWeekendsEnabled] = useState(false);
-  const [passwordRequests, setPasswordRequests] = useState<PasswordResetRequest[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [devModeEnabled, setDevModeEnabled] = useState(false);
   
@@ -73,7 +69,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } else {
             console.error("No user profile found in Firestore for UID:", uid);
             setUser(null);
-            await signOut(auth);
+            if (auth) {
+              await signOut(auth);
+            }
         }
     };
 
@@ -96,7 +94,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const userDoc = await getDoc(userDocRef);
 
     if (userDoc.exists()) {
-        const userProfile = userDoc.data() as User;
+        const userProfile = { ...userDoc.data(), id: userDoc.id } as User;
         setUser(userProfile);
         setOperatorName(userProfile.name);
         return userProfile;
@@ -135,19 +133,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const addPasswordRequest = useCallback((request: Omit<PasswordResetRequest, 'id' | 'date'>) => {
-    const newRequest: PasswordResetRequest = {
-        ...request,
-        id: `req-${Date.now()}`,
-        date: new Date(),
-    };
-    setPasswordRequests(prev => [newRequest, ...prev]);
-  }, []);
-
-  const resolvePasswordRequest = useCallback((id: string) => {
-      setPasswordRequests(prev => prev.filter(req => req.id !== id));
-  }, []);
-
   const addNotification = useCallback((notificationData: Omit<AppNotification, 'id' | 'date' | 'read'>) => {
     const newNotification: AppNotification = {
       ...notificationData,
@@ -175,7 +160,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       formsEnabled,
       weekendsEnabled,
       blockedDays,
-      passwordRequests,
       notifications,
       devModeEnabled,
       confirmZone,
@@ -184,14 +168,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleDevMode,
       addBlockedDay,
       removeBlockedDay,
-      addPasswordRequest,
-      resolvePasswordRequest,
       addNotification,
       markNotificationAsRead,
     }),
     [
-      user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead, setZone
+      user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, notifications, devModeEnabled, 
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, markNotificationAsRead, setZone
     ]
   );
 

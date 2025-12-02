@@ -20,12 +20,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { ROLES, Role, STATUS } from "@/lib/types";
+import { CollaboratorCompany, ExpansionManager, Inspector, ROLES, Role, STATUS, Sector, User as AppUser } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA, mockMunicipalities } from "@/lib/form-options";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, doc } from "firebase/firestore";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const inspectionDetailSchema = z.object({
   id: z.string(),
@@ -79,13 +82,22 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function MassiveInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, inspectors, addNotification, users: allUsers, devModeEnabled } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, zone, addNotification } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const firestore = useFirestore();
+
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
+
+  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemoFirebase(() => firestore ? collection(firestore, 'empresas_colaboradoras') : null, [firestore]));
+  const { data: installers } = useCollection<any>(useMemoFirebase(() => firestore ? collection(firestore, 'instaladores') : null, [firestore]));
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => firestore ? collection(firestore, 'gestores_expansion') : null, [firestore]));
+  const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => firestore ? collection(firestore, 'sectores') : null, [firestore]));
+  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => firestore ? collection(firestore, 'inspectores') : null, [firestore]));
+  const { data: allUsers } = useCollection<AppUser>(useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]));
 
   const fromParam = searchParams.get('from');
 
@@ -125,7 +137,7 @@ export default function MassiveInspectionPage() {
       gestor: "",
       status: getInitialStatus(user?.role),
       inspections: [{ id: generateId(), poliza: "", caso: "", portal: "", escalera: "", piso: "", puerta: "" }],
-      fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : undefined,
+      fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
     }
   }, [user?.role, zone, isCollaborator, collaboratorCompany, searchParams]);
 
@@ -144,11 +156,12 @@ export default function MassiveInspectionPage() {
   const formData = form.watch();
 
   const isInspectorFieldDisabled = useMemo(() => {
-    return ![ROLES.ADMIN, ROLES.CALIDAD].includes(user!.role);
+    return !(user && [ROLES.ADMIN, ROLES.CALIDAD].includes(user.role));
   }, [user]);
 
   const availableSectors = useMemo(() => {
     const currentZone = formData.zone;
+    if (!sectors) return [];
     if (currentZone === 'Todas las zonas') {
         return sectors;
     }
@@ -156,6 +169,7 @@ export default function MassiveInspectionPage() {
   }, [formData.zone, sectors]);
 
     const availableInstallers = useMemo(() => {
+        if (!installers) return [];
         if (!isCollaborator) return installers.filter(i => i.status === 'Activo');
         return installers.filter(i => 
             i.collaboratorCompany === collaboratorCompany && i.status === 'Activo'
@@ -163,6 +177,7 @@ export default function MassiveInspectionPage() {
     }, [isCollaborator, collaboratorCompany, installers]);
     
     const availableManagers = useMemo(() => {
+        if (!expansionManagers) return [];
         return expansionManagers.filter(m => 
             (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
             m.status === 'Activo'
@@ -170,6 +185,7 @@ export default function MassiveInspectionPage() {
     }, [formData.zone, expansionManagers]);
 
     const availableInspectors = useMemo(() => {
+        if (!inspectors) return [];
         return inspectors.filter(m => 
             (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
             m.status === 'Activo'
@@ -208,46 +224,61 @@ export default function MassiveInspectionPage() {
   }, [fromParam]);
 
   function onFinalSubmit(values: FormValues) {
+    if (!firestore) return;
+
     setIsSubmitting(true);
     
-    setTimeout(() => {
-        const gestorUser = allUsers.find(u => u.name === values.gestor);
-        const createdIds: string[] = [];
-        
-        values.inspections.forEach(detail => {
-            const recordToSave: InspectionRecord = {
-                ...values,
-                ...detail,
-                client: 'Cliente (TBD)',
-                address: `${values.calle} ${values.numero}, ${detail.puerta || ''}`,
-                requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
-                type: 'Masiva PES',
-                createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-                createdBy: user?.username || 'desconocido',
-                inspector: values.inspector || 'N/A',
-                horarioProgramacion: values.horarioProgramacion,
-                zone: values.zone,
-                id: detail.id,
-                serieMdd: undefined,
-                observaciones: values.observaciones,
-            };
-            addRecord(recordToSave);
-            createdIds.push(detail.id);
-        });
+    const gestorUser = allUsers?.find(u => u.name === values.gestor);
+    const createdIds: string[] = [];
 
-        if (gestorUser) {
-            addNotification({
-                recipientUsername: gestorUser.username,
-                message: `${values.inspections.length} nuevas inspecciones masivas te han sido asignadas.`,
-            });
-        }
-        
-        setCreatedRecordInfo({ ids: createdIds, status: values.status });
-        setIsSuccessDialogOpen(true);
+    const inspectionsCollectionRef = collection(firestore, 'inspections');
+    
+    const savePromises = values.inspections.map(detail => {
+        const recordToSave: InspectionRecord = {
+            ...values,
+            ...detail,
+            client: 'Cliente (TBD)',
+            address: `${values.calle} ${values.numero}, ${detail.puerta || ''}`,
+            requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
+            type: 'Masiva PES',
+            createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+            createdBy: user?.username || 'desconocido',
+            inspector: values.inspector || 'N/A',
+            horarioProgramacion: values.horarioProgramacion,
+            zone: values.zone,
+            id: detail.id,
+            serieMdd: undefined, // ensure it's not present or handled correctly
+            observaciones: values.observaciones,
+            collaboratorCompany: values.empresaColaboradora
+        };
+        createdIds.push(detail.id);
+        const docRef = doc(inspectionsCollectionRef, detail.id);
+        // Using non-blocking update
+        return addDocumentNonBlocking(inspectionsCollectionRef, recordToSave);
+    });
+
+    Promise.all(savePromises).then(() => {
+      if (gestorUser) {
+          addNotification({
+              recipientUsername: gestorUser.username,
+              message: `${values.inspections.length} nuevas inspecciones masivas te han sido asignadas.`,
+          });
+      }
+      
+      setCreatedRecordInfo({ ids: createdIds, status: values.status });
+      setIsSuccessDialogOpen(true);
 
       setIsSubmitting(false);
       setIsConfirming(false);
-    }, 1500);
+    }).catch(err => {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Error al Guardar",
+        description: "Hubo un problema al guardar las inspecciones en la base de datos."
+      })
+      setIsSubmitting(false);
+    })
   }
 
   const handleReset = () => {
@@ -554,7 +585,7 @@ export default function MassiveInspectionPage() {
                         <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isCollaborator}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                            {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />

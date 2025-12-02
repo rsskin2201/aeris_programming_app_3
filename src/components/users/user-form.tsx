@@ -10,7 +10,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useAppContext } from '@/hooks/use-app-context';
 import type { User } from '@/lib/types';
 import { ROLES, ZONES, USER_STATUS } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -42,7 +41,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const auth = useAuth();
-  const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users } = useCollection<User>(usersQuery);
 
   const [newPassword, setNewPassword] = useState('');
@@ -82,6 +81,11 @@ export function UserForm({ user, onClose }: UserFormProps) {
   }
   
   async function onSubmit(values: FormValues) {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'El servicio de base de datos no está disponible.'});
+      return;
+    }
+
     if (!isEditMode && users?.some(u => u.username === values.username)) {
       form.setError('username', { type: 'manual', message: 'Este nombre de usuario ya existe.' });
       return;

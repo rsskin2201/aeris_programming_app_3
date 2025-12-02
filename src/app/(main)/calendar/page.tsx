@@ -136,6 +136,7 @@ export default function CalendarPage() {
   const isQualityControl = user?.role === ROLES.CALIDAD;
 
   const inspectionsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
     const baseQuery = collection(firestore, 'inspections');
     let q = query(baseQuery);
     return q;
@@ -147,7 +148,7 @@ export default function CalendarPage() {
     if (!records) return [];
     let filtered = records;
     if (isCollaborator) {
-      filtered = records.filter(record => record.collaboratorCompany === user.name);
+      filtered = records.filter(record => record.collaboratorCompany === user?.name);
     } else if (zone !== 'Todas las zonas' && !isQualityControl) {
       filtered = records.filter(record => record.zone === zone);
     }
@@ -159,6 +160,7 @@ export default function CalendarPage() {
 
   const inspectionsByDay = useMemo(() => {
     const inspections: Record<string, typeof filteredRecordsForView> = {};
+    if (!filteredRecordsForView) return inspections;
     filteredRecordsForView.forEach((record) => {
       const recordDate = parseISO(record.requestDate);
       const dateKey = format(recordDate, 'yyyy-MM-dd');
@@ -172,6 +174,7 @@ export default function CalendarPage() {
   
    const inspectionsByTime = useMemo(() => {
     const inspections: Record<string, typeof filteredRecordsForView> = {};
+    if (!filteredRecordsForView) return inspections;
     filteredRecordsForView.forEach((record) => {
       const recordDate = parseISO(record.requestDate);
       const dateTimeKey = format(recordDate, 'yyyy-MM-dd-HH');
@@ -268,10 +271,10 @@ export default function CalendarPage() {
               break;
       }
       
-      const recordsToExport = filteredRecordsForView.filter(rec => {
+      const recordsToExport = filteredRecordsForView?.filter(rec => {
           const recDate = parseISO(rec.requestDate);
           return recDate >= start && recDate <= end;
-      });
+      }) || [];
 
       return {
           exportData: recordsToExport,

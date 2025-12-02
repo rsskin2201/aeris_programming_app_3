@@ -72,9 +72,13 @@ export default function RecordsPage() {
   const [filters, setFilters] = useState(initialFilters);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => collection(firestore, 'gestores_expansion'), [firestore]));
-  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemoFirebase(() => collection(firestore, 'empresas_colaboradoras'), [firestore]));
-  const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => collection(firestore, 'sectores'), [firestore]));
+  const expansionManagersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'gestores_expansion') : null, [firestore]);
+  const collaboratorsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'empresas_colaboradoras') : null, [firestore]);
+  const sectorsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'sectores') : null, [firestore]);
+
+  const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
+  const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
+  const { data: sectors } = useCollection<Sector>(sectorsQuery);
   
   const canModify = user && !viewOnlyRoles.includes(user.role);
   const canExport = user && user.role !== ROLES.CANALES;
@@ -88,6 +92,7 @@ export default function RecordsPage() {
   }
 
   const inspectionsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
     const baseQuery = collection(firestore, 'inspections');
     let q = query(baseQuery);
 

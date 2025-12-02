@@ -48,9 +48,6 @@ export function LoginForm() {
           duration: 2000,
         });
         router.push('/');
-      } else {
-        // This case might not be reached if login throws an error, but it's a good fallback.
-        throw new Error("No se encontró el perfil de usuario.");
       }
     } catch (error: any) {
       console.error("Login failed:", error);

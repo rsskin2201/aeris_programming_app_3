@@ -9,10 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import Papa from 'papaparse';
 import { useAppContext } from '@/hooks/use-app-context';
 import { InspectionRecord } from '@/lib/mock-data';
-import { ROLES, STATUS } from '@/lib/types';
+import { ROLES, STATUS, User as AppUser } from '@/lib/types';
 import { CsvEditor, FieldDefinition } from '@/components/shared/csv-editor';
 import { MERCADO } from '@/lib/form-options';
 import { isValid, parse, format as formatDate } from 'date-fns';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, doc } from 'firebase/firestore';
 
 const isValidDate = (dateStr: string) => {
     const formats = ['yyyy-MM-dd', 'dd/MM/yyyy'];
@@ -137,7 +140,11 @@ export default function SalesforceUploadPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const { addMultipleRecords, user, zone, users: allUsers, addNotification } = useAppContext();
+  const { user, zone, addNotification } = useAppContext();
+  const firestore = useFirestore();
+
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const { data: allUsers } = useCollection<AppUser>(usersQuery);
 
   const handleFileChange = (files: FileList | null) => {
     if (files && files[0]) {
@@ -171,56 +178,60 @@ export default function SalesforceUploadPage() {
   };
 
   const handleFinalUpload = (newRecords: Partial<InspectionRecord>[]) => {
+    if (!firestore) return;
     setIsUploading(true);
     
-    setTimeout(() => {
-        try {
-            const recordsToSave = newRecords.map(rec => {
-                const fullAddress = [rec.calle, rec.numero, rec.colonia].filter(Boolean).join(', ');
-                return {
-                    ...rec,
-                    id: `SF-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-                    type: rec.tipoInspeccion || 'Masiva Salesforce',
-                    client: rec.nombreCliente || 'Cliente por definir',
-                    address: fullAddress,
-                    createdAt: formatDate(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-                    createdBy: rec.capturista || user?.username || 'desconocido',
-                    status: rec.status || STATUS.REGISTRADA,
-                    zone: rec.zone || zone,
-                    requestDate: rec.requestDate ? parseToUniformDate(rec.requestDate) : '',
-                } as InspectionRecord;
-            });
+    const inspectionsCollectionRef = collection(firestore, 'inspections');
 
-            addMultipleRecords(recordsToSave);
+    const savePromises = newRecords.map(rec => {
+        const fullAddress = [rec.calle, rec.numero, rec.colonia].filter(Boolean).join(', ');
+        const id = `SF-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        const recordToSave: InspectionRecord = {
+            ...rec,
+            id,
+            type: rec.tipoInspeccion || 'Masiva Salesforce',
+            client: rec.nombreCliente || 'Cliente por definir',
+            address: fullAddress,
+            createdAt: formatDate(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+            createdBy: rec.capturista || user?.username || 'desconocido',
+            status: rec.status || STATUS.REGISTRADA,
+            zone: rec.zone || zone,
+            requestDate: rec.requestDate ? parseToUniformDate(rec.requestDate) : '',
+        } as InspectionRecord;
 
-            const usersToNotify = allUsers.filter(u => 
-                (u.role === ROLES.COORDINADOR_SSPP || u.role === ROLES.CALIDAD) &&
-                (u.zone === zone || u.zone === 'Todas las zonas')
-            );
-            
-            usersToNotify.forEach(notifiedUser => {
-                addNotification({
-                    recipientUsername: notifiedUser.username,
-                    message: `Se han cargado ${newRecords.length} registros masivos en la zona ${zone}.`,
-                });
-            });
+        const docRef = doc(inspectionsCollectionRef, id);
+        return addDocumentNonBlocking(inspectionsCollectionRef, recordToSave);
+    });
 
-            setIsUploading(false);
-            setIsEditorOpen(false);
-            setFile(null);
-            toast({
-                title: "Carga Exitosa",
-                description: `Se han cargado y procesado ${newRecords.length} registros del archivo CSV.`
+    Promise.all(savePromises).then(() => {
+        const usersToNotify = allUsers?.filter(u => 
+            (u.role === ROLES.COORDINADOR_SSPP || u.role === ROLES.CALIDAD) &&
+            (u.zone === zone || u.zone === 'Todas las zonas')
+        );
+        
+        usersToNotify?.forEach(notifiedUser => {
+            addNotification({
+                recipientUsername: notifiedUser.username,
+                message: `Se han cargado ${newRecords.length} registros masivos en la zona ${zone}.`,
             });
-        } catch (e: any) {
-            setIsUploading(false);
-             toast({
-                variant: 'destructive',
-                title: "Error en la Carga",
-                description: e.message || "Ocurrió un problema al procesar los registros."
-            });
-        }
-    }, 2000);
+        });
+
+        setIsUploading(false);
+        setIsEditorOpen(false);
+        setFile(null);
+        toast({
+            title: "Carga Exitosa",
+            description: `Se han cargado y procesado ${newRecords.length} registros del archivo CSV.`
+        });
+    }).catch(err => {
+        setIsUploading(false);
+        console.error("Error during bulk upload:", err);
+        toast({
+           variant: 'destructive',
+           title: "Error en la Carga",
+           description: "Ocurrió un problema al procesar los registros."
+       });
+    });
   }
 
   const downloadTemplate = () => {

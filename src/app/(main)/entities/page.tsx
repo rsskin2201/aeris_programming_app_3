@@ -54,22 +54,22 @@ export default function EntitiesPage() {
   const [selectedManager, setSelectedManager] = useState<ExpansionManager | null>(null);
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
 
-  const collaboratorsQuery = useMemoFirebase(() => collection(firestore, 'empresas_colaboradoras'), [firestore]);
+  const collaboratorsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'empresas_colaboradoras') : null, [firestore]);
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
 
-  const installersQuery = useMemoFirebase(() => collection(firestore, 'instaladores'), [firestore]);
+  const installersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'instaladores') : null, [firestore]);
   const { data: installers } = useCollection<Installer>(installersQuery);
 
-  const managersQuery = useMemoFirebase(() => collection(firestore, 'gestores_expansion'), [firestore]);
+  const managersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'gestores_expansion') : null, [firestore]);
   const { data: expansionManagers } = useCollection<ExpansionManager>(managersQuery);
   
-  const qualityQuery = useMemoFirebase(() => collection(firestore, 'empresas_control_calidad'), [firestore]);
+  const qualityQuery = useMemoFirebase(() => firestore ? collection(firestore, 'empresas_control_calidad') : null, [firestore]);
   const { data: qualityCompanies } = useCollection<QualityControlCompany>(qualityQuery);
   
-  const inspectorsQuery = useMemoFirebase(() => collection(firestore, 'inspectores'), [firestore]);
+  const inspectorsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'inspectores') : null, [firestore]);
   const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
   
-  const sectorsQuery = useMemoFirebase(() => collection(firestore, 'sectores'), [firestore]);
+  const sectorsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'sectores') : null, [firestore]);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
 
   const filteredCollaborators = useMemo(() => 

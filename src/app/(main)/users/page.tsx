@@ -44,7 +44,7 @@ export default function UsersPage() {
     const { toast } = useToast();
     const firestore = useFirestore();
 
-    const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+    const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
     const { data: users, isLoading } = useCollection<User>(usersQuery);
 
     const [dialogState, setDialogState] = useState({
@@ -135,7 +135,7 @@ export default function UsersPage() {
     }
 
     const handleConfirmDelete = () => {
-        if (selectedUser) {
+        if (selectedUser && firestore) {
             const userDocRef = doc(firestore, 'users', selectedUser.id);
             deleteDocumentNonBlocking(userDocRef);
             toast({
