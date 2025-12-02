@@ -1,3 +1,4 @@
+
 export const firebaseConfig = {
   "projectId": "aerisprogramming3-decd2",
   "appId": "1:1041164359924:web:e33c7c258525b62e49c882",
