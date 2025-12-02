@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
 import { InspectionRecord } from "@/lib/mock-data";
-import { MARCA_MDD, TIPO_MDD, SI_NO, MATERIAL_TUBERIA, EQUIPO, FORMA_PAGO } from "@/lib/form-options";
+import { MARCA_MDD, TIPO_MDD, SI_NO, MATERIAL_TUBERIA, EQUIPO, FORMA_PAGO, MOTIVO_CANCELACION } from "@/lib/form-options";
 import { ScrollArea } from "../ui/scroll-area";
 import { STATUS } from "@/lib/types";
 
@@ -292,7 +292,22 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                                   <FormField control={form.control} name="telCliente" render={({ field }) => (<FormItem><FormLabel>TEL. CLIENTE</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                                 <FormField control={form.control} name="comentariosOca" render={({ field }) => (<FormItem><FormLabel>COMENTARIOS OCA</FormLabel><FormControl><Textarea {...field} onChange={e => handleUpperCase(e, field)}/></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="motivoCancelacion" render={({ field }) => (<FormItem><FormLabel>MOTIVO CANCELACION / NO APROBACION</FormLabel><FormControl><Textarea {...field} onChange={e => handleUpperCase(e, field)}/></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="motivoCancelacion" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>MOTIVO CANCELACION / NO APROBACION</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar un motivo" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {MOTIVO_CANCELACION.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField control={form.control} name="formaDePago" render={({ field }) => (<FormItem><FormLabel>FORMA DE PAGO</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl><SelectContent>{FORMA_PAGO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                                   <FormField control={form.control} name="equipoExtra" render={({ field }) => (<FormItem><FormLabel>EQUIPO EXTRA</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
