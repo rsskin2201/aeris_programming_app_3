@@ -136,7 +136,7 @@ export default function UsersPage() {
 
     const handleConfirmDelete = () => {
         if (selectedUser) {
-            const userDocRef = doc(firestore, 'users', selectedUser.username); // Assuming username is doc ID
+            const userDocRef = doc(firestore, 'users', selectedUser.id);
             deleteDocumentNonBlocking(userDocRef);
             toast({
                 variant: 'destructive',
@@ -316,7 +316,7 @@ export default function UsersPage() {
                 </TableHeader>
                 <TableBody>
                 {paginatedUsers.map((userItem) => (
-                    <TableRow key={userItem.username} className="hover:bg-muted/60">
+                    <TableRow key={userItem.id} className="hover:bg-muted/60">
                     <TableCell className="py-2 px-4 font-medium">{userItem.name}</TableCell>
                     <TableCell className="py-2 px-4">{userItem.username}</TableCell>
                     <TableCell className="py-2 px-4">{userItem.role}</TableCell>

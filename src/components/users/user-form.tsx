@@ -15,11 +15,10 @@ import type { User } from '@/lib/types';
 import { ROLES, ZONES, USER_STATUS } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RotateCcw, ShieldAlert } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { useAuth } from '@/firebase';
 
 
 const formSchema = z.object({
@@ -96,6 +95,10 @@ export function UserForm({ user, onClose }: UserFormProps) {
     try {
         let userId = user?.id;
         if (!isEditMode) {
+            if (!auth) {
+                toast({ variant: 'destructive', title: 'Error', description: 'El servicio de autenticación no está disponible.'});
+                return;
+            }
             const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password!);
             userId = userCredential.user.uid;
         }
