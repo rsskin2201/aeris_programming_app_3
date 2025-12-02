@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { getDoc, doc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { useAuth, useFirestore, useUser as useFirebaseAuthUser } from '@/firebase';
+import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { User, Role, Zone, BlockedDay, AppNotification } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS } from '@/lib/types';
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
@@ -46,7 +46,7 @@ const mockUsersSeed: Omit<User, 'id'>[] = [
   { name: 'Samuel Coordinador', username: 'coordinador', email: 'coordinador@aeris.com', role: ROLES.COORDINADOR_SSPP, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
   { name: 'Carla Calidad', username: 'calidad', email: 'calidad@aeris.com', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
   { name: 'Carlos Canales', username: 'canales', email: 'canales@aeris.com', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { name: 'Victor Visual', username: 'visual', email: 'visual@aeris.com', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { name: 'Victor Visual', username: 'visual', email: 'visual@aeris.com', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.INACTIVO },
 ];
 const defaultPassword = 'password123';
 
@@ -122,16 +122,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const fetchUserProfile = async (uid: string) => {
         if (!firestore) return;
         const userDocRef = doc(firestore, "users", uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-            const userProfile = userDoc.data() as User;
-            setUser(userProfile);
-            setOperatorName(userProfile.name);
-        } else {
-            console.error("No user profile found in Firestore for UID:", uid);
+        try {
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                const userProfile = userDoc.data() as User;
+                setUser(userProfile);
+                setOperatorName(userProfile.name);
+            } else {
+                console.error("No user profile found in Firestore for UID:", uid);
+                setUser(null);
+                if (auth) {
+                    await signOut(auth);
+                }
+            }
+        } catch (error: any) {
+            if (error.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({
+                    path: userDocRef.path,
+                    operation: 'get',
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            }
+            console.error("Error fetching user profile:", error);
             setUser(null);
             if (auth) {
-              await signOut(auth);
+                await signOut(auth);
             }
         }
     };
@@ -152,16 +167,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const authedUser = userCredential.user;
     
     const userDocRef = doc(firestore, 'users', authedUser.uid);
-    const userDoc = await getDoc(userDocRef);
 
-    if (userDoc.exists()) {
-        const userProfile = { ...userDoc.data(), id: userDoc.id } as User;
-        setUser(userProfile);
-        setOperatorName(userProfile.name);
-        return userProfile;
-    } else {
-        await signOut(auth);
-        throw new Error("User profile does not exist in Firestore.");
+    try {
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            const userProfile = { ...userDoc.data(), id: userDoc.id } as User;
+            setUser(userProfile);
+            setOperatorName(userProfile.name);
+            return userProfile;
+        } else {
+            await signOut(auth);
+            throw new Error("User profile does not exist in Firestore.");
+        }
+    } catch (error: any) {
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'get',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        }
+        // Re-throw the original or a new error to be caught by the login form
+        throw error;
     }
   }, [auth, firestore]);
 
