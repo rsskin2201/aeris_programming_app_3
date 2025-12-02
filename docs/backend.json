@@ -1,1 +1,66 @@
-{}
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's public profile information.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role in the application."
+        },
+        "zone": {
+          "type": "string",
+          "description": "The geographical zone the user belongs to."
+        }
+      },
+      "required": ["name", "role", "zone"]
+    },
+    "InspectionRecord": {
+      "title": "Inspection Record",
+      "description": "Represents a single inspection record.",
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "description": "The address of the inspection."
+        },
+        "client": {
+          "type": "string",
+          "description": "The client for the inspection."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the inspection."
+        },
+        "requestDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The requested date for the inspection."
+        }
+      },
+      "required": ["address", "client", "status", "requestDate"]
+    }
+  },
+  "auth": {
+    "providers": []
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores public profile information for each user."
+    },
+    "/inspectionRecords/{recordId}": {
+      "schema": {
+        "$ref": "#/entities/InspectionRecord"
+      },
+      "description": "Stores all inspection records for the application."
+    }
+  }
+}
