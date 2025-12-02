@@ -2,7 +2,6 @@
 
 import {
   Button,
-  buttonVariants,
 } from '@/components/ui/button';
 import {
   Card,
@@ -31,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
-import { mockRecords, InspectionRecord } from '@/lib/mock-data';
+import { InspectionRecord } from '@/lib/mock-data';
 import {
   addDays,
   addMonths,
@@ -50,7 +49,7 @@ import {
   getDay,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ROLES } from '@/lib/types';
+import { ROLES, Status } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import {
@@ -71,6 +70,8 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Textarea } from '@/components/ui/textarea';
 import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
 const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE, ROLES.COORDINADOR_SSPP];
 const adminRoles = [ROLES.ADMIN];
@@ -88,11 +89,18 @@ const daysOfWeek = [
 ];
 const hoursOfDay = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
 
-const statusColors: Record<InspectionRecord['status'], string> = {
-    'Aprobado': 'bg-green-500/80 border-green-700 text-white',
-    'Contemplado': 'bg-yellow-500/80 border-yellow-700 text-white',
-    'Pendiente Aprobación': 'bg-blue-500/80 border-blue-700 text-white',
-    'Rechazado': 'bg-red-500/80 border-red-700 text-white',
+const statusColors: Record<Status, string> = {
+    'REGISTRADA': 'bg-gray-500/80 border-gray-600 text-white',
+    'CONFIRMADA POR GE': 'bg-cyan-600/80 border-cyan-700 text-white',
+    'PROGRAMADA': 'bg-blue-600/80 border-blue-700 text-white',
+    'EN PROCESO': 'bg-orange-500/80 border-orange-600 text-white',
+    'PENDIENTE INFORMAR DATOS': 'bg-yellow-500/80 border-yellow-600 text-white',
+    'APROBADA': 'bg-green-600/80 border-green-700 text-white',
+    'NO APROBADA': 'bg-red-600/80 border-red-700 text-white',
+    'RECHAZADA': 'bg-red-700/80 border-red-800 text-white',
+    'CANCELADA': 'bg-red-800/80 border-red-900 text-white',
+    'CONECTADA': 'bg-purple-600/80 border-purple-700 text-white',
+    'PENDIENTE CORRECCION': 'bg-yellow-600/80 border-yellow-700 text-white',
 };
 
 export default function CalendarPage() {
@@ -106,8 +114,8 @@ export default function CalendarPage() {
     blockedDays,
     addBlockedDay,
     removeBlockedDay,
-    records,
   } = useAppContext();
+  const firestore = useFirestore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -127,7 +135,16 @@ export default function CalendarPage() {
   const isCollaborator = user?.role === ROLES.COLABORADOR;
   const isQualityControl = user?.role === ROLES.CALIDAD;
 
+  const inspectionsQuery = useMemoFirebase(() => {
+    const baseQuery = collection(firestore, 'inspections');
+    let q = query(baseQuery);
+    return q;
+  }, [firestore]);
+  
+  const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
+
   const filteredRecordsForView = useMemo(() => {
+    if (!records) return [];
     let filtered = records;
     if (isCollaborator) {
       filtered = records.filter(record => record.collaboratorCompany === user.name);

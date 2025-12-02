@@ -14,6 +14,7 @@ interface AppContextType {
   isUserLoading: boolean;
   login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
+  setUserProfile: (user: User | null) => void;
 
   operatorName: string | null;
   zone: Zone;
@@ -51,9 +52,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [passwordRequests, setPasswordRequests] = useState<PasswordResetRequest[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [devModeEnabled, setDevModeEnabled] = useState(false);
-  const firestore = useFirestore();
-  const auth = useAuth();
-  const { user: authUser, isUserLoading } = useFirebaseAuthUser();
   
   const [blockedDays, setBlockedDays] = useState<Record<string, BlockedDay>>({
       "2024-09-16": { reason: "Día de la Independencia" },
@@ -61,47 +59,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
   });
 
   const login = useCallback(async (email: string, password: string): Promise<User | null> => {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const firebaseUser = userCredential.user;
-    
-    const userDocRef = doc(firestore, 'users', firebaseUser.uid);
-    const userDoc = await getDoc(userDocRef);
-
-    if (userDoc.exists()) {
-      const userProfile = userDoc.data() as User;
-      setUser(userProfile);
-      return userProfile;
-    }
-    
-    // If no profile, logout the user from firebase auth
-    await signOut(auth);
+    // This is a mock login. In a real app, this would be an API call.
     return null;
-  }, [auth, firestore]);
+  }, []);
 
-  const logout = useCallback(async () => {
-    await signOut(auth);
+  const logout = useCallback(() => {
     setUser(null);
     setIsZoneConfirmed(false);
-  }, [auth]);
+  }, []);
 
-  useEffect(() => {
-    if (isUserLoading) return;
-
-    if (authUser) {
-      const userRef = doc(firestore, 'users', authUser.uid);
-      getDoc(userRef).then(docSnap => {
-        if (docSnap.exists()) {
-          setUser(docSnap.data() as User);
-        } else {
-          console.warn("User profile not found in Firestore for UID:", authUser.uid);
-          logout();
-        }
-      });
+  const setUserProfile = (user: User | null) => {
+    setUser(user);
+    if(user){
+      setOperatorName(user.name);
     } else {
-      setUser(null);
+      setOperatorName(null);
+      setIsZoneConfirmed(false);
     }
-  }, [authUser, isUserLoading, firestore, logout]);
-  
+  }
+
   useEffect(() => {
     if (user) {
         setOperatorName(user.name);
@@ -161,9 +137,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(
     () => ({
       user,
-      isUserLoading,
+      isUserLoading: false, // For mock auth, always false
       login,
       logout,
+      setUserProfile,
       operatorName,
       zone,
       setZone,
@@ -186,7 +163,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markNotificationAsRead,
     }),
     [
-      user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, devModeEnabled, 
+      user, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, passwordRequests, notifications, devModeEnabled, 
       confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addPasswordRequest, resolvePasswordRequest, addNotification, markNotificationAsRead
     ]
   );
