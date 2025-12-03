@@ -87,13 +87,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             } catch (error: any) {
                 if (error.code === 'auth/email-already-in-use') {
                     // This is expected if the user already exists, so we can ignore it.
-                    console.log(`User ${mockUser.email} already exists in Auth. Ensuring Firestore profile exists.`);
+                    // console.log(`User ${mockUser.email} already exists in Auth.`);
                     
-                    // We still need to ensure the Firestore document exists, so we query for it.
-                    // This part is a bit complex as we need UID from email. For simplicity, we assume
-                    // if auth user exists, firestore doc exists for this seeding script.
-                    // A more robust solution might involve a Cloud Function to sync users.
-
                 } else {
                     console.error(`Error processing user ${mockUser.username}:`, error);
                 }
