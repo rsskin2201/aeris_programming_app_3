@@ -137,7 +137,7 @@ service cloud.firestore {
     /**
      * @description Manages user profiles. Users can manage their own profile.
      * @path /users/{userId}
-     * @allow (create) A new user creates their own profile document. `auth.uid == userId`.
+     * @allow (get) An authenticated user reads their own profile. `auth.uid == userId`.
      * @deny (get) A user attempts to read another user's profile. `auth.uid != userId`.
      * @principle Restricts access to a user's own data tree and enforces relational integrity.
      */
