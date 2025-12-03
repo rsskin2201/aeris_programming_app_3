@@ -71,7 +71,7 @@ import { Textarea } from '@/components/ui/textarea';
 import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, QueryConstraint } from 'firebase/firestore';
 
 const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE, ROLES.COORDINADOR_SSPP];
 const adminRoles = [ROLES.ADMIN];
@@ -146,14 +146,14 @@ export default function CalendarPage() {
 
   const inspectionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    let q = query(collection(firestore, 'inspections'));
+    const constraints: QueryConstraint[] = [];
     
     // Non-admin roles should be filtered by their zone unless they have global access
     if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
-        q = query(q, where('zone', '==', zone));
+      constraints.push(where('zone', '==', zone));
     }
     
-    return q;
+    return query(collection(firestore, 'inspections'), ...constraints);
   }, [firestore, user, zone]);
   
   const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
@@ -171,8 +171,6 @@ export default function CalendarPage() {
     // Role-based pre-filtering
     if (isCollaborator) {
       filtered = records.filter(record => record.collaboratorCompany === user?.name);
-    } else if (zone !== 'Todas las zonas' && !isQualityControl) {
-      filtered = records.filter(record => record.zone === zone);
     }
     
     // Active filters from UI
@@ -183,7 +181,7 @@ export default function CalendarPage() {
     if(activeFilters.inspector && activeFilters.inspector !== 'all') filtered = filtered.filter(r => r.inspector === activeFilters.inspector);
     
     return filtered;
-  }, [records, isCollaborator, user, zone, isQualityControl, activeFilters]);
+  }, [records, isCollaborator, user, activeFilters]);
 
   const availableManagers = useMemo(() => 
     expansionManagers?.filter(m => m.status === 'Activo' && (m.zone === zone || zone === 'Todas las zonas')) || [], 
