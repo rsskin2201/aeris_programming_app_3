@@ -73,31 +73,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const seedUsers = async () => {
         if (!firestore || !auth) return;
 
+        const usersCollection = collection(firestore, 'users');
+
         for (const mockUser of mockUsersSeed) {
-            try {
-                // Try to create the user. If it fails because the email is in use, it's fine.
-                const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, defaultPassword);
-                const uid = userCredential.user.uid;
+            const q = query(usersCollection, where("username", "==", mockUser.username));
+            const querySnapshot = await getDocs(q);
 
-                // User was created in Auth, now create their profile in Firestore.
-                const userProfile: User = { ...mockUser, id: uid };
-                await setDoc(doc(firestore, 'users', uid), userProfile);
-                console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
-
-            } catch (error: any) {
-                if (error.code === 'auth/email-already-in-use') {
-                    // This is expected if the user already exists, so we can ignore it.
-                    // console.log(`User ${mockUser.email} already exists in Auth.`);
-                } else if (error.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({
-                      path: `users`,
-                      operation: 'create',
-                      requestResourceData: {email: mockUser.email},
-                    });
-                    errorEmitter.emit('permission-error', permissionError);
-                } else {
-                    console.error(`Error processing user ${mockUser.username}:`, error);
+            if (querySnapshot.empty) {
+                // User does not exist in Firestore, so create them in Auth and Firestore
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, defaultPassword);
+                    const uid = userCredential.user.uid;
+                    const userProfile: User = { ...mockUser, id: uid };
+                    await setDoc(doc(firestore, 'users', uid), userProfile);
+                    console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
+                } catch (error: any) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        console.warn(`Auth user with email ${mockUser.email} exists, but no Firestore record found. This may indicate an inconsistency.`);
+                    } else if (error.code === 'permission-denied') {
+                        const permissionError = new FirestorePermissionError({
+                          path: `users`,
+                          operation: 'create',
+                          requestResourceData: {email: mockUser.email},
+                        });
+                        errorEmitter.emit('permission-error', permissionError);
+                    } else {
+                        console.error(`Error creating user ${mockUser.username}:`, error);
+                    }
                 }
+            } else {
+                // User already exists in Firestore, no action needed for seeding
+                // console.log(`User ${mockUser.username} already exists. Skipping seed.`);
             }
         }
         // Sign out after seeding to ensure a clean state for the actual user to log in.

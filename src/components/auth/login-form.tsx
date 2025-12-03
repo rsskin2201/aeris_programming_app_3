@@ -63,7 +63,7 @@ export function LoginForm() {
             description = 'El formato del correo electrónico no es válido.';
             break;
           default:
-            description = 'Error de autenticación. Por favor, inténtalo de nuevo.';
+            description = `Error de autenticación. Por favor, inténtalo de nuevo. (${error.code})`;
         }
       } else {
         description = error.message || description;
