@@ -37,8 +37,8 @@ const statusColors: Record<string, string> = {
   'Deshabilitado': 'bg-red-600/80 border-red-700 text-white',
 };
 
-const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
-const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD];
+const viewOnlyRoles = [ROLES.VISUAL];
+const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD, ROLES.CANALES];
 
 export default function EntitiesPage() {
   const { user, zone } = useAppContext();
@@ -58,7 +58,8 @@ export default function EntitiesPage() {
   const [selectedManager, setSelectedManager] = useState<ExpansionManager | null>(null);
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
   
-  const canModify = user && ![...viewOnlyRoles, ROLES.CALIDAD].includes(user.role);
+  const canModify = user && canModifyRoles.includes(user.role);
+  const canUpload = user && [ROLES.ADMIN, ROLES.CANALES].includes(user.role);
 
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
@@ -159,7 +160,7 @@ export default function EntitiesPage() {
           <Settings className="h-8 w-8 text-primary" />
           Gestión de Entidades
         </h1>
-         {canModify && (
+         {canUpload && (
             <Button asChild>
               <Link href="/entities/upload">
                 <Upload className="mr-2 h-4 w-4" />

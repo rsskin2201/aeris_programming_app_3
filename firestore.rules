@@ -25,7 +25,7 @@
  *   user's profile, a deliberate trade-off for centralized role management.
  * - Read-Only Catalogs: Collections containing reference data (like companies,
  *   inspectors, sectors) are readable by any authenticated user but are only
- *   writable by users with the 'Administrator' role.
+ *   writable by users with the 'Administrator' or 'Canales' role.
  * - Query Constraints: The rules cannot filter data. For `list` operations
  *   on inspections, the client application is responsible for adding a `where`
  *   clause to filter by the user's assigned zone (e.g.,
@@ -96,6 +96,14 @@ service cloud.firestore {
      */
     function isAdmin() {
       return isSignedIn() && userRole() == 'Administrador';
+    }
+
+    /**
+     * Checks if the user is an Administrator or belongs to the Canales role.
+     */
+    function isAdminOrCanales() {
+      let role = userRole();
+      return isSignedIn() && (role == 'Administrador' || role == 'Canales');
     }
 
     /**
@@ -174,9 +182,9 @@ service cloud.firestore {
     match /empresas_colaboradoras/{empresaColaboradoraId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && isExistingDoc();
-      allow delete: if isAdmin() && isExistingDoc();
+      allow create: if isAdminOrCanales();
+      allow update: if isAdminOrCanales() && isExistingDoc();
+      allow delete: if isAdminOrCanales() && isExistingDoc();
     }
 
     /**
@@ -189,9 +197,9 @@ service cloud.firestore {
     match /gestores_expansion/{gestorExpansionId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && isExistingDoc();
-      allow delete: if isAdmin() && isExistingDoc();
+      allow create: if isAdminOrCanales();
+      allow update: if isAdminOrCanales() && isExistingDoc();
+      allow delete: if isAdminOrCanales() && isExistingDoc();
     }
 
     /**
@@ -204,9 +212,9 @@ service cloud.firestore {
     match /empresas_control_calidad/{empresaControlCalidadId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && isExistingDoc();
-      allow delete: if isAdmin() && isExistingDoc();
+      allow create: if isAdminOrCanales();
+      allow update: if isAdminOrCanales() && isExistingDoc();
+      allow delete: if isAdminOrCanales() && isExistingDoc();
     }
 
     /**
@@ -219,9 +227,9 @@ service cloud.firestore {
     match /instaladores/{instaladorId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && isExistingDoc();
-      allow delete: if isAdmin() && isExistingDoc();
+      allow create: if isAdminOrCanales();
+      allow update: if isAdminOrCanales() && isExistingDoc();
+      allow delete: if isAdminOrCanales() && isExistingDoc();
     }
 
     /**
@@ -234,9 +242,9 @@ service cloud.firestore {
     match /inspectores/{inspectorId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && isExistingDoc();
-      allow delete: if isAdmin() && isExistingDoc();
+      allow create: if isAdminOrCanales();
+      allow update: if isAdminOrCanales() && isExistingDoc();
+      allow delete: if isAdminOrCanales() && isExistingDoc();
     }
 
     /**
@@ -249,9 +257,9 @@ service cloud.firestore {
     match /sectores/{sectorId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && isExistingDoc();
-      allow delete: if isAdmin() && isExistingDoc();
+      allow create: if isAdminOrCanales();
+      allow update: if isAdminOrCanales() && isExistingDoc();
+      allow delete: if isAdminOrCanales() && isExistingDoc();
     }
   }
 }
