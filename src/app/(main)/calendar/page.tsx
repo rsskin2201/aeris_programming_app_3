@@ -156,9 +156,18 @@ export default function CalendarPage() {
   
   const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
   
-  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => firestore ? collection(firestore, 'gestores_expansion') : null, [firestore]));
-  const { data: installers } = useCollection<Installer>(useMemoFirebase(() => firestore ? collection(firestore, 'instaladores') : null, [firestore]));
-  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => firestore ? collection(firestore, 'inspectores') : null, [firestore]));
+  const buildQuery = (collectionName: string) => {
+    if (!firestore || !user) return null;
+    const constraints: QueryConstraint[] = [];
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+        constraints.push(where('zone', '==', zone));
+    }
+    return query(collection(firestore, collectionName), ...constraints);
+  };
+  
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
+  const { data: installers } = useCollection<Installer>(useMemoFirebase(() => buildQuery('instaladores'), [firestore, user, zone]));
+  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]));
 
 
   const filteredRecordsForView = useMemo(() => {
