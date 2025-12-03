@@ -145,8 +145,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     operation: 'get',
                 });
                 errorEmitter.emit('permission-error', permissionError);
+            } else {
+              console.error("Error fetching user profile:", error);
             }
-            console.error("Error fetching user profile:", error);
+            
             setUser(null);
             if (auth) {
                 await signOut(auth);
