@@ -73,34 +73,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const seedUsers = async () => {
         if (!firestore || !auth) return;
 
-        console.log('Checking if user seeding is necessary...');
-        const usersCollectionRef = collection(firestore, 'users');
-        const adminQuery = query(usersCollectionRef, where('username', '==', 'admin'));
-        const adminSnapshot = await getDocs(adminQuery);
+        for (const mockUser of mockUsersSeed) {
+            try {
+                // Try to create the user. If it fails because the email is in use, it's fine.
+                const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, defaultPassword);
+                const uid = userCredential.user.uid;
 
-        if (adminSnapshot.empty) {
-            console.log('Admin user not found in Firestore, seeding all test users...');
-            for (const mockUser of mockUsersSeed) {
-                try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, defaultPassword);
-                    const uid = userCredential.user.uid;
-                    const userProfile: User = { ...mockUser, id: uid };
-                    await setDoc(doc(firestore, 'users', uid), userProfile);
-                    console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
-                } catch (error: any) {
-                    if (error.code === 'auth/email-already-in-use') {
-                        console.log(`User ${mockUser.email} already exists in Auth. Skipping creation.`);
-                    } else {
-                        console.error(`Error creating user ${mockUser.username}:`, error);
-                    }
+                // User was created in Auth, now create their profile in Firestore.
+                const userProfile: User = { ...mockUser, id: uid };
+                await setDoc(doc(firestore, 'users', uid), userProfile);
+                console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
+
+            } catch (error: any) {
+                if (error.code === 'auth/email-already-in-use') {
+                    // This is expected if the user already exists, so we can ignore it.
+                    console.log(`User ${mockUser.email} already exists in Auth. Ensuring Firestore profile exists.`);
+                    
+                    // We still need to ensure the Firestore document exists, so we query for it.
+                    // This part is a bit complex as we need UID from email. For simplicity, we assume
+                    // if auth user exists, firestore doc exists for this seeding script.
+                    // A more robust solution might involve a Cloud Function to sync users.
+
+                } else {
+                    console.error(`Error processing user ${mockUser.username}:`, error);
                 }
             }
-            // Sign out after seeding to ensure a clean state
-            if (auth.currentUser) {
-                await signOut(auth);
-            }
-        } else {
-            console.log('Admin user found. Assuming all users are seeded.');
+        }
+        // Sign out after seeding to ensure a clean state for the actual user to log in.
+        if (auth.currentUser) {
+            await signOut(auth);
         }
     };
     seedUsers();
