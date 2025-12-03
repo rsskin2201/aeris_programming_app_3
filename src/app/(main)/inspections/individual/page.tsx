@@ -29,8 +29,8 @@ import { SupportValidationForm } from "@/components/inspections/support-validati
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
-import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc } from "firebase/firestore";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -106,11 +106,20 @@ export default function IndividualInspectionPage() {
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
 
-  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemoFirebase(() => collection(firestore, 'empresas_colaboradoras'), [firestore]));
-  const { data: installers } = useCollection<any>(useMemoFirebase(() => collection(firestore, 'instaladores'), [firestore]));
-  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => collection(firestore, 'gestores_expansion'), [firestore]));
-  const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => collection(firestore, 'sectores'), [firestore]));
-  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => collection(firestore, 'inspectores'), [firestore]));
+  const buildQuery = (collectionName: string) => {
+    if (!firestore || !user) return null;
+    const constraints: QueryConstraint[] = [];
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+        constraints.push(where('zone', '==', zone));
+    }
+    return query(collection(firestore, collectionName), ...constraints);
+  };
+
+  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]));
+  const { data: installers } = useCollection<any>(useMemoFirebase(() => buildQuery('instaladores'), [firestore, user, zone]));
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
+  const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]));
+  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]));
   const { data: allUsers } = useCollection<AppUser>(useMemoFirebase(() => collection(firestore, 'users'), [firestore]));
 
   const docRef = useMemoFirebase(() => recordId ? doc(firestore, 'inspections', recordId) : null, [firestore, recordId]);
@@ -354,6 +363,7 @@ export default function IndividualInspectionPage() {
   }, [fromParam]);
 
   function onFinalSubmit(values: FormValues) {
+    if (!firestore) return;
     setIsSubmitting(true);
     
     const recordToSave: InspectionRecord = {
@@ -460,7 +470,7 @@ export default function IndividualInspectionPage() {
   }
   
   const handleRecordUpdate = (updatedData: Partial<InspectionRecord>) => {
-    if (currentRecord) {
+    if (currentRecord && firestore) {
         const newRecord: InspectionRecord = { 
             ...currentRecord, 
             ...updatedData,
@@ -569,7 +579,7 @@ export default function IndividualInspectionPage() {
                       <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isFieldDisabled('sector')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {availableSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                          {availableSectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />

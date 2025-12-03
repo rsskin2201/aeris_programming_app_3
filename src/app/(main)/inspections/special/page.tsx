@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse } from "date-fns";
 import { es } from 'date-fns/locale';
+import React, { useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,13 +20,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { ROLES, Role, STATUS } from "@/lib/types";
+import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
-import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO, mockMunicipalities } from "@/lib/form-options";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -73,15 +76,32 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function SpecialInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, addRecord, zone, collaborators, installers, expansionManagers, sectors, inspectors, addNotification, users: allUsers, devModeEnabled } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, zone, addNotification, devModeEnabled } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const firestore = useFirestore();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
 
   const fromParam = searchParams.get('from');
+
+  const buildQuery = (collectionName: string) => {
+    if (!firestore || !user) return null;
+    const constraints: QueryConstraint[] = [];
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+        constraints.push(where('zone', '==', zone));
+    }
+    return query(collection(firestore, collectionName), ...constraints);
+  };
+  
+  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]));
+  const { data: installers } = useCollection<any>(useMemoFirebase(() => buildQuery('instaladores'), [firestore, user, zone]));
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
+  const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]));
+  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]));
+  const { data: allUsers } = useCollection<AppUser>(useMemoFirebase(() => collection(firestore, 'users'), [firestore]));
 
   const isCollaborator = user?.role === ROLES.COLABORADOR;
   const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption
@@ -145,6 +165,7 @@ export default function SpecialInspectionPage() {
 
   const availableSectors = useMemo(() => {
     const currentZone = formData.zone;
+    if (!sectors) return [];
     if (currentZone === 'Todas las zonas') {
         return sectors;
     }
@@ -152,6 +173,7 @@ export default function SpecialInspectionPage() {
   }, [formData.zone, sectors]);
 
     const availableInstallers = useMemo(() => {
+        if (!installers) return [];
         if (!isCollaborator) return installers.filter(i => i.status === 'Activo');
         return installers.filter(i => 
             i.collaboratorCompany === collaboratorCompany && i.status === 'Activo'
@@ -159,6 +181,7 @@ export default function SpecialInspectionPage() {
     }, [isCollaborator, collaboratorCompany, installers]);
     
     const availableManagers = useMemo(() => {
+        if (!expansionManagers) return [];
         return expansionManagers.filter(m => 
             (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
             m.status === 'Activo'
@@ -166,6 +189,7 @@ export default function SpecialInspectionPage() {
     }, [formData.zone, expansionManagers]);
 
     const availableInspectors = useMemo(() => {
+        if (!inspectors) return [];
         return inspectors.filter(m => 
             (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
             m.status === 'Activo'
@@ -204,42 +228,44 @@ export default function SpecialInspectionPage() {
   }, [fromParam]);
 
   function onFinalSubmit(values: FormValues) {
+    if (!firestore) return;
+
     setIsSubmitting(true);
     
-    setTimeout(() => {
-        const recordToSave: InspectionRecord = {
-            ...values,
-            client: 'Cliente (TBD)',
-            address: `${values.calle} ${values.numero}, ${values.colonia}`,
-            requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
-            type: 'Especial',
-            createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-            createdBy: user?.username || 'desconocido',
-            inspector: values.inspector || 'N/A',
-            horarioProgramacion: values.horarioProgramacion,
-            zone: values.zone,
-            id: values.id || generateId(),
-            serieMdd: undefined,
-            mercado: values.mercado,
-            observaciones: values.observaciones,
-        };
-        addRecord(recordToSave);
+    const recordToSave: InspectionRecord = {
+        ...values,
+        client: 'Cliente (TBD)',
+        address: `${values.calle} ${values.numero}, ${values.colonia}`,
+        requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
+        type: 'Especial',
+        createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        createdBy: user?.username || 'desconocido',
+        inspector: values.inspector || 'N/A',
+        horarioProgramacion: values.horarioProgramacion,
+        zone: values.zone,
+        id: values.id || generateId(),
+        serieMdd: undefined,
+        mercado: values.mercado,
+        observaciones: values.observaciones,
+        collaboratorCompany: values.empresaColaboradora,
+    };
+    
+    const docRef = doc(firestore, 'inspections', recordToSave.id);
+    setDocumentNonBlocking(docRef, recordToSave, { merge: true });
 
-        // Notify gestor of new inspection
-        const gestorUser = allUsers.find(u => u.name === values.gestor);
-        if (gestorUser) {
-            addNotification({
-                recipientUsername: gestorUser.username,
-                message: `Nueva inspección especial (${recordToSave.id}) te ha sido asignada.`,
-            });
-        }
-        
-        setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
-        setIsSuccessDialogOpen(true);
+    const gestorUser = allUsers?.find(u => u.name === values.gestor);
+    if (gestorUser) {
+        addNotification({
+            recipientUsername: gestorUser.username,
+            message: `Nueva inspección especial (${recordToSave.id}) te ha sido asignada.`,
+        });
+    }
+    
+    setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
+    setIsSuccessDialogOpen(true);
 
-      setIsSubmitting(false);
-      setIsConfirming(false);
-    }, 1500);
+    setIsSubmitting(false);
+    setIsConfirming(false);
   }
 
   const handleReset = () => {
@@ -330,7 +356,7 @@ export default function SpecialInspectionPage() {
                       <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {availableSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                          {availableSectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -512,7 +538,7 @@ export default function SpecialInspectionPage() {
                         <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isCollaborator}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {collaborators.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                            {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />

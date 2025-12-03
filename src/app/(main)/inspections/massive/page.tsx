@@ -27,8 +27,8 @@ import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA, mockM
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, doc } from "firebase/firestore";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const inspectionDetailSchema = z.object({
   id: z.string(),
@@ -92,12 +92,21 @@ export default function MassiveInspectionPage() {
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
 
-  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemoFirebase(() => firestore ? collection(firestore, 'empresas_colaboradoras') : null, [firestore]));
-  const { data: installers } = useCollection<any>(useMemoFirebase(() => firestore ? collection(firestore, 'instaladores') : null, [firestore]));
-  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => firestore ? collection(firestore, 'gestores_expansion') : null, [firestore]));
-  const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => firestore ? collection(firestore, 'sectores') : null, [firestore]));
-  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => firestore ? collection(firestore, 'inspectores') : null, [firestore]));
-  const { data: allUsers } = useCollection<AppUser>(useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]));
+  const buildQuery = (collectionName: string) => {
+    if (!firestore || !user) return null;
+    const constraints: QueryConstraint[] = [];
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+        constraints.push(where('zone', '==', zone));
+    }
+    return query(collection(firestore, collectionName), ...constraints);
+  };
+
+  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]));
+  const { data: installers } = useCollection<any>(useMemoFirebase(() => buildQuery('instaladores'), [firestore, user, zone]));
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
+  const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]));
+  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]));
+  const { data: allUsers } = useCollection<AppUser>(useMemoFirebase(() => collection(firestore, 'users'), [firestore]));
 
   const fromParam = searchParams.get('from');
 
@@ -230,10 +239,8 @@ export default function MassiveInspectionPage() {
     
     const gestorUser = allUsers?.find(u => u.name === values.gestor);
     const createdIds: string[] = [];
-
-    const inspectionsCollectionRef = collection(firestore, 'inspections');
     
-    const savePromises = values.inspections.map(detail => {
+    values.inspections.forEach(detail => {
         const recordToSave: InspectionRecord = {
             ...values,
             ...detail,
@@ -252,33 +259,22 @@ export default function MassiveInspectionPage() {
             collaboratorCompany: values.empresaColaboradora
         };
         createdIds.push(detail.id);
-        const docRef = doc(inspectionsCollectionRef, detail.id);
-        // Using non-blocking update
-        return addDocumentNonBlocking(inspectionsCollectionRef, recordToSave);
+        const docRef = doc(firestore, 'inspections', detail.id);
+        setDocumentNonBlocking(docRef, recordToSave, { merge: true });
     });
 
-    Promise.all(savePromises).then(() => {
-      if (gestorUser) {
-          addNotification({
-              recipientUsername: gestorUser.username,
-              message: `${values.inspections.length} nuevas inspecciones masivas te han sido asignadas.`,
-          });
-      }
-      
-      setCreatedRecordInfo({ ids: createdIds, status: values.status });
-      setIsSuccessDialogOpen(true);
+    if (gestorUser) {
+        addNotification({
+            recipientUsername: gestorUser.username,
+            message: `${values.inspections.length} nuevas inspecciones masivas te han sido asignadas.`,
+        });
+    }
+    
+    setCreatedRecordInfo({ ids: createdIds, status: values.status });
+    setIsSuccessDialogOpen(true);
 
-      setIsSubmitting(false);
-      setIsConfirming(false);
-    }).catch(err => {
-      console.error(err);
-      toast({
-        variant: "destructive",
-        title: "Error al Guardar",
-        description: "Hubo un problema al guardar las inspecciones en la base de datos."
-      })
-      setIsSubmitting(false);
-    })
+    setIsSubmitting(false);
+    setIsConfirming(false);
   }
 
   const handleReset = () => {
@@ -367,7 +363,7 @@ export default function MassiveInspectionPage() {
                         <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {availableSectors.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                            {availableSectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />

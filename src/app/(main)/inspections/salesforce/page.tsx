@@ -14,7 +14,7 @@ import { CsvEditor, FieldDefinition } from '@/components/shared/csv-editor';
 import { MERCADO } from '@/lib/form-options';
 import { isValid, parse, format as formatDate } from 'date-fns';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc } from 'firebase/firestore';
 
 const isValidDate = (dateStr: string) => {
@@ -180,10 +180,8 @@ export default function SalesforceUploadPage() {
   const handleFinalUpload = (newRecords: Partial<InspectionRecord>[]) => {
     if (!firestore) return;
     setIsUploading(true);
-    
-    const inspectionsCollectionRef = collection(firestore, 'inspections');
 
-    const savePromises = newRecords.map(rec => {
+    newRecords.forEach(rec => {
         const fullAddress = [rec.calle, rec.numero, rec.colonia].filter(Boolean).join(', ');
         const id = `SF-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
         const recordToSave: InspectionRecord = {
@@ -199,38 +197,28 @@ export default function SalesforceUploadPage() {
             requestDate: rec.requestDate ? parseToUniformDate(rec.requestDate) : '',
         } as InspectionRecord;
 
-        const docRef = doc(inspectionsCollectionRef, id);
-        return addDocumentNonBlocking(inspectionsCollectionRef, recordToSave);
+        const docRef = doc(firestore, 'inspections', id);
+        setDocumentNonBlocking(docRef, recordToSave, { merge: true });
     });
 
-    Promise.all(savePromises).then(() => {
-        const usersToNotify = allUsers?.filter(u => 
-            (u.role === ROLES.COORDINADOR_SSPP || u.role === ROLES.CALIDAD) &&
-            (u.zone === zone || u.zone === 'Todas las zonas')
-        );
-        
-        usersToNotify?.forEach(notifiedUser => {
-            addNotification({
-                recipientUsername: notifiedUser.username,
-                message: `Se han cargado ${newRecords.length} registros masivos en la zona ${zone}.`,
-            });
+    const usersToNotify = allUsers?.filter(u => 
+        (u.role === ROLES.COORDINADOR_SSPP || u.role === ROLES.CALIDAD) &&
+        (u.zone === zone || u.zone === 'Todas las zonas')
+    );
+    
+    usersToNotify?.forEach(notifiedUser => {
+        addNotification({
+            recipientUsername: notifiedUser.username,
+            message: `Se han cargado ${newRecords.length} registros masivos en la zona ${zone}.`,
         });
+    });
 
-        setIsUploading(false);
-        setIsEditorOpen(false);
-        setFile(null);
-        toast({
-            title: "Carga Exitosa",
-            description: `Se han cargado y procesado ${newRecords.length} registros del archivo CSV.`
-        });
-    }).catch(err => {
-        setIsUploading(false);
-        console.error("Error during bulk upload:", err);
-        toast({
-           variant: 'destructive',
-           title: "Error en la Carga",
-           description: "Ocurrió un problema al procesar los registros."
-       });
+    setIsUploading(false);
+    setIsEditorOpen(false);
+    setFile(null);
+    toast({
+        title: "Carga Exitosa",
+        description: `Se han cargado y procesado ${newRecords.length} registros del archivo CSV.`
     });
   }
 
