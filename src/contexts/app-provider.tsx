@@ -71,52 +71,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const seedUsers = async () => {
-      if (!firestore || !auth) return;
-      console.log('Checking if user seeding is necessary...');
-  
-      // Ensure no user is signed in before seeding
-      if (auth.currentUser) {
-        await signOut(auth);
-      }
-  
-      const usersCollectionRef = collection(firestore, 'users');
-      const q = query(usersCollectionRef, where('username', '==', 'admin'));
-      const adminSnapshot = await getDocs(q);
-  
-      if (adminSnapshot.empty) {
-        console.log('Seeding initial users...');
-        for (const mockUser of mockUsersSeed) {
-          try {
-            // Try to sign in first to see if the user already exists in Auth
-            await signInWithEmailAndPassword(auth, mockUser.email, defaultPassword);
-            console.log(`Auth user ${mockUser.email} already exists. Skipping creation.`);
-          } catch (error: any) {
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-              // User does not exist in Auth, so create them
-              try {
-                const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, defaultPassword);
-                const uid = userCredential.user.uid;
-                const userProfile: User = { ...mockUser, id: uid };
-                await setDoc(doc(firestore, 'users', uid), userProfile);
-                console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
-              } catch (creationError) {
-                console.error(`Error creating user ${mockUser.username}:`, creationError);
-              }
-            } else {
-              // Another auth error occurred
-              console.error(`Error checking user ${mockUser.email}:`, error);
+        if (!firestore || !auth) return;
+
+        console.log('Checking if user seeding is necessary...');
+        const usersCollectionRef = collection(firestore, 'users');
+        const adminQuery = query(usersCollectionRef, where('username', '==', 'admin'));
+        const adminSnapshot = await getDocs(adminQuery);
+
+        if (adminSnapshot.empty) {
+            console.log('Admin user not found in Firestore, seeding all test users...');
+            for (const mockUser of mockUsersSeed) {
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, defaultPassword);
+                    const uid = userCredential.user.uid;
+                    const userProfile: User = { ...mockUser, id: uid };
+                    await setDoc(doc(firestore, 'users', uid), userProfile);
+                    console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
+                } catch (error: any) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        console.log(`User ${mockUser.email} already exists in Auth. Skipping creation.`);
+                    } else {
+                        console.error(`Error creating user ${mockUser.username}:`, error);
+                    }
+                }
             }
-          }
+            // Sign out after seeding to ensure a clean state
+            if (auth.currentUser) {
+                await signOut(auth);
+            }
+        } else {
+            console.log('Admin user found. Assuming all users are seeded.');
         }
-        // Sign out the last user to ensure a clean state for the login page
-        if (auth.currentUser) {
-          await signOut(auth);
-        }
-      } else {
-        console.log("Admin user found in Firestore. Skipping seeding.");
-      }
     };
-  
     seedUsers();
   }, [firestore, auth]);
 
