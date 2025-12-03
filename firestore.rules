@@ -114,7 +114,7 @@ service cloud.firestore {
       let role = userRole();
       return isSignedIn() && (
         role == 'Administrador' ||
-        role == 'Visual User' ||
+        role == 'Visual' ||
         role == 'Empresa Colaboradora' ||
         role == 'Gestor de Expansión' ||
         role == 'Empresa de Control de Calidad' ||
@@ -160,8 +160,8 @@ service cloud.firestore {
     /**
      * @description Stores inspection records for the workflow. Access is role-based.
      * @path /inspections/{inspectionId}
-     * @allow (get) An authenticated user with a 'Visual User' role reads an inspection.
-     * @deny (create) A user with a 'Visual User' role attempts to create an inspection.
+     * @allow (get) An authenticated user with a 'Visual' role reads an inspection.
+     * @deny (create) A user with a 'Visual' role attempts to create an inspection.
      * @principle Enforces Role-Based Access Control (RBAC) for shared business data.
      */
     match /inspections/{inspectionId} {
