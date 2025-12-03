@@ -63,10 +63,13 @@ export default function EntitiesPage() {
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
+    const baseCollection = collection(firestore, collectionName);
+    
     if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
-    return query(collection(firestore, collectionName), ...constraints);
+
+    return query(baseCollection, ...constraints);
   };
   
   const collaboratorsQuery = useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
