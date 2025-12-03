@@ -49,7 +49,7 @@ import {
   getDay,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ROLES, Status } from '@/lib/types';
+import { ROLES, Status, STATUS } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import {
@@ -660,7 +660,7 @@ export default function CalendarPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="">Todos</SelectItem>
-                                    {Object.values(Status).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                    {Object.values(STATUS).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
