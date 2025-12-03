@@ -171,11 +171,11 @@ export default function CalendarPage() {
     }
     
     // Active filters from UI
-    if(activeFilters.status) filtered = filtered.filter(r => r.status === activeFilters.status);
-    if(activeFilters.requestType) filtered = filtered.filter(r => r.type === activeFilters.requestType);
-    if(activeFilters.gestor) filtered = filtered.filter(r => r.gestor === activeFilters.gestor);
-    if(activeFilters.instalador) filtered = filtered.filter(r => r.instalador === activeFilters.instalador);
-    if(activeFilters.inspector) filtered = filtered.filter(r => r.inspector === activeFilters.inspector);
+    if(activeFilters.status && activeFilters.status !== 'all') filtered = filtered.filter(r => r.status === activeFilters.status);
+    if(activeFilters.requestType && activeFilters.requestType !== 'all') filtered = filtered.filter(r => r.type === activeFilters.requestType);
+    if(activeFilters.gestor && activeFilters.gestor !== 'all') filtered = filtered.filter(r => r.gestor === activeFilters.gestor);
+    if(activeFilters.instalador && activeFilters.instalador !== 'all') filtered = filtered.filter(r => r.instalador === activeFilters.instalador);
+    if(activeFilters.inspector && activeFilters.inspector !== 'all') filtered = filtered.filter(r => r.inspector === activeFilters.inspector);
     
     return filtered;
   }, [records, isCollaborator, user, zone, isQualityControl, activeFilters]);
@@ -287,7 +287,7 @@ export default function CalendarPage() {
   }
   
   const handleFilterChange = (filter: keyof typeof activeFilters, value: string) => {
-      setActiveFilters(prev => ({...prev, [filter]: value}));
+      setActiveFilters(prev => ({...prev, [filter]: value === 'all' ? '' : value}));
   }
 
   const clearFilters = () => {
@@ -640,12 +640,12 @@ export default function CalendarPage() {
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                         <div className="space-y-2">
                             <Label htmlFor="filter-type">Tipo de Inspección</Label>
-                            <Select value={activeFilters.requestType} onValueChange={(v) => handleFilterChange('requestType', v)}>
+                            <Select value={activeFilters.requestType || 'all'} onValueChange={(v) => handleFilterChange('requestType', v)}>
                                 <SelectTrigger id="filter-type">
                                     <SelectValue placeholder="Todos" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Todos</SelectItem>
+                                    <SelectItem value="all">Todos</SelectItem>
                                     <SelectItem value="Individual PES">PES Individual</SelectItem>
                                     <SelectItem value="Masiva PES">PES Masiva</SelectItem>
                                     <SelectItem value="Especial">Especial</SelectItem>
@@ -654,12 +654,12 @@ export default function CalendarPage() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="filter-status">Estado</Label>
-                            <Select value={activeFilters.status} onValueChange={(v) => handleFilterChange('status', v)}>
+                            <Select value={activeFilters.status || 'all'} onValueChange={(v) => handleFilterChange('status', v)}>
                                 <SelectTrigger id="filter-status">
                                     <SelectValue placeholder="Todos" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Todos</SelectItem>
+                                    <SelectItem value="all">Todos</SelectItem>
                                     {Object.values(STATUS).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                 </SelectContent>
                             </Select>
@@ -668,10 +668,10 @@ export default function CalendarPage() {
                         {isExpansionManager && (
                             <div className="space-y-2">
                                 <Label htmlFor="filter-gestor">Gestor de Expansión</Label>
-                                <Select value={activeFilters.gestor} onValueChange={(v) => handleFilterChange('gestor', v)}>
+                                <Select value={activeFilters.gestor || 'all'} onValueChange={(v) => handleFilterChange('gestor', v)}>
                                     <SelectTrigger id="filter-gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Todos</SelectItem>
+                                        <SelectItem value="all">Todos</SelectItem>
                                         {availableManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
@@ -680,10 +680,10 @@ export default function CalendarPage() {
                         {isCollaborator && (
                              <div className="space-y-2">
                                 <Label htmlFor="filter-instalador">Instalador</Label>
-                                <Select value={activeFilters.instalador} onValueChange={(v) => handleFilterChange('instalador', v)}>
+                                <Select value={activeFilters.instalador || 'all'} onValueChange={(v) => handleFilterChange('instalador', v)}>
                                     <SelectTrigger id="filter-instalador"><SelectValue placeholder="Todos" /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Todos</SelectItem>
+                                        <SelectItem value="all">Todos</SelectItem>
                                         {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
@@ -692,10 +692,10 @@ export default function CalendarPage() {
                         {isQualityControl && (
                              <div className="space-y-2">
                                 <Label htmlFor="filter-inspector">Inspector</Label>
-                                <Select value={activeFilters.inspector} onValueChange={(v) => handleFilterChange('inspector', v)}>
+                                <Select value={activeFilters.inspector || 'all'} onValueChange={(v) => handleFilterChange('inspector', v)}>
                                     <SelectTrigger id="filter-inspector"><SelectValue placeholder="Todos" /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Todos</SelectItem>
+                                        <SelectItem value="all">Todos</SelectItem>
                                         {availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
