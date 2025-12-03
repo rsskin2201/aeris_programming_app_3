@@ -59,6 +59,7 @@ const initialFilters = {
 };
 
 const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
+const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD];
 
 export default function RecordsPage() {
   const { user, zone } = useAppContext();
@@ -72,7 +73,7 @@ export default function RecordsPage() {
   const [filters, setFilters] = useState(initialFilters);
   const [isExporting, setIsExporting] = useState(false);
   
-  const canModify = user && !viewOnlyRoles.includes(user.role);
+  const canModify = user && canModifyRoles.includes(user.role);
   const canExport = user && user.role !== ROLES.CANALES;
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
@@ -85,10 +86,13 @@ export default function RecordsPage() {
 
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
-    let constraints: QueryConstraint[] = [];
+    
+    const constraints: QueryConstraint[] = [];
+    
     if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
       constraints.push(where('zone', '==', zone));
     }
+    
     return query(collection(firestore, collectionName), ...constraints);
   };
 
@@ -102,14 +106,14 @@ export default function RecordsPage() {
 
   const inspectionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    const baseQuery = collection(firestore, 'inspections');
-    let q = query(baseQuery);
-
+    
+    const constraints: QueryConstraint[] = [];
+    
     if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
-      q = query(q, where('zone', '==', zone));
+        constraints.push(where('zone', '==', zone));
     }
-    // Note: More complex client-side filtering is still needed for text search on un-indexed fields
-    return q;
+    
+    return query(collection(firestore, 'inspections'), ...constraints);
   }, [firestore, user, zone]);
 
   const { data: records, isLoading } = useCollection<InspectionRecord>(inspectionsQuery);

@@ -37,7 +37,8 @@ const statusColors: Record<string, string> = {
   'Deshabilitado': 'bg-red-600/80 border-red-700 text-white',
 };
 
-const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL, ROLES.CALIDAD];
+const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
+const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD];
 
 export default function EntitiesPage() {
   const { user, zone } = useAppContext();
@@ -57,14 +58,17 @@ export default function EntitiesPage() {
   const [selectedManager, setSelectedManager] = useState<ExpansionManager | null>(null);
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
   
-  const canModify = user && !viewOnlyRoles.includes(user.role);
+  const canModify = user && canModifyRoles.includes(user.role);
 
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
-    let constraints: QueryConstraint[] = [];
+    
+    const constraints: QueryConstraint[] = [];
+    
     if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
-      constraints.push(where('zone', '==', zone));
+        constraints.push(where('zone', '==', zone));
     }
+    
     return query(collection(firestore, collectionName), ...constraints);
   };
   
