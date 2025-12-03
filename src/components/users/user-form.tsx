@@ -18,6 +18,7 @@ import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebas
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { useAppContext } from '@/contexts/app-provider';
 
 
 const formSchema = z.object({
@@ -41,7 +42,9 @@ export function UserForm({ user, onClose }: UserFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const auth = useAuth();
-  const usersQuery = useMemoFirebase(() => firestore && user?.role === ROLES.ADMIN ? collection(firestore, 'users') : null, [firestore, user]);
+  const { addMultipleUsers } = useAppContext();
+
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users } = useCollection<User>(usersQuery);
 
   const [newPassword, setNewPassword] = useState('');
@@ -99,31 +102,17 @@ export function UserForm({ user, onClose }: UserFormProps) {
     try {
         let userId = user?.id;
         if (!isEditMode) {
-            if (!auth) {
-                toast({ variant: 'destructive', title: 'Error', description: 'El servicio de autenticación no está disponible.'});
-                return;
-            }
-            const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password!);
-            userId = userCredential.user.uid;
+             addMultipleUsers([values as Omit<User, 'id'>]);
+        } else {
+             const dataToSave: Partial<User> = {
+                name: values.name,
+                role: values.role,
+                zone: values.zone,
+                status: values.status,
+            };
+            const userDocRef = doc(firestore, 'users', userId!);
+            setDocumentNonBlocking(userDocRef, dataToSave, { merge: true });
         }
-
-        if (!userId) {
-            toast({ variant: 'destructive', title: 'Error', description: 'No se pudo obtener el ID del usuario.'});
-            return;
-        }
-
-        const dataToSave: User = {
-            id: userId,
-            name: values.name,
-            username: values.username,
-            email: values.email,
-            role: values.role,
-            zone: values.zone,
-            status: values.status,
-        };
-        
-        const userDocRef = doc(firestore, 'users', userId);
-        setDocumentNonBlocking(userDocRef, dataToSave, { merge: isEditMode });
         
         toast({
           title: isEditMode ? 'Usuario Actualizado' : 'Usuario Creado',

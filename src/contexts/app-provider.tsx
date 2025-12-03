@@ -7,6 +7,8 @@ import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, Fi
 import type { User, Role, Zone, BlockedDay, AppNotification } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS } from '@/lib/types';
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
+import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from '@/lib/mock-data';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 interface AppContextType {
   // Auth State
@@ -14,6 +16,8 @@ interface AppContextType {
   isUserLoading: boolean;
   login: (email: string, password: string) => Promise<User | null>;
   logout: () => void;
+  addMultipleUsers: (users: Omit<User, 'id'>[]) => void;
+
 
   operatorName: string | null;
   zone: Zone;
@@ -34,6 +38,14 @@ interface AppContextType {
   addNotification: (notification: Omit<AppNotification, 'id' | 'date' | 'read'>) => void;
   markNotificationAsRead: (id: string) => void;
   toggleDevMode: () => void;
+
+  // Temp mock data management
+  addMultipleCollaborators: (data: CollaboratorCompany[]) => void;
+  addMultipleQualityControlCompanies: (data: QualityControlCompany[]) => void;
+  addMultipleInspectors: (data: Inspector[]) => void;
+  addMultipleInstallers: (data: Installer[]) => void;
+  addMultipleExpansionManagers: (data: ExpansionManager[]) => void;
+  addMultipleSectors: (data: Sector[]) => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -73,14 +85,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const seedUsers = async () => {
         if (!firestore || !auth) return;
 
-        const usersCollection = collection(firestore, 'users');
-
         for (const mockUser of mockUsersSeed) {
-            const q = query(usersCollection, where("username", "==", mockUser.username));
+            const q = query(collection(firestore, 'users'), where("username", "==", mockUser.username));
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                // User does not exist in Firestore, so create them in Auth and Firestore
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, defaultPassword);
                     const uid = userCredential.user.uid;
@@ -89,30 +98,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
                 } catch (error: any) {
                     if (error.code === 'auth/email-already-in-use') {
-                        console.warn(`Auth user with email ${mockUser.email} exists, but no Firestore record found. This may indicate an inconsistency.`);
-                    } else if (error.code === 'permission-denied') {
-                        const permissionError = new FirestorePermissionError({
-                          path: `users`,
-                          operation: 'create',
-                          requestResourceData: {email: mockUser.email},
-                        });
-                        errorEmitter.emit('permission-error', permissionError);
+                        // This is expected if the auth user exists but the firestore doc doesn't.
+                        // We can try to find the user and link. For now, we'll log it.
+                         console.warn(`Auth user with email ${mockUser.email} already exists.`);
                     } else {
                         console.error(`Error creating user ${mockUser.username}:`, error);
                     }
                 }
-            } else {
-                // User already exists in Firestore, no action needed for seeding
-                // console.log(`User ${mockUser.username} already exists. Skipping seed.`);
             }
         }
-        // Sign out after seeding to ensure a clean state for the actual user to log in.
+        // Important: Sign out after seeding if you don't want the last seeded user to be logged in.
         if (auth.currentUser) {
-            await signOut(auth);
+           // await signOut(auth);
         }
     };
     seedUsers();
-  }, [firestore, auth]);
+}, [firestore, auth]);
 
 
   useEffect(() => {
@@ -179,6 +180,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             throw new Error("User profile does not exist in Firestore.");
         }
     } catch (error: any) {
+         console.error("Login process failed after auth:", error);
         if (error.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
                 path: userDocRef.path,
@@ -203,6 +205,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setZone(newZone);
     setIsZoneConfirmed(true);
   }, []);
+
+  const addMultipleUsers = useCallback((users: Omit<User, 'id'>[]) => {
+    if (!firestore || !auth) return;
+    users.forEach(async (user) => {
+      try {
+        // Create user in Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, user.email, user.password);
+        const uid = userCredential.user.uid;
+        
+        // Create user profile in Firestore
+        const userProfile: User = { ...user, id: uid };
+        const docRef = doc(firestore, 'users', uid);
+        setDocumentNonBlocking(docRef, userProfile, { merge: false });
+
+      } catch (error) {
+        console.error("Error creating a user during bulk upload:", error);
+        // We can add a notification to the user here if needed
+      }
+    });
+  }, [auth, firestore]);
+
+  // Placeholder functions for mock data manipulation
+  const addMultipleCollaborators = (data: any[]) => console.log('Adding collaborators', data);
+  const addMultipleQualityControlCompanies = (data: any[]) => console.log('Adding quality companies', data);
+  const addMultipleInspectors = (data: any[]) => console.log('Adding inspectors', data);
+  const addMultipleInstallers = (data: any[]) => console.log('Adding installers', data);
+  const addMultipleExpansionManagers = (data: any[]) => console.log('Adding managers', data);
+  const addMultipleSectors = (data: any[]) => console.log('Adding sectors', data);
+
 
   const toggleForms = useCallback(() => setFormsEnabled(prev => !prev), []);
   const toggleWeekends = useCallback(() => setWeekendsEnabled(prev => !prev), []);
@@ -257,10 +288,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removeBlockedDay,
       addNotification,
       markNotificationAsRead,
+      addMultipleUsers,
+      addMultipleCollaborators,
+      addMultipleQualityControlCompanies,
+      addMultipleInspectors,
+      addMultipleInstallers,
+      addMultipleExpansionManagers,
+      addMultipleSectors,
     }),
     [
       user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, markNotificationAsRead, setZone
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, markNotificationAsRead, setZone, addMultipleUsers
     ]
   );
 
