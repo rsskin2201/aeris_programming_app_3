@@ -145,11 +145,16 @@ export default function CalendarPage() {
   const isExpansionManager = user?.role === ROLES.GESTOR;
 
   const inspectionsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    const baseQuery = collection(firestore, 'inspections');
-    let q = query(baseQuery);
+    if (!firestore || !user) return null;
+    let q = query(collection(firestore, 'inspections'));
+    
+    // Non-admin roles should be filtered by their zone unless they have global access
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+        q = query(q, where('zone', '==', zone));
+    }
+    
     return q;
-  }, [firestore]);
+  }, [firestore, user, zone]);
   
   const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
   
