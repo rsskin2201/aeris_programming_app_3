@@ -60,6 +60,8 @@ const initialFilters = {
 
 const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
 const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD];
+const canExportRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD, ROLES.VISUAL, ROLES.CANALES, ROLES.COORDINADOR_SSPP];
+
 
 export default function RecordsPage() {
   const { user, zone } = useAppContext();
@@ -74,7 +76,7 @@ export default function RecordsPage() {
   const [isExporting, setIsExporting] = useState(false);
   
   const canModify = user && canModifyRoles.includes(user.role);
-  const canExport = user && user.role !== ROLES.CANALES;
+  const canExport = user && canExportRoles.includes(user.role);
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value || '' }));
