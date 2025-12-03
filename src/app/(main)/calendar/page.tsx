@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
-import { InspectionRecord } from '@/lib/mock-data';
+import { InspectionRecord, ExpansionManager, Installer, Inspector } from '@/lib/mock-data';
 import {
   addDays,
   addMonths,
@@ -127,6 +127,14 @@ export default function CalendarPage() {
   const router = useRouter();
   const { toast } = useToast();
 
+  const [activeFilters, setActiveFilters] = useState({
+      status: '',
+      requestType: '',
+      gestor: '',
+      instalador: '',
+      inspector: '',
+  });
+
   const canToggleForms = user && privilegedRoles.includes(user.role);
   const canEnableWeekends = user && adminRoles.includes(user.role);
   const canBlockDays = user && dayBlockingRoles.includes(user.role);
@@ -134,6 +142,7 @@ export default function CalendarPage() {
   
   const isCollaborator = user?.role === ROLES.COLABORADOR;
   const isQualityControl = user?.role === ROLES.CALIDAD;
+  const isExpansionManager = user?.role === ROLES.GESTOR;
 
   const inspectionsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -143,19 +152,45 @@ export default function CalendarPage() {
   }, [firestore]);
   
   const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
+  
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => firestore && isExpansionManager ? collection(firestore, 'gestores_expansion') : null, [firestore, isExpansionManager]));
+  const { data: installers } = useCollection<Installer>(useMemoFirebase(() => firestore && isCollaborator ? collection(firestore, 'instaladores') : null, [firestore, isCollaborator]));
+  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => firestore && isQualityControl ? collection(firestore, 'inspectores') : null, [firestore, isQualityControl]));
+
 
   const filteredRecordsForView = useMemo(() => {
     if (!records) return [];
+    
     let filtered = records;
+
+    // Role-based pre-filtering
     if (isCollaborator) {
       filtered = records.filter(record => record.collaboratorCompany === user?.name);
     } else if (zone !== 'Todas las zonas' && !isQualityControl) {
       filtered = records.filter(record => record.zone === zone);
     }
-    // For Quality Control, they can see all in their zone, so no special filter here,
-    // it's handled by the global zone context.
+    
+    // Active filters from UI
+    if(activeFilters.status) filtered = filtered.filter(r => r.status === activeFilters.status);
+    if(activeFilters.requestType) filtered = filtered.filter(r => r.type === activeFilters.requestType);
+    if(activeFilters.gestor) filtered = filtered.filter(r => r.gestor === activeFilters.gestor);
+    if(activeFilters.instalador) filtered = filtered.filter(r => r.instalador === activeFilters.instalador);
+    if(activeFilters.inspector) filtered = filtered.filter(r => r.inspector === activeFilters.inspector);
+    
     return filtered;
-  }, [zone, records, isCollaborator, isQualityControl, user]);
+  }, [records, isCollaborator, user, zone, isQualityControl, activeFilters]);
+
+  const availableManagers = useMemo(() => 
+    expansionManagers?.filter(m => m.status === 'Activo' && (m.zone === zone || zone === 'Todas las zonas')) || [], 
+  [expansionManagers, zone]);
+  
+  const availableInstallers = useMemo(() => 
+    installers?.filter(i => i.status === 'Activo' && i.collaboratorCompany === user?.name) || [], 
+  [installers, user]);
+
+  const availableInspectors = useMemo(() => 
+    inspectors?.filter(i => i.status === 'Activo') || [], 
+  [inspectors]);
 
 
   const inspectionsByDay = useMemo(() => {
@@ -250,8 +285,22 @@ export default function CalendarPage() {
     setIsBlockDialogOpen(false);
     setBlockReason('');
   }
+  
+  const handleFilterChange = (filter: keyof typeof activeFilters, value: string) => {
+      setActiveFilters(prev => ({...prev, [filter]: value}));
+  }
 
-  const { exportData, exportRange, exportCount } = useMemo(() => {
+  const clearFilters = () => {
+    setActiveFilters({
+        status: '',
+        requestType: '',
+        gestor: '',
+        instalador: '',
+        inspector: '',
+    });
+  }
+
+  const { exportData, exportCount } = useMemo(() => {
       let start: Date;
       let end: Date;
 
@@ -530,7 +579,7 @@ export default function CalendarPage() {
                     <DialogDescription>
                       Se exportarán <strong>{exportCount}</strong> registros para el rango de fechas:
                       <p className='font-medium mt-2'>
-                          {format(exportRange.from, 'PPP', { locale: es })} - {format(exportRange.to, 'PPP', { locale: es })}
+                          {format(exportData[0]?.requestDate ? parseISO(exportData[0].requestDate) : new Date(), 'PPP', { locale: es })} - {format(exportData[exportData.length-1]?.requestDate ? parseISO(exportData[exportData.length - 1].requestDate) : new Date(), 'PPP', { locale: es })}
                       </p>
                       ¿Deseas continuar?
                     </DialogDescription>
@@ -591,36 +640,70 @@ export default function CalendarPage() {
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                         <div className="space-y-2">
                             <Label htmlFor="filter-type">Tipo de Inspección</Label>
-                            <Select>
+                            <Select value={activeFilters.requestType} onValueChange={(v) => handleFilterChange('requestType', v)}>
                                 <SelectTrigger id="filter-type">
                                     <SelectValue placeholder="Todos" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    <SelectItem value="pes-individual">PES Individual</SelectItem>
-                                    <SelectItem value="pes-masiva">PES Masiva</SelectItem>
-                                    <SelectItem value="especial">Especial</SelectItem>
+                                    <SelectItem value="">Todos</SelectItem>
+                                    <SelectItem value="Individual PES">PES Individual</SelectItem>
+                                    <SelectItem value="Masiva PES">PES Masiva</SelectItem>
+                                    <SelectItem value="Especial">Especial</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
-                            <div className="space-y-2">
+                        <div className="space-y-2">
                             <Label htmlFor="filter-status">Estado</Label>
-                            <Select>
+                            <Select value={activeFilters.status} onValueChange={(v) => handleFilterChange('status', v)}>
                                 <SelectTrigger id="filter-status">
                                     <SelectValue placeholder="Todos" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    <SelectItem value="Aprobado">Aprobado</SelectItem>
-                                    <SelectItem value="Contemplado">Contemplado</SelectItem>
-                                    <SelectItem value="Pendiente">Pendiente Aprobación</SelectItem>
-                                    <SelectItem value="Rechazado">Rechazado</SelectItem>
+                                    <SelectItem value="">Todos</SelectItem>
+                                    {Object.values(Status).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
-                            <div className="flex items-end gap-2 lg:col-start-4">
-                            <Button className="flex-1">Aplicar</Button>
-                            <Button variant="ghost" className="flex-1">Limpiar</Button>
+
+                        {isExpansionManager && (
+                            <div className="space-y-2">
+                                <Label htmlFor="filter-gestor">Gestor de Expansión</Label>
+                                <Select value={activeFilters.gestor} onValueChange={(v) => handleFilterChange('gestor', v)}>
+                                    <SelectTrigger id="filter-gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">Todos</SelectItem>
+                                        {availableManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                        {isCollaborator && (
+                             <div className="space-y-2">
+                                <Label htmlFor="filter-instalador">Instalador</Label>
+                                <Select value={activeFilters.instalador} onValueChange={(v) => handleFilterChange('instalador', v)}>
+                                    <SelectTrigger id="filter-instalador"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">Todos</SelectItem>
+                                        {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                        {isQualityControl && (
+                             <div className="space-y-2">
+                                <Label htmlFor="filter-inspector">Inspector</Label>
+                                <Select value={activeFilters.inspector} onValueChange={(v) => handleFilterChange('inspector', v)}>
+                                    <SelectTrigger id="filter-inspector"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">Todos</SelectItem>
+                                        {availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                        
+                        <div className="flex items-end gap-2 lg:col-start-4">
+                            <Button variant="ghost" className="flex-1" onClick={clearFilters}>Limpiar</Button>
                         </div>
                     </div>
                 </Card>
