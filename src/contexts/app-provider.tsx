@@ -88,7 +88,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 if (error.code === 'auth/email-already-in-use') {
                     // This is expected if the user already exists, so we can ignore it.
                     // console.log(`User ${mockUser.email} already exists in Auth.`);
-                    
+                } else if (error.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({
+                      path: `users`,
+                      operation: 'create',
+                      requestResourceData: {email: mockUser.email},
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
                 } else {
                     console.error(`Error processing user ${mockUser.username}:`, error);
                 }

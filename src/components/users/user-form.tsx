@@ -41,7 +41,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const auth = useAuth();
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const usersQuery = useMemoFirebase(() => firestore && user?.role === ROLES.ADMIN ? collection(firestore, 'users') : null, [firestore, user]);
   const { data: users } = useCollection<User>(usersQuery);
 
   const [newPassword, setNewPassword] = useState('');

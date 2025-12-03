@@ -101,7 +101,7 @@ export default function SpecialInspectionPage() {
   const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
   const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]));
   const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]));
-  const { data: allUsers } = useCollection<AppUser>(useMemoFirebase(() => collection(firestore, 'users'), [firestore]));
+  const { data: allUsers } = useCollection<AppUser>(useMemoFirebase(() => user?.role === ROLES.ADMIN ? collection(firestore, 'users') : null, [firestore, user]));
 
   const isCollaborator = user?.role === ROLES.COLABORADOR;
   const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption
@@ -227,7 +227,7 @@ export default function SpecialInspectionPage() {
     }
   }, [fromParam]);
 
-  function onFinalSubmit(values: FormValues) {
+  async function onFinalSubmit(values: FormValues) {
     if (!firestore) return;
 
     setIsSubmitting(true);
@@ -253,12 +253,14 @@ export default function SpecialInspectionPage() {
     const docRef = doc(firestore, 'inspections', recordToSave.id);
     setDocumentNonBlocking(docRef, recordToSave, { merge: true });
 
-    const gestorUser = allUsers?.find(u => u.name === values.gestor);
-    if (gestorUser) {
-        addNotification({
-            recipientUsername: gestorUser.username,
-            message: `Nueva inspección especial (${recordToSave.id}) te ha sido asignada.`,
-        });
+    if (allUsers) {
+      const gestorUser = allUsers.find(u => u.name === values.gestor);
+      if (gestorUser) {
+          addNotification({
+              recipientUsername: gestorUser.username,
+              message: `Nueva inspección especial (${recordToSave.id}) te ha sido asignada.`,
+          });
+      }
     }
     
     setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
