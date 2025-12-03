@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from "react";
-import { collection, doc } from "firebase/firestore";
+import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +21,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { ROLES } from "@/lib/types";
 
 
 const entities = [
@@ -36,8 +37,10 @@ const statusColors: Record<string, string> = {
   'Deshabilitado': 'bg-red-600/80 border-red-700 text-white',
 };
 
+const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL, ROLES.CALIDAD];
+
 export default function EntitiesPage() {
-  const { zone } = useAppContext();
+  const { user, zone } = useAppContext();
   const firestore = useFirestore();
 
   const [collaboratorDialogOpen, setCollaboratorDialogOpen] = useState(false);
@@ -53,49 +56,35 @@ export default function EntitiesPage() {
   const [selectedInstaller, setSelectedInstaller] = useState<Installer | null>(null);
   const [selectedManager, setSelectedManager] = useState<ExpansionManager | null>(null);
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
+  
+  const canModify = user && !viewOnlyRoles.includes(user.role);
 
-  const collaboratorsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'empresas_colaboradoras') : null, [firestore]);
+  const buildQuery = (collectionName: string) => {
+    if (!firestore || !user) return null;
+    let constraints: QueryConstraint[] = [];
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+      constraints.push(where('zone', '==', zone));
+    }
+    return query(collection(firestore, collectionName), ...constraints);
+  };
+  
+  const collaboratorsQuery = useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
-
-  const installersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'instaladores') : null, [firestore]);
+  
+  const installersQuery = useMemoFirebase(() => buildQuery('instaladores'), [firestore, user, zone]);
   const { data: installers } = useCollection<Installer>(installersQuery);
 
-  const managersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'gestores_expansion') : null, [firestore]);
+  const managersQuery = useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]);
   const { data: expansionManagers } = useCollection<ExpansionManager>(managersQuery);
   
-  const qualityQuery = useMemoFirebase(() => firestore ? collection(firestore, 'empresas_control_calidad') : null, [firestore]);
+  const qualityQuery = useMemoFirebase(() => buildQuery('empresas_control_calidad'), [firestore, user, zone]);
   const { data: qualityCompanies } = useCollection<QualityControlCompany>(qualityQuery);
   
-  const inspectorsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'inspectores') : null, [firestore]);
+  const inspectorsQuery = useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]);
   const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
   
-  const sectorsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'sectores') : null, [firestore]);
+  const sectorsQuery = useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
-
-  const filteredCollaborators = useMemo(() => 
-    collaborators?.filter(c => zone === 'Todas las zonas' || c.zone === zone) || [],
-    [zone, collaborators]
-  );
-  const filteredInstallers = useMemo(() => 
-    installers?.filter(i => zone === 'Todas las zonas' || i.zone === zone) || [],
-    [zone, installers]
-  );
-  const filteredExpansionManagers = useMemo(() => 
-    expansionManagers?.filter(m => zone === 'Todas las zonas' || m.zone === zone) || [],
-    [zone, expansionManagers]
-  );
-  const filteredQualityCompanies = useMemo(() => 
-    qualityCompanies?.filter(c => zone === 'Todas las zonas' || c.zone === zone) || [],
-    [zone, qualityCompanies]
-  );
-  const filteredInspectors = useMemo(() => 
-    inspectors?.filter(i => zone === 'Todas las zonas' || i.zone === zone) || [],
-    [zone, inspectors]
-  );
-  const filteredSectors = useMemo(() => 
-    sectors?.filter(s => zone === 'Todas las zonas' || s.zone === zone) || [],
-    [zone, sectors]
-  );
 
   const handleEditCollaborator = (company: CollaboratorCompany) => {
     setSelectedCollaborator(company);
@@ -169,12 +158,14 @@ export default function EntitiesPage() {
           <Settings className="h-8 w-8 text-primary" />
           Gestión de Entidades
         </h1>
-         <Button asChild>
-          <Link href="/entities/upload">
-            <Upload className="mr-2 h-4 w-4" />
-            Carga Masiva
-          </Link>
-        </Button>
+         {canModify && (
+            <Button asChild>
+              <Link href="/entities/upload">
+                <Upload className="mr-2 h-4 w-4" />
+                Carga Masiva
+              </Link>
+            </Button>
+         )}
       </div>
 
       
@@ -199,12 +190,14 @@ export default function EntitiesPage() {
                       <CardTitle>Listado de: Empresa Colaboradora</CardTitle>
                       <CardDescription>Gestiona las empresas colaboradoras.</CardDescription>
                   </div>
+                  {canModify && (
                    <DialogTrigger asChild>
                       <Button onClick={handleNewCollaborator}>
                           <PlusCircle className="mr-2" />
                           Nuevo Registro
                       </Button>
                   </DialogTrigger>
+                  )}
                 </CardHeader>
                 <CardContent>
                    <Table>
@@ -220,7 +213,7 @@ export default function EntitiesPage() {
                           </TableRow>
                       </TableHeader>
                       <TableBody>
-                          {filteredCollaborators.map(item => (
+                          {collaborators?.map(item => (
                                <TableRow key={item.id} className="hover:bg-muted/60">
                                   <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
                                   <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
@@ -231,21 +224,23 @@ export default function EntitiesPage() {
                                   </TableCell>
                                   <TableCell className="py-2 px-4">{item.created_at}</TableCell>
                                   <TableCell className="py-2 px-4 text-right">
-                                      <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                                          <MoreHorizontal className="h-4 w-4" />
-                                          <span className="sr-only">Toggle menu</span>
-                                          </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                          <DropdownMenuItem onClick={() => handleEditCollaborator(item)}>Editar</DropdownMenuItem>
-                                          <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activa')} className="text-green-600">Activar</DropdownMenuItem>
-                                          <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactiva')} className="text-yellow-600">Poner Inactiva</DropdownMenuItem>
-                                          <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitada')} className="text-red-600">Deshabilitar</DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                      </DropdownMenu>
+                                      {canModify && (
+                                        <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                            <span className="sr-only">Toggle menu</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                            <DropdownMenuItem onClick={() => handleEditCollaborator(item)}>Editar</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activa')} className="text-green-600">Activar</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactiva')} className="text-yellow-600">Poner Inactiva</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitada')} className="text-red-600">Deshabilitar</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                        </DropdownMenu>
+                                      )}
                                   </TableCell>
                                </TableRow>
                           ))}
@@ -254,7 +249,7 @@ export default function EntitiesPage() {
                    {/* TODO: Add Pagination Controls */}
                 </CardContent>
               </Card>
-              <CollaboratorCompanyForm company={selectedCollaborator} onClose={() => setCollaboratorDialogOpen(false)}/>
+              {canModify && <CollaboratorCompanyForm company={selectedCollaborator} onClose={() => setCollaboratorDialogOpen(false)}/>}
             </Dialog>
           </TabsContent>
           
@@ -266,12 +261,14 @@ export default function EntitiesPage() {
                     <CardTitle>Listado de: Instaladores</CardTitle>
                     <CardDescription>Gestiona los instaladores.</CardDescription>
                   </div>
-                  <DialogTrigger asChild>
-                    <Button onClick={handleNewInstaller}>
-                      <PlusCircle className="mr-2" />
-                      Nuevo Registro
-                    </Button>
-                  </DialogTrigger>
+                  {canModify && (
+                    <DialogTrigger asChild>
+                      <Button onClick={handleNewInstaller}>
+                        <PlusCircle className="mr-2" />
+                        Nuevo Registro
+                      </Button>
+                    </DialogTrigger>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -288,7 +285,7 @@ export default function EntitiesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredInstallers.map(item => (
+                      {installers?.map(item => (
                         <TableRow key={item.id} className="hover:bg-muted/60">
                           <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
                           <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
@@ -300,6 +297,7 @@ export default function EntitiesPage() {
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="py-2 px-4 text-right">
+                           {canModify && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -315,6 +313,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                           )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -323,7 +322,7 @@ export default function EntitiesPage() {
                   {/* TODO: Add Pagination Controls */}
                 </CardContent>
               </Card>
-              <InstallerForm installer={selectedInstaller} onClose={() => setInstallerDialogOpen(false)} />
+              {canModify && <InstallerForm installer={selectedInstaller} onClose={() => setInstallerDialogOpen(false)} />}
             </Dialog>
           </TabsContent>
 
@@ -335,12 +334,14 @@ export default function EntitiesPage() {
                     <CardTitle>Listado de: Gestores de Expansión</CardTitle>
                     <CardDescription>Gestiona los gestores de expansión.</CardDescription>
                   </div>
+                  {canModify && (
                   <DialogTrigger asChild>
                     <Button onClick={handleNewManager}>
                       <PlusCircle className="mr-2" />
                       Nuevo Registro
                     </Button>
                   </DialogTrigger>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -357,7 +358,7 @@ export default function EntitiesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredExpansionManagers.map(item => (
+                      {expansionManagers?.map(item => (
                         <TableRow key={item.id} className="hover:bg-muted/60">
                           <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
                           <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
@@ -369,6 +370,7 @@ export default function EntitiesPage() {
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="py-2 px-4 text-right">
+                           {canModify && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -384,6 +386,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                           )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -392,7 +395,7 @@ export default function EntitiesPage() {
                   {/* TODO: Add Pagination Controls */}
                 </CardContent>
               </Card>
-              <ExpansionManagerForm manager={selectedManager} onClose={() => setManagerDialogOpen(false)} />
+              {canModify && <ExpansionManagerForm manager={selectedManager} onClose={() => setManagerDialogOpen(false)} />}
             </Dialog>
           </TabsContent>
 
@@ -404,12 +407,14 @@ export default function EntitiesPage() {
                     <CardTitle>Listado de: Empresa de Control de Calidad</CardTitle>
                     <CardDescription>Gestiona las empresas de control de calidad.</CardDescription>
                   </div>
+                  {canModify && (
                   <DialogTrigger asChild>
                     <Button onClick={handleNewQualityCompany}>
                       <PlusCircle className="mr-2" />
                       Nuevo Registro
                     </Button>
                   </DialogTrigger>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -425,7 +430,7 @@ export default function EntitiesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredQualityCompanies.map(item => (
+                      {qualityCompanies?.map(item => (
                         <TableRow key={item.id} className="hover:bg-muted/60">
                           <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
                           <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
@@ -436,6 +441,7 @@ export default function EntitiesPage() {
                           </TableCell>
                           <TableCell className="py-2 px-4">{item.created_at}</TableCell>
                           <TableCell className="py-2 px-4 text-right">
+                           {canModify && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -451,6 +457,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitada')} className="text-red-600">Deshabilitar</DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                           )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -459,7 +466,7 @@ export default function EntitiesPage() {
                   {/* TODO: Add Pagination Controls */}
                 </CardContent>
               </Card>
-              <QualityControlCompanyForm company={selectedQualityCompany} onClose={() => setQualityDialogOpen(false)} />
+              {canModify && <QualityControlCompanyForm company={selectedQualityCompany} onClose={() => setQualityDialogOpen(false)} />}
             </Dialog>
           </TabsContent>
 
@@ -471,12 +478,14 @@ export default function EntitiesPage() {
                     <CardTitle>Listado de: Inspectores</CardTitle>
                     <CardDescription>Gestiona los inspectores de calidad.</CardDescription>
                   </div>
+                  {canModify && (
                   <DialogTrigger asChild>
                     <Button onClick={handleNewInspector}>
                       <PlusCircle className="mr-2" />
                       Nuevo Registro
                     </Button>
                   </DialogTrigger>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -493,7 +502,7 @@ export default function EntitiesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredInspectors.map(item => (
+                      {inspectors?.map(item => (
                         <TableRow key={item.id} className="hover:bg-muted/60">
                           <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
                           <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
@@ -505,6 +514,7 @@ export default function EntitiesPage() {
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="py-2 px-4 text-right">
+                           {canModify && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -520,6 +530,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                           )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -528,7 +539,7 @@ export default function EntitiesPage() {
                   {/* TODO: Add Pagination Controls */}
                 </CardContent>
               </Card>
-              <InspectorForm inspector={selectedInspector} onClose={() => setInspectorDialogOpen(false)} />
+              {canModify && <InspectorForm inspector={selectedInspector} onClose={() => setInspectorDialogOpen(false)} />}
             </Dialog>
           </TabsContent>
           
@@ -540,12 +551,14 @@ export default function EntitiesPage() {
                     <CardTitle>Listado de: Sectores</CardTitle>
                     <CardDescription>Gestiona los sectores.</CardDescription>
                   </div>
+                  {canModify && (
                   <DialogTrigger asChild>
                     <Button onClick={handleNewSector}>
                       <PlusCircle className="mr-2" />
                       Nuevo Registro
                     </Button>
                   </DialogTrigger>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -562,7 +575,7 @@ export default function EntitiesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredSectors.map(item => (
+                      {sectors?.map(item => (
                         <TableRow key={item.id} className="hover:bg-muted/60">
                           <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
                           <TableCell className="py-2 px-4 font-medium">{item.sector}</TableCell>
@@ -574,6 +587,7 @@ export default function EntitiesPage() {
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="py-2 px-4 text-right">
+                            {canModify && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -589,6 +603,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -597,7 +612,7 @@ export default function EntitiesPage() {
                   {/* TODO: Add Pagination Controls */}
                 </CardContent>
               </Card>
-              <SectorForm sector={selectedSector} onClose={() => setSectorDialogOpen(false)} />
+              {canModify && <SectorForm sector={selectedSector} onClose={() => setSectorDialogOpen(false)} />}
             </Dialog>
           </TabsContent>
         </Tabs>

@@ -26,7 +26,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, QueryConstraint } from 'firebase/firestore';
 
 const statusColors: Record<InspectionRecord['status'], string> = {
   [STATUS.REGISTRADA]: 'bg-gray-500/80 border-gray-600 text-white',
@@ -71,14 +71,6 @@ export default function RecordsPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState(initialFilters);
   const [isExporting, setIsExporting] = useState(false);
-
-  const expansionManagersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'gestores_expansion') : null, [firestore]);
-  const collaboratorsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'empresas_colaboradoras') : null, [firestore]);
-  const sectorsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'sectores') : null, [firestore]);
-
-  const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
-  const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
-  const { data: sectors } = useCollection<Sector>(sectorsQuery);
   
   const canModify = user && !viewOnlyRoles.includes(user.role);
   const canExport = user && user.role !== ROLES.CANALES;
@@ -91,17 +83,34 @@ export default function RecordsPage() {
     setFilters(initialFilters);
   }
 
+  const buildQuery = (collectionName: string) => {
+    if (!firestore || !user) return null;
+    let constraints: QueryConstraint[] = [];
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+      constraints.push(where('zone', '==', zone));
+    }
+    return query(collection(firestore, collectionName), ...constraints);
+  };
+
+  const expansionManagersQuery = useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]);
+  const collaboratorsQuery = useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
+  const sectorsQuery = useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]);
+  
+  const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
+  const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
+  const { data: sectors } = useCollection<Sector>(sectorsQuery);
+
   const inspectionsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !user) return null;
     const baseQuery = collection(firestore, 'inspections');
     let q = query(baseQuery);
 
-    if (zone !== 'Todas las zonas') {
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
       q = query(q, where('zone', '==', zone));
     }
     // Note: More complex client-side filtering is still needed for text search on un-indexed fields
     return q;
-  }, [firestore, zone]);
+  }, [firestore, user, zone]);
 
   const { data: records, isLoading } = useCollection<InspectionRecord>(inspectionsQuery);
 
@@ -228,6 +237,7 @@ export default function RecordsPage() {
                         <Select value={filters.gestor} onValueChange={(v) => handleFilterChange('gestor', v)}>
                             <SelectTrigger id="gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
                                 {expansionManagers?.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -237,6 +247,7 @@ export default function RecordsPage() {
                         <Select value={filters.empresa} onValueChange={(v) => handleFilterChange('empresa', v)}>
                             <SelectTrigger id="empresa"><SelectValue placeholder="Todas" /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="all">Todas</SelectItem>
                                  {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -246,6 +257,7 @@ export default function RecordsPage() {
                          <Select value={filters.sector} onValueChange={(v) => handleFilterChange('sector', v)}>
                             <SelectTrigger id="sector"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
                                 {sectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -267,6 +279,7 @@ export default function RecordsPage() {
                          <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
                             <SelectTrigger id="status"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
                                 {Object.values(STATUS).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -276,6 +289,7 @@ export default function RecordsPage() {
                          <Select value={filters.tipoInspeccion} onValueChange={(v) => handleFilterChange('tipoInspeccion', v)}>
                             <SelectTrigger id="tipoInspeccion"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
                                 {allInspectionTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -285,6 +299,7 @@ export default function RecordsPage() {
                          <Select value={filters.mercado} onValueChange={(v) => handleFilterChange('mercado', v)}>
                             <SelectTrigger id="mercado"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
                                 {MERCADO.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                             </SelectContent>
                         </Select>
