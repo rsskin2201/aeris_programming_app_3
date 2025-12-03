@@ -148,12 +148,9 @@ export default function CalendarPage() {
   const inspectionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    
-    // Non-admin roles should be filtered by their zone unless they have global access
     if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
       constraints.push(where('zone', '==', zone));
     }
-    
     return query(collection(firestore, 'inspections'), ...constraints);
   }, [firestore, user, zone]);
   

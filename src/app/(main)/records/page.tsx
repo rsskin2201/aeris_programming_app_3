@@ -106,13 +106,10 @@ export default function RecordsPage() {
 
   const inspectionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    
     const constraints: QueryConstraint[] = [];
-    
     if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
-    
     return query(collection(firestore, 'inspections'), ...constraints);
   }, [firestore, user, zone]);
 

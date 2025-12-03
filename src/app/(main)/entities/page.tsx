@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from "react";
-import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
+import { collection, query, where, QueryConstraint } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,17 +58,14 @@ export default function EntitiesPage() {
   const [selectedManager, setSelectedManager] = useState<ExpansionManager | null>(null);
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
   
-  const canModify = user && canModifyRoles.includes(user.role);
+  const canModify = user && ![...viewOnlyRoles, ROLES.CALIDAD].includes(user.role);
 
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
-    
     const constraints: QueryConstraint[] = [];
-    
     if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
-    
     return query(collection(firestore, collectionName), ...constraints);
   };
   
