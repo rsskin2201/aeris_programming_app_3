@@ -50,17 +50,6 @@ interface AppContextType {
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const mockUsersSeed: (Omit<User, 'id'> & {password: string})[] = [
-  { name: 'Admin User', username: 'admin', password: 'password123', role: ROLES.ADMIN, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { name: 'Gerardo Gestor', username: 'gestor', password: 'password123', role: ROLES.GESTOR, zone: 'Zona Norte', status: USER_STATUS.ACTIVO },
-  { name: 'Ana Colaboradora', username: 'colaboradora', password: 'password123', role: ROLES.COLABORADOR, zone: 'Bajio Norte', status: USER_STATUS.ACTIVO },
-  { name: 'Sofia Soporte', username: 'soporte', password: 'password123', role: ROLES.SOPORTE, zone: 'Zona Centro', status: USER_STATUS.ACTIVO },
-  { name: 'Samuel Coordinador', username: 'coordinador', password: 'password123', role: ROLES.COORDINADOR_SSPP, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { name: 'Carla Calidad', username: 'calidad', password: 'password123', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
-  { name: 'Carlos Canales', username: 'canales', password: 'password123', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { name: 'Victor Visual', username: 'visual', password: 'password123', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.INACTIVO },
-];
-
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [operatorName, setOperatorName] = useState<string | null>(null);
@@ -79,44 +68,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const firestore = useFirestore();
   const { user: firebaseUser, loading: isUserLoading } = useFirebaseAuthUser();
-
-  useEffect(() => {
-    const seedUsers = async () => {
-        if (!firestore || !auth) return;
-
-        for (const mockUser of mockUsersSeed) {
-            const email = `${mockUser.username}@aeris.com`;
-            try {
-                // Attempt to create the user in Firebase Auth
-                const userCredential = await createUserWithEmailAndPassword(auth, email, mockUser.password);
-                const uid = userCredential.user.uid;
-
-                // If creation is successful, create the Firestore document
-                const { password, ...userProfileData } = mockUser;
-                const userProfile: User = { ...userProfileData, id: uid };
-                const userDocRef = doc(firestore, 'users', uid);
-                await setDoc(userDocRef, userProfile);
-                console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
-
-            } catch (error: any) {
-                if (error.code === 'auth/email-already-in-use') {
-                    // User already exists in Auth, this is fine. We can ensure the Firestore doc exists if needed.
-                    console.log(`Auth user ${mockUser.username} already exists.`);
-                } else {
-                    // Log other creation errors
-                    console.error(`Failed to create new user ${mockUser.username}:`, error);
-                }
-            }
-        }
-         // Sign out after seeding to ensure a clean state for the actual user login
-        if (auth.currentUser) {
-            await signOut(auth);
-        }
-    };
-  
-    seedUsers();
-  }, [firestore, auth]);
-
 
   useEffect(() => {
     const fetchUserProfile = async (uid: string) => {
@@ -228,9 +179,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const docRef = doc(firestore, 'users', uid);
         setDocumentNonBlocking(docRef, userProfile, { merge: false });
 
-      } catch (error) {
-        console.error("Error creating a user during bulk upload:", error);
-        // We can add a notification to the user here if needed
+      } catch (error: any) {
+        if (error.code !== 'auth/email-already-in-use') {
+            console.error("Error creating a user during bulk upload:", error);
+        }
       }
     });
   }, [auth, firestore]);

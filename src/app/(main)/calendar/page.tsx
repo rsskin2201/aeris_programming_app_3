@@ -73,10 +73,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, QueryConstraint } from 'firebase/firestore';
 
-const adminRoles = [ROLES.ADMIN];
-const canToggleFormsRoles = [ROLES.ADMIN];
+const canToggleFormsRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
+const canEnableWeekendsRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
 const canBlockDaysRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
-const canExportRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP, ROLES.VISUAL, ROLES.CANALES];
+const canExportRoles = Object.values(ROLES); // All roles can export
 
 const daysOfWeek = [
   'Lunes',
@@ -136,7 +136,7 @@ export default function CalendarPage() {
   });
 
   const canToggleForms = user && canToggleFormsRoles.includes(user.role);
-  const canEnableWeekends = user && adminRoles.includes(user.role);
+  const canEnableWeekends = user && canEnableWeekendsRoles.includes(user.role);
   const canBlockDays = user && canBlockDaysRoles.includes(user.role);
   const canExport = user && canExportRoles.includes(user.role);
   
@@ -169,8 +169,8 @@ export default function CalendarPage() {
     let filtered = records;
 
     // Role-based pre-filtering
-    if (isCollaborator) {
-      filtered = records.filter(record => record.collaboratorCompany === user?.name);
+    if (isCollaborator && user?.name) {
+      filtered = records.filter(record => record.collaboratorCompany === user.name);
     }
     
     // Active filters from UI
@@ -337,6 +337,15 @@ export default function CalendarPage() {
   }, [view, currentDate, filteredRecordsForView]);
   
   const handleExport = () => {
+    if (exportCount === 0) {
+        toast({
+            variant: 'destructive',
+            title: "Exportación Vacía",
+            description: "No hay registros en la vista actual para exportar.",
+        });
+        return;
+    }
+
     const csv = Papa.unparse(exportData);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
@@ -580,10 +589,7 @@ export default function CalendarPage() {
                   <DialogHeader>
                     <DialogTitle>Confirmar Exportación de Calendario</DialogTitle>
                     <DialogDescription>
-                      Se exportarán <strong>{exportCount}</strong> registros para el rango de fechas:
-                      <p className='font-medium mt-2'>
-                          {format(exportData[0]?.requestDate ? parseISO(exportData[0].requestDate) : new Date(), 'PPP', { locale: es })} - {format(exportData[exportData.length-1]?.requestDate ? parseISO(exportData[exportData.length - 1].requestDate) : new Date(), 'PPP', { locale: es })}
-                      </p>
+                      Se exportarán <strong>{exportCount}</strong> registros para el rango de fechas seleccionado en la vista actual.
                       ¿Deseas continuar?
                     </DialogDescription>
                   </DialogHeader>
@@ -668,46 +674,40 @@ export default function CalendarPage() {
                             </Select>
                         </div>
 
-                        {![ROLES.CALIDAD].includes(user?.role || '') && (
+                        {user?.role && ![ROLES.CALIDAD].includes(user.role) && (
                             <>
-                                {(isGestor || isCoordinator || isAdmin) && (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="filter-gestor">Gestor de Expansión</Label>
-                                        <Select value={activeFilters.gestor || 'all'} onValueChange={(v) => handleFilterChange('gestor', v)}>
-                                            <SelectTrigger id="filter-gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">Todos</SelectItem>
-                                                {availableManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
-                                {(isCollaborator || isCoordinator || isAdmin) && (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="filter-instalador">Instalador</Label>
-                                        <Select value={activeFilters.instalador || 'all'} onValueChange={(v) => handleFilterChange('instalador', v)}>
-                                            <SelectTrigger id="filter-instalador"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">Todos</SelectItem>
-                                                {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
+                                <div className="space-y-2">
+                                    <Label htmlFor="filter-gestor">Gestor de Expansión</Label>
+                                    <Select value={activeFilters.gestor || 'all'} onValueChange={(v) => handleFilterChange('gestor', v)}>
+                                        <SelectTrigger id="filter-gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Todos</SelectItem>
+                                            {availableManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="filter-instalador">Instalador</Label>
+                                    <Select value={activeFilters.instalador || 'all'} onValueChange={(v) => handleFilterChange('instalador', v)}>
+                                        <SelectTrigger id="filter-instalador"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Todos</SelectItem>
+                                            {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </>
                         )}
-                        {(isQualityControl || isCoordinator || isAdmin) && (
-                             <div className="space-y-2">
-                                <Label htmlFor="filter-inspector">Inspector</Label>
-                                <Select value={activeFilters.inspector || 'all'} onValueChange={(v) => handleFilterChange('inspector', v)}>
-                                    <SelectTrigger id="filter-inspector"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos</SelectItem>
-                                        {availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
+                        <div className="space-y-2">
+                            <Label htmlFor="filter-inspector">Inspector</Label>
+                            <Select value={activeFilters.inspector || 'all'} onValueChange={(v) => handleFilterChange('inspector', v)}>
+                                <SelectTrigger id="filter-inspector"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos</SelectItem>
+                                    {availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         
                         <div className="flex items-end gap-2 lg:col-start-4">
                             <Button variant="ghost" className="flex-1" onClick={clearFilters}>Limpiar</Button>
