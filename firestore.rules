@@ -265,5 +265,20 @@ service cloud.firestore {
       allow update: if isAdminOrCanales() && isExistingDoc();
       allow delete: if isAdminOrCanales() && isExistingDoc();
     }
+
+    /**
+     * @description Stores meter records. Publicly readable, admin-only writes.
+     * @path /medidores/{medidorId}
+     * @allow (list) Any authenticated user lists all meters.
+     * @deny (create) A non-admin user attempts to add a new meter.
+     * @principle Protects critical reference data while allowing it to be read by all users.
+     */
+    match /medidores/{medidorId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdminOrCanales();
+      allow update: if isAdminOrCanales() && isExistingDoc();
+      allow delete: if isAdminOrCanales() && isExistingDoc();
+    }
   }
 }
