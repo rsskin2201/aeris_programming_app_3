@@ -7,8 +7,9 @@ import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, Fi
 import type { User, Role, Zone, BlockedDay, AppNotification } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS } from '@/lib/types';
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
-import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from '@/lib/mock-data';
+import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, mockUsers } from '@/lib/mock-data';
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppContextType {
   // Auth State
@@ -16,7 +17,7 @@ interface AppContextType {
   isUserLoading: boolean;
   login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
-  addMultipleUsers: (users: Omit<User, 'id'>[]) => void;
+  addMultipleUsers: (users: (Omit<User, 'id'> & { password?: string })[]) => void;
 
 
   operatorName: string | null;
@@ -67,7 +68,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const auth = useAuth();
   const firestore = useFirestore();
+  const { toast } = useToast();
   const { user: firebaseUser, loading: isUserLoading } = useFirebaseAuthUser();
+
+  const addMultipleUsers = useCallback((users: (Omit<User, 'id'> & { password?: string })[]) => {
+    if (!firestore || !auth) return;
+    users.forEach(async (user) => {
+      const email = `${user.username}@aeris.com`;
+      if (!user.password) {
+          console.error("Skipping user creation due to missing password", user);
+          return;
+      }
+      try {
+        // Create user in Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, user.password);
+        const uid = userCredential.user.uid;
+        
+        // Create user profile in Firestore
+        const { password, ...userProfileData } = user;
+        const userProfile: User = { ...userProfileData, id: uid };
+        const docRef = doc(firestore, 'users', uid);
+        setDocumentNonBlocking(docRef, userProfile, { merge: false });
+
+      } catch (error: any) {
+        if (error.code !== 'auth/email-already-in-use') {
+            console.error("Error creating a user during bulk upload:", error);
+        }
+      }
+    });
+  }, [auth, firestore]);
+
+  const seedUsers = useCallback(() => {
+    const passwords = {
+      [ROLES.ADMIN]: 'Admin.2024!',
+      [ROLES.GESTOR]: 'Gestor.2024!',
+      [ROLES.COLABORADOR]: 'Colab.2024!',
+      [ROLES.SOPORTE]: 'Soporte.2024!',
+      [ROLES.COORDINADOR_SSPP]: 'Coord.2024!',
+      [ROLES.CALIDAD]: 'Calidad.2024!',
+      [ROLES.CANALES]: 'Canales.2024!',
+      [ROLES.VISUAL]: 'Visual.2024!',
+    };
+
+    const usersToSeed = mockUsers.map(u => ({
+      ...u,
+      password: passwords[u.role] || 'Default.2024!',
+    }));
+    
+    addMultipleUsers(usersToSeed);
+    localStorage.setItem('users_seeded', 'true');
+    toast({ title: "Usuarios de demostración creados", description: "Puedes iniciar sesión con los usuarios de prueba."});
+
+  }, [addMultipleUsers, toast]);
+
+  useEffect(() => {
+    if (firestore && auth && !localStorage.getItem('users_seeded')) {
+      seedUsers();
+    }
+  }, [firestore, auth, seedUsers]);
+
 
   useEffect(() => {
     const fetchUserProfile = async (uid: string) => {
@@ -123,8 +182,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-        // To prevent user enumeration, we throw a generic invalid credential error.
-        throw { code: 'auth/invalid-credential' };
+        throw { code: 'auth/invalid-credential', message: 'Usuario o contraseña incorrectos.' };
     }
 
     const userDoc = querySnapshot.docs[0];
@@ -133,13 +191,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const email = `${userProfile.username}@aeris.com`;
 
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, email, password);
         // On successful sign-in, Firebase automatically handles the user state.
         // The `useEffect` listening to `firebaseUser` will then fetch the profile.
         return userProfile;
     } catch (error: any) {
         console.error("Login process failed after finding user profile:", error);
-        throw error;
+        throw error; // Re-throw the original Firebase auth error
     }
   }, [auth, firestore]);
 
@@ -155,33 +213,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setZone(newZone);
     setIsZoneConfirmed(true);
   }, []);
-
-  const addMultipleUsers = useCallback((users: (Omit<User, 'id'> & { password?: string })[]) => {
-    if (!firestore || !auth) return;
-    users.forEach(async (user) => {
-      const email = `${user.username}@aeris.com`;
-      if (!user.password) {
-          console.error("Skipping user creation due to missing password", user);
-          return;
-      }
-      try {
-        // Create user in Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, email, user.password);
-        const uid = userCredential.user.uid;
-        
-        // Create user profile in Firestore
-        const { password, ...userProfileData } = user;
-        const userProfile: User = { ...userProfileData, id: uid };
-        const docRef = doc(firestore, 'users', uid);
-        setDocumentNonBlocking(docRef, userProfile, { merge: false });
-
-      } catch (error: any) {
-        if (error.code !== 'auth/email-already-in-use') {
-            console.error("Error creating a user during bulk upload:", error);
-        }
-      }
-    });
-  }, [auth, firestore]);
 
   const addMultipleEntities = (collectionName: string) => (data: any[]) => {
     if (!firestore) return;
