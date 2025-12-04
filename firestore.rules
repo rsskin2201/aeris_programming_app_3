@@ -58,14 +58,6 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    
-    /**
-     * Returns true if the user is not authenticated.
-     * Used for login-related queries that must be accessible before sign-in.
-     */
-    function isSigningIn() {
-        return request.auth == null;
-    }
 
     /**
      * Returns true if the authenticated user's UID matches the provided userId.
@@ -163,7 +155,7 @@ service cloud.firestore {
      */
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin() || isSigningIn();
+      allow list: if isAdmin() || request.auth == null;
       allow create: if isOwner(userId) || isAdmin();
       allow update: if (isOwner(userId) || isAdmin()) && isExistingDoc() && request.resource.data.id == resource.data.id;
       allow delete: if (isOwner(userId) || isAdmin()) && isExistingDoc();
