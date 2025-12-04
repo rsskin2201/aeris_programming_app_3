@@ -20,7 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser } from "@/lib/types";
+import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser, ChangeHistory } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, mockMunicipalities } from "@/lib/form-options";
@@ -29,7 +29,7 @@ import { SupportValidationForm } from "@/components/inspections/support-validati
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
-import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
 
 const formSchema = z.object({
@@ -367,9 +367,51 @@ export default function IndividualInspectionPage() {
     }
   }, [fromParam]);
 
+  const saveChangeHistory = (newValues: FormValues) => {
+    if (!firestore || !user || !currentRecord) return;
+    
+    const changes: { field: string; oldValue: string; newValue: string }[] = [];
+    const oldValues = {
+      ...currentRecord,
+      fechaProgramacion: parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()),
+    };
+
+    (Object.keys(newValues) as (keyof FormValues)[]).forEach(key => {
+        const oldValue = String(oldValues[key as keyof typeof oldValues] || '');
+        const newValue = String(newValues[key] || '');
+
+        if (key === 'fechaProgramacion' && newValues.fechaProgramacion) {
+            const oldDateStr = format(oldValues.fechaProgramacion || new Date(), 'yyyy-MM-dd');
+            const newDateStr = format(newValues.fechaProgramacion, 'yyyy-MM-dd');
+            if (oldDateStr !== newDateStr) {
+                changes.push({ field: 'Fecha Programación', oldValue: oldDateStr, newValue: newDateStr });
+            }
+        } else if (oldValue !== newValue) {
+            changes.push({ field: key, oldValue, newValue });
+        }
+    });
+
+    if (changes.length > 0) {
+      const historyRecord: Omit<ChangeHistory, 'id'> = {
+        inspectionId: currentRecord.id,
+        timestamp: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        userId: user.id,
+        username: user.username,
+        changes: changes,
+      };
+
+      const historyCollectionRef = collection(firestore, `inspections/${currentRecord.id}/history`);
+      addDocumentNonBlocking(historyCollectionRef, historyRecord);
+    }
+  };
+
   async function onFinalSubmit(values: FormValues) {
     if (!firestore) return;
     setIsSubmitting(true);
+
+    if (pageMode === 'edit') {
+      saveChangeHistory(values);
+    }
     
     const recordToSave: InspectionRecord = {
         ...currentRecord,

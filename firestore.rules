@@ -162,11 +162,8 @@ service cloud.firestore {
     }
 
     /**
-     * @description Stores inspection records for the workflow. Access is role-based.
+     * @description Stores inspection records and their change history.
      * @path /inspections/{inspectionId}
-     * @allow (get) An authenticated user with a 'Visual' role reads an inspection.
-     * @deny (create) A user with a 'Visual' role attempts to create an inspection.
-     * @principle Enforces Role-Based Access Control (RBAC) for shared business data.
      */
     match /inspections/{inspectionId} {
       allow get: if canReadData();
@@ -174,6 +171,20 @@ service cloud.firestore {
       allow create: if canWriteData();
       allow update: if canWriteData() && isExistingDoc();
       allow delete: if isAdmin() && isExistingDoc();
+
+      /**
+       * @description Stores change history for an inspection.
+       * @path /inspections/{inspectionId}/history/{historyId}
+       * @allow (read, create) A user who can modify the parent inspection can create and read history.
+       * @deny (update, delete) History records are immutable.
+       */
+      match /history/{historyId} {
+        allow get: if canReadData();
+        allow list: if canReadData();
+        allow create: if canWriteData();
+        allow update: if false; // History is immutable
+        allow delete: if false; // History is immutable
+      }
     }
 
     /**

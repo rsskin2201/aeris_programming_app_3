@@ -358,6 +358,58 @@
         "zona",
         "status"
       ]
+    },
+    "ChangeHistory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChangeHistory",
+      "type": "object",
+      "description": "Represents a record of a change made to an inspection document.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the history entry."
+        },
+        "inspectionId": {
+          "type": "string",
+          "description": "The ID of the inspection that was modified."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of when the change occurred."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who made the change."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the user who made the change."
+        },
+        "changes": {
+          "type": "array",
+          "description": "An array detailing the fields that were changed.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "description": "The name of the field that was changed."
+              },
+              "oldValue": {
+                "type": "string",
+                "description": "The value of the field before the change."
+              },
+              "newValue": {
+                "type": "string",
+                "description": "The value of the field after the change."
+              }
+            },
+            "required": ["field", "oldValue", "newValue"]
+          }
+        }
+      },
+      "required": ["id", "inspectionId", "timestamp", "userId", "username", "changes"]
     }
   },
   "auth": {
@@ -380,6 +432,26 @@
             {
               "name": "inspectionId",
               "description": "Unique identifier for the inspection record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/inspections/{inspectionId}/history/{historyId}",
+        "definition": {
+          "entityName": "ChangeHistory",
+          "schema": {
+            "$ref": "#/backend/entities/ChangeHistory"
+          },
+          "description": "Stores the history of changes for a specific inspection.",
+          "params": [
+            {
+              "name": "inspectionId",
+              "description": "The ID of the parent inspection record."
+            },
+            {
+              "name": "historyId",
+              "description": "Unique identifier for the history entry."
             }
           ]
         }
