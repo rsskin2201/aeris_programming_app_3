@@ -60,7 +60,15 @@ const initialFilters = {
 
 const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
 const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD];
-const canExportRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD, ROLES.VISUAL, ROLES.CANALES, ROLES.COORDINADOR_SSPP];
+const canExportRoles = Object.values(ROLES);
+const nonAdminRolesWithZoneFilter = [
+  ROLES.COLABORADOR,
+  ROLES.GESTOR,
+  ROLES.SOPORTE,
+  ROLES.CALIDAD,
+  ROLES.COORDINADOR_SSPP,
+  ROLES.VISUAL,
+];
 
 
 export default function RecordsPage() {
@@ -91,7 +99,7 @@ export default function RecordsPage() {
     
     const constraints: QueryConstraint[] = [];
     
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+    if (nonAdminRolesWithZoneFilter.includes(user.role) && zone !== 'Todas las zonas') {
       constraints.push(where('zone', '==', zone));
     }
     

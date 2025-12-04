@@ -40,6 +40,14 @@ const statusColors: Record<string, string> = {
 const viewOnlyRoles = [ROLES.VISUAL];
 const canModifyRoles = [ROLES.ADMIN, ROLES.CANALES];
 const canUploadRoles = [ROLES.ADMIN, ROLES.CANALES];
+const nonAdminRolesWithZoneFilter = [
+  ROLES.COLABORADOR,
+  ROLES.GESTOR,
+  ROLES.SOPORTE,
+  ROLES.CALIDAD,
+  ROLES.COORDINADOR_SSPP,
+  ROLES.VISUAL,
+];
 
 export default function EntitiesPage() {
   const { user, zone } = useAppContext();
@@ -65,7 +73,7 @@ export default function EntitiesPage() {
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && user.role !== ROLES.CANALES && zone !== 'Todas las zonas') {
+    if (nonAdminRolesWithZoneFilter.includes(user.role) && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
     return query(collection(firestore, collectionName), ...constraints);

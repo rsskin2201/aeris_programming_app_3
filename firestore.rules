@@ -110,6 +110,8 @@ service cloud.firestore {
     /**
      * Checks if the user's role grants them permission to read inspections.
      * Includes all operational, administrative, and visualization roles.
+     * This function grants blanket read/list permission; client-side queries
+     * MUST enforce zone-based filtering for non-admin roles.
      */
     function canReadData() {
       let role = userRole();
@@ -118,7 +120,7 @@ service cloud.firestore {
         role == 'Visual' ||
         role == 'Empresa Colaboradora' ||
         role == 'Gestor de Expansión' ||
-        role == 'Empresa de Control de Calidad' ||
+        role == 'Empresa Control de Calidad' ||
         role == 'Soporte a Procesos' ||
         role == 'Canales' ||
         role == 'Coordinador SSPP'
@@ -135,7 +137,7 @@ service cloud.firestore {
         role == 'Administrador' ||
         role == 'Empresa Colaboradora' ||
         role == 'Gestor de Expansión' ||
-        role == 'Empresa de Control de Calidad'
+        role == 'Empresa Control de Calidad'
       );
     }
 
