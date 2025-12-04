@@ -18,7 +18,7 @@ import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebas
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { useAppContext } from '@/contexts/app-provider';
+import { useAppContext } from '@/hooks/use-app-context';
 
 
 const formSchema = z.object({
