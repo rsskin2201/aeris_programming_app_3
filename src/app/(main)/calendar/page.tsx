@@ -73,9 +73,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, QueryConstraint } from 'firebase/firestore';
 
-const privilegedRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.SOPORTE, ROLES.COORDINADOR_SSPP];
 const adminRoles = [ROLES.ADMIN];
-const dayBlockingRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP];
+const canToggleFormsRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
+const canBlockDaysRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
 const canExportRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP, ROLES.VISUAL];
 
 const daysOfWeek = [
@@ -135,27 +135,17 @@ export default function CalendarPage() {
       inspector: '',
   });
 
-  const canToggleForms = user && privilegedRoles.includes(user.role);
+  const canToggleForms = user && canToggleFormsRoles.includes(user.role);
   const canEnableWeekends = user && adminRoles.includes(user.role);
-  const canBlockDays = user && dayBlockingRoles.includes(user.role);
+  const canBlockDays = user && canBlockDaysRoles.includes(user.role);
   const canExport = user && canExportRoles.includes(user.role);
   
   const isCollaborator = user?.role === ROLES.COLABORADOR;
   const isQualityControl = user?.role === ROLES.CALIDAD;
-  const isExpansionManager = user?.role === ROLES.GESTOR;
+  const isCoordinator = user?.role === ROLES.COORDINADOR_SSPP;
+  const isGestor = user?.role === ROLES.GESTOR;
   const isAdmin = user?.role === ROLES.ADMIN;
 
-  const inspectionsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
-      constraints.push(where('zone', '==', zone));
-    }
-    return query(collection(firestore, 'inspections'), ...constraints);
-  }, [firestore, user, zone]);
-  
-  const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
-  
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
@@ -164,6 +154,9 @@ export default function CalendarPage() {
     }
     return query(collection(firestore, collectionName), ...constraints);
   };
+  
+  const inspectionsQuery = useMemoFirebase(() => buildQuery('inspections'), [firestore, user, zone]);
+  const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
   
   const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
   const { data: installers } = useCollection<Installer>(useMemoFirebase(() => buildQuery('instaladores'), [firestore, user, zone]));
@@ -675,7 +668,7 @@ export default function CalendarPage() {
                             </Select>
                         </div>
 
-                        {isExpansionManager && (
+                        {(isGestor || isCoordinator || isAdmin) && (
                             <div className="space-y-2">
                                 <Label htmlFor="filter-gestor">Gestor de Expansión</Label>
                                 <Select value={activeFilters.gestor || 'all'} onValueChange={(v) => handleFilterChange('gestor', v)}>
@@ -687,7 +680,7 @@ export default function CalendarPage() {
                                 </Select>
                             </div>
                         )}
-                        {isCollaborator && (
+                        {(isCollaborator || isCoordinator || isAdmin) && (
                              <div className="space-y-2">
                                 <Label htmlFor="filter-instalador">Instalador</Label>
                                 <Select value={activeFilters.instalador || 'all'} onValueChange={(v) => handleFilterChange('instalador', v)}>
@@ -699,7 +692,7 @@ export default function CalendarPage() {
                                 </Select>
                             </div>
                         )}
-                        {isQualityControl && (
+                        {(isQualityControl || isCoordinator || isAdmin) && (
                              <div className="space-y-2">
                                 <Label htmlFor="filter-inspector">Inspector</Label>
                                 <Select value={activeFilters.inspector || 'all'} onValueChange={(v) => handleFilterChange('inspector', v)}>
