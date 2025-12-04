@@ -278,7 +278,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // 5. Update the old record
     const oldDocRef = doc(firestore, 'inspections', oldId);
     const updatedOldRecord: Partial<InspectionRecord> = {
-        status: `${oldStatus} - REPROGRAMADA` as Status,
+        status: `${oldStatus} - REPROGRAMADA` as any,
         reprogrammedToId: newId,
     };
     updateDocumentNonBlocking(oldDocRef, updatedOldRecord);

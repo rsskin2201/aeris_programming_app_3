@@ -431,7 +431,7 @@ export default function RecordsPage() {
                                   Modificar
                               </DropdownMenuItem>
                           )}
-                          {canModify && reprogrammableStatuses.includes(record.status) && (
+                          {canModify && reprogrammableStatuses.includes(record.status) && !record.id.startsWith('SF-') && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleReprogram(record)}>
