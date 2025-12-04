@@ -116,34 +116,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
     if (!auth || !firestore) throw new Error("Firebase services not available.");
-
-    // Find the user profile by username first
+    
     const usersRef = collection(firestore, "users");
     const q = query(usersRef, where("username", "==", username));
     
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-        throw new Error("auth/user-not-found");
+        // To prevent user enumeration, we throw a generic invalid credential error.
+        throw { code: 'auth/invalid-credential' };
     }
 
     const userDoc = querySnapshot.docs[0];
-    const userProfile = { ...userDoc.data(), id: userDoc.id } as User;
+    const userProfile = { id: userDoc.id, ...userDoc.data() } as User;
     
-    // Now use the full email for authentication
     const email = `${userProfile.username}@aeris.com`;
 
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const authedUser = userCredential.user;
-        
-        setUser(userProfile);
-        setOperatorName(userProfile.name);
+        // On successful sign-in, Firebase automatically handles the user state.
+        // The `useEffect` listening to `firebaseUser` will then fetch the profile.
         return userProfile;
-
     } catch (error: any) {
         console.error("Login process failed after finding user profile:", error);
-        // Re-throw the original auth error to be caught by the login form
         throw error;
     }
   }, [auth, firestore]);
@@ -271,7 +266,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, markNotificationAsRead, setZone, addMultipleUsers
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors
     ]
   );
 
