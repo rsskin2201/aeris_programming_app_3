@@ -92,21 +92,21 @@ const daysOfWeek = [
 const hoursOfDay = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
 
 const statusColors: Record<Status, string> = {
-    'REGISTRADA': 'bg-gray-500/80 border-gray-600 text-white',
-    'CONFIRMADA POR GE': 'bg-cyan-600/80 border-cyan-700 text-white',
-    'PROGRAMADA': 'bg-blue-600/80 border-blue-700 text-white',
-    'EN PROCESO': 'bg-orange-500/80 border-orange-600 text-white',
-    'PENDIENTE INFORMAR DATOS': 'bg-yellow-500/80 border-yellow-600 text-white',
-    'APROBADA': 'bg-green-600/80 border-green-700 text-white',
-    'NO APROBADA': 'bg-red-600/80 border-red-700 text-white',
-    'RECHAZADA': 'bg-red-700/80 border-red-800 text-white',
-    'CANCELADA': 'bg-red-800/80 border-red-900 text-white',
-    'CONECTADA': 'bg-purple-600/80 border-purple-700 text-white',
-    'FALTA INFORMACION': 'bg-yellow-600/80 border-yellow-700 text-white',
+    [STATUS.REGISTRADA]: 'bg-gray-500 border-gray-600 text-white',
+    [STATUS.CONFIRMADA_POR_GE]: 'bg-cyan-600 border-cyan-700 text-white',
+    [STATUS.PROGRAMADA]: 'bg-blue-600 border-blue-700 text-white',
+    [STATUS.EN_PROCESO]: 'bg-orange-500 border-orange-600 text-white',
+    [STATUS.PENDIENTE_INFORMAR_DATOS]: 'bg-yellow-500 border-yellow-600 text-white',
+    [STATUS.APROBADA]: 'bg-green-600 border-green-700 text-white',
+    [STATUS.NO_APROBADA]: 'bg-pink-600 border-pink-700 text-white',
+    [STATUS.FALTA_INFORMACION]: 'bg-amber-600 border-amber-700 text-white',
+    [STATUS.RECHAZADA]: 'bg-red-700 border-red-800 text-white',
+    [STATUS.CANCELADA]: 'bg-red-800 border-red-900 text-white',
+    [STATUS.CONECTADA]: 'bg-purple-600 border-purple-700 text-white',
 };
 
 const fadedStatuses: Status[] = [STATUS.REGISTRADA, STATUS.CONFIRMADA_POR_GE];
-const hiddenStatuses: Status[] = [STATUS.CANCELADA];
+const hiddenStatuses: Status[] = [STATUS.CANCELADA, STATUS.RECHAZADA];
 
 const nonAdminRolesWithZoneFilter = [
   ROLES.COLABORADOR,
