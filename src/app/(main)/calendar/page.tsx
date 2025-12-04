@@ -103,6 +103,15 @@ const statusColors: Record<Status, string> = {
     'PENDIENTE CORRECCION': 'bg-yellow-600/80 border-yellow-700 text-white',
 };
 
+const nonAdminRolesWithZoneFilter = [
+  ROLES.COLABORADOR,
+  ROLES.GESTOR,
+  ROLES.SOPORTE,
+  ROLES.CALIDAD,
+  ROLES.COORDINADOR_SSPP,
+  ROLES.VISUAL,
+];
+
 export default function CalendarPage() {
   const {
     user,
@@ -149,7 +158,7 @@ export default function CalendarPage() {
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    if (![ROLES.ADMIN, ROLES.CANALES].includes(user.role) && zone !== 'Todas las zonas') {
+    if (nonAdminRolesWithZoneFilter.includes(user.role) && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
     return query(collection(firestore, collectionName), ...constraints);
