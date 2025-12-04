@@ -65,6 +65,7 @@ const formSchema = z.object({
   gestor: z.string().min(1, "El gestor es requerido."),
   
   status: z.string(),
+  motivoRechazo: z.string().optional(),
 }).refine(data => {
     if (data.status === STATUS.PROGRAMADA) {
         return !!data.inspector;
@@ -73,6 +74,14 @@ const formSchema = z.object({
 }, {
     message: "El campo Inspector es requerido para el estatus 'Programada'.",
     path: ["inspector"],
+}).refine(data => {
+    if (data.status === STATUS.RECHAZADA) {
+        return !!data.motivoRechazo && data.motivoRechazo.length > 0;
+    }
+    return true;
+}, {
+    message: "El motivo de rechazo es requerido cuando el estatus es 'Rechazada'.",
+    path: ["motivoRechazo"],
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -173,6 +182,7 @@ export default function IndividualInspectionPage() {
       gestor: "",
       sector: "",
       status: getInitialStatus(user?.role),
+      motivoRechazo: "",
     }
   }, [zone, user?.role, searchParams, isCollaborator, collaboratorCompany]);
 
@@ -214,6 +224,7 @@ export default function IndividualInspectionPage() {
                 inspector: currentRecord.inspector || '',
                 gestor: currentRecord.gestor || '',
                 status: currentRecord.status,
+                motivoRechazo: currentRecord.motivoRechazo || '',
             });
         }
     } else {
@@ -443,6 +454,7 @@ export default function IndividualInspectionPage() {
         inspector: values.inspector || '',
         gestor: values.gestor || '',
         status: values.status as Status,
+        motivoRechazo: values.motivoRechazo || '',
 
         client: currentRecord?.client || 'Cliente (TBD)',
         address: `${values.calle} ${values.numero}, ${values.colonia}`,
@@ -923,6 +935,21 @@ export default function IndividualInspectionPage() {
                   </FormItem>
                 )} />
 
+                {formData.status === STATUS.RECHAZADA && (
+                    <FormField control={form.control} name="motivoRechazo" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Motivo de Rechazo</FormLabel>
+                            <FormControl>
+                                <Textarea 
+                                    placeholder="Explica por qué se rechaza esta inspección..."
+                                    {...field} 
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                )}
+
               </CardContent>
             </Card>
 
@@ -975,6 +1002,7 @@ export default function IndividualInspectionPage() {
                               {renderFieldWithFeedback('horarioProgramacion', 'Horario', formData.horarioProgramacion)}
                               {renderFieldWithFeedback('gestor', 'Gestor', formData.gestor)}
                               {renderFieldWithFeedback('status', 'Estatus', formData.status)}
+                              {formData.status === STATUS.RECHAZADA && renderFieldWithFeedback('motivoRechazo', 'Motivo Rechazo', formData.motivoRechazo)}
                           </div>
                           <DialogFooter>
                               <DialogClose asChild>
@@ -1033,3 +1061,5 @@ export default function IndividualInspectionPage() {
     </div>
   );
 }
+
+    

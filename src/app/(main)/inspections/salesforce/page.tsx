@@ -119,6 +119,7 @@ const recordFields: FieldDefinition<InspectionRecord>[] = [
     { key: 'nombreCliente', label: 'NOMBRE DEL CLIENTE' },
     { key: 'telCliente', label: 'TEL. CLIENTE' },
     { key: 'motivoCancelacion', label: 'MOTIVO CANCELACION / NO APROBACION' },
+    { key: 'motivoRechazo', label: 'MOTIVO RECHAZO' },
     { key: 'comentariosOca', label: 'COMENTARIOS OCA' },
     { key: 'formaDePago', label: 'FORMA DE PAGO' },
     { key: 'equipoExtra', label: 'EQUIPO EXTRA' },
@@ -132,7 +133,6 @@ const recordFields: FieldDefinition<InspectionRecord>[] = [
     { key: 'datosConfirmados', label: 'DATOS CONFIRMADOS' },
     { key: 'observacionesSoporte', label: 'OBSERVACIONES SOPORTE' },
     { key: 'tipoRechazo', label: 'TIPO RECHAZO' },
-    { key: 'motivoRechazo', label: 'MOTIVO RECHAZO' },
     { key: 'observaciones', label: 'Observaciones' },
 ];
 
@@ -323,3 +323,5 @@ export default function SalesforceUploadPage() {
     </div>
   );
 }
+
+    
