@@ -116,33 +116,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
     if (!auth || !firestore) throw new Error("Firebase services not available.");
-    const email = `${username}@aeris.com`; // Internal convention
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const authedUser = userCredential.user;
+
+    // Find the user profile by username first
+    const usersRef = collection(firestore, "users");
+    const q = query(usersRef, where("username", "==", username));
     
-    const userDocRef = doc(firestore, 'users', authedUser.uid);
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+        throw new Error("auth/user-not-found");
+    }
+
+    const userDoc = querySnapshot.docs[0];
+    const userProfile = { ...userDoc.data(), id: userDoc.id } as User;
+    
+    // Now use the full email for authentication
+    const email = `${userProfile.username}@aeris.com`;
 
     try {
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-            const userProfile = { ...userDoc.data(), id: userDoc.id } as User;
-            setUser(userProfile);
-            setOperatorName(userProfile.name);
-            return userProfile;
-        } else {
-            await signOut(auth);
-            throw new Error("User profile does not exist in Firestore.");
-        }
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const authedUser = userCredential.user;
+        
+        setUser(userProfile);
+        setOperatorName(userProfile.name);
+        return userProfile;
+
     } catch (error: any) {
-         console.error("Login process failed after auth:", error);
-        if (error.code === 'permission-denied') {
-            const permissionError = new FirestorePermissionError({
-                path: userDocRef.path,
-                operation: 'get',
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        }
-        // Re-throw the original or a new error to be caught by the login form
+        console.error("Login process failed after finding user profile:", error);
+        // Re-throw the original auth error to be caught by the login form
         throw error;
     }
   }, [auth, firestore]);

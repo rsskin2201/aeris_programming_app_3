@@ -96,17 +96,16 @@ export function UserForm({ user, onClose }: UserFormProps) {
     }
     
     try {
-        let userId = user?.id;
         if (!isEditMode && values.password) {
-             addMultipleUsers([{...values, password: values.password}]);
-        } else if (userId) {
-             const dataToSave: Partial<User> = {
+            addMultipleUsers([{...values, password: values.password}]);
+        } else if (isEditMode && user) {
+            const dataToSave: Partial<User> = {
                 name: values.name,
                 role: values.role,
                 zone: values.zone,
                 status: values.status,
             };
-            const userDocRef = doc(firestore, 'users', userId);
+            const userDocRef = doc(firestore, 'users', user.id);
             updateDocumentNonBlocking(userDocRef, dataToSave);
         }
         
