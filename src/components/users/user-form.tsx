@@ -16,15 +16,13 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RotateCcw, ShieldAlert } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useAppContext } from '@/hooks/use-app-context';
 
 
 const formSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido.'),
   username: z.string().min(1, 'El nombre de usuario es requerido.'),
-  email: z.string().email('El correo electrónico no es válido.'),
   role: z.nativeEnum(ROLES),
   zone: z.nativeEnum(ZONES),
   status: z.nativeEnum(USER_STATUS),
@@ -41,7 +39,6 @@ interface UserFormProps {
 export function UserForm({ user, onClose }: UserFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const auth = useAuth();
   const { addMultipleUsers } = useAppContext();
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
@@ -54,7 +51,6 @@ export function UserForm({ user, onClose }: UserFormProps) {
   const defaultValues = useMemo(() => ({
     name: user?.name || '',
     username: user?.username || '',
-    email: user?.email || '',
     role: user?.role || ROLES.GESTOR,
     zone: user?.zone || ZONES[0],
     status: user?.status || USER_STATUS.ACTIVO,
@@ -157,13 +153,6 @@ export function UserForm({ user, onClose }: UserFormProps) {
                 <FormItem>
                     <FormLabel>Nombre de Usuario</FormLabel>
                     <FormControl><Input {...field} placeholder="alias.de.usuario" disabled={isEditMode} /></FormControl>
-                    <FormMessage />
-                </FormItem>
-            )} />
-            <FormField control={form.control} name="email" render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Correo Electrónico</FormLabel>
-                    <FormControl><Input type="email" {...field} placeholder="usuario@ejemplo.com" disabled={isEditMode} /></FormControl>
                     <FormMessage />
                 </FormItem>
             )} />

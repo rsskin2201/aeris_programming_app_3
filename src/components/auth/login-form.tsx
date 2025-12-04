@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '../ui/label';
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'Por favor, ingresa un correo electrónico válido.' }),
+  username: z.string().min(1, { message: 'Por favor, ingresa tu nombre de usuario.' }),
   password: z.string().min(1, { message: 'Por favor, ingresa tu contraseña.' }),
 });
 
@@ -32,7 +32,7 @@ export function LoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: '',
     },
   });
@@ -40,7 +40,7 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const userProfile = await login(values.email, values.password);
+      const userProfile = await login(values.username, values.password);
       if (userProfile) {
         toast({
           title: 'Inicio de sesión exitoso',
@@ -57,13 +57,13 @@ export function LoginForm() {
           case 'auth/user-not-found':
           case 'auth/wrong-password':
           case 'auth/invalid-credential':
-            description = 'Correo electrónico o contraseña incorrectos.';
+            description = 'Usuario o contraseña incorrectos.';
             break;
           case 'auth/invalid-email':
-            description = 'El formato del correo electrónico no es válido.';
+            description = 'El formato del usuario no es válido.';
             break;
           default:
-            description = `Error de autenticación. Por favor, inténtalo de nuevo. (${error.code})`;
+            description = `Error de autenticación. Por favor, inténtalo de nuevo.`;
         }
       } else {
         description = error.message || description;
@@ -98,12 +98,12 @@ export function LoginForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="email"
+            name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-bold">Correo Electrónico</FormLabel>
+                <FormLabel className="text-base font-bold">Usuario</FormLabel>
                 <FormControl>
-                  <Input placeholder="tu@correo.com" {...field} />
+                  <Input placeholder="tu.usuario" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -145,18 +145,18 @@ export function LoginForm() {
                 <DialogHeader>
                     <DialogTitle>Recuperar Contraseña</DialogTitle>
                     <DialogDescription>
-                        Esta función enviará un correo para restablecer tu contraseña.
+                        Esta función (no implementada) enviaría un correo para restablecer tu contraseña.
                     </DialogDescription>
                 </DialogHeader>
                  <div className="py-4 space-y-4">
                      <div>
-                        <Label htmlFor="forgot-email">Correo Electrónico Registrado</Label>
+                        <Label htmlFor="forgot-email">Nombre de Usuario</Label>
                         <Input 
                             id="forgot-email" 
-                            type="email"
+                            type="text"
                             value={forgotEmail}
                             onChange={(e) => setForgotEmail(e.target.value)}
-                            placeholder="tu@correo.com"
+                            placeholder="tu.usuario"
                             className="mt-2"
                         />
                     </div>

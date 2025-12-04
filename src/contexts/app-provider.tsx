@@ -14,9 +14,9 @@ interface AppContextType {
   // Auth State
   user: User | null;
   isUserLoading: boolean;
-  login: (email: string, password: string) => Promise<User | null>;
+  login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
-  addMultipleUsers: (users: Omit<User, 'id' | 'email'>[]) => void;
+  addMultipleUsers: (users: Omit<User, 'id'>[]) => void;
 
 
   operatorName: string | null;
@@ -51,14 +51,14 @@ interface AppContextType {
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const mockUsersSeed: (Omit<User, 'id'> & {password: string})[] = [
-  { name: 'Admin User', username: 'admin', email: 'admin@aeris.com', password: 'password123', role: ROLES.ADMIN, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { name: 'Gerardo Gestor', username: 'gestor', email: 'gestor@aeris.com', password: 'password123', role: ROLES.GESTOR, zone: 'Zona Norte', status: USER_STATUS.ACTIVO },
-  { name: 'Ana Colaboradora', username: 'colaboradora', email: 'colaborador@aeris.com', password: 'password123', role: ROLES.COLABORADOR, zone: 'Bajio Norte', status: USER_STATUS.ACTIVO },
-  { name: 'Sofia Soporte', username: 'soporte', email: 'soporte@aeris.com', password: 'password123', role: ROLES.SOPORTE, zone: 'Zona Centro', status: USER_STATUS.ACTIVO },
-  { name: 'Samuel Coordinador', username: 'coordinador', email: 'coordinador@aeris.com', password: 'password123', role: ROLES.COORDINADOR_SSPP, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { name: 'Carla Calidad', username: 'calidad', email: 'calidad@aeris.com', password: 'password123', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
-  { name: 'Carlos Canales', username: 'canales', email: 'canales@aeris.com', password: 'password123', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { name: 'Victor Visual', username: 'visual', email: 'visual@aeris.com', password: 'password123', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.INACTIVO },
+  { name: 'Admin User', username: 'admin', password: 'password123', role: ROLES.ADMIN, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { name: 'Gerardo Gestor', username: 'gestor', password: 'password123', role: ROLES.GESTOR, zone: 'Zona Norte', status: USER_STATUS.ACTIVO },
+  { name: 'Ana Colaboradora', username: 'colaboradora', password: 'password123', role: ROLES.COLABORADOR, zone: 'Bajio Norte', status: USER_STATUS.ACTIVO },
+  { name: 'Sofia Soporte', username: 'soporte', password: 'password123', role: ROLES.SOPORTE, zone: 'Zona Centro', status: USER_STATUS.ACTIVO },
+  { name: 'Samuel Coordinador', username: 'coordinador', password: 'password123', role: ROLES.COORDINADOR_SSPP, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { name: 'Carla Calidad', username: 'calidad', password: 'password123', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
+  { name: 'Carlos Canales', username: 'canales', password: 'password123', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { name: 'Victor Visual', username: 'visual', password: 'password123', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.INACTIVO },
 ];
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -93,21 +93,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (querySnapshot.empty) {
           try {
             console.log(`User ${mockUser.username} not found in Firestore, attempting to create...`);
+            const email = `${mockUser.username}@aeris.com`;
             // User does not exist in Firestore, so create in Auth and then in Firestore
-            const userCredential = await createUserWithEmailAndPassword(auth, mockUser.email, mockUser.password);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, mockUser.password);
             const uid = userCredential.user.uid;
             
             const { password, ...userProfileData } = mockUser;
             const userProfile: User = { ...userProfileData, id: uid };
             const docRef = doc(firestore, 'users', uid);
             
-            // Use setDocumentNonBlocking which has error handling
             setDocumentNonBlocking(docRef, userProfile, { merge: false });
             console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
   
           } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') {
-              console.warn(`Auth user with email ${mockUser.email} already exists. Firestore doc might be missing or this is a remnant of a previous failed seed.`);
+              console.warn(`Auth user with email for ${mockUser.username} already exists. Firestore doc might be missing or this is a remnant of a previous failed seed.`);
             } else {
               console.error(`Error creating user ${mockUser.username}:`, error);
             }
@@ -165,8 +165,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [firebaseUser, firestore, auth]);
   
 
-  const login = useCallback(async (email: string, password: string): Promise<User | null> => {
+  const login = useCallback(async (username: string, password: string): Promise<User | null> => {
     if (!auth || !firestore) throw new Error("Firebase services not available.");
+    const email = `${username}@aeris.com`; // Internal convention
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const authedUser = userCredential.user;
     
@@ -210,21 +211,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsZoneConfirmed(true);
   }, []);
 
-  const addMultipleUsers = useCallback((users: (Omit<User, 'id' | 'email'> & { password?: string, email?: string })[]) => {
+  const addMultipleUsers = useCallback((users: (Omit<User, 'id'> & { password?: string })[]) => {
     if (!firestore || !auth) return;
     users.forEach(async (user) => {
-      if (!user.email || !user.password) {
-          console.error("Skipping user creation due to missing email or password", user);
+      const email = `${user.username}@aeris.com`;
+      if (!user.password) {
+          console.error("Skipping user creation due to missing password", user);
           return;
       }
       try {
         // Create user in Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, user.email, user.password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, user.password);
         const uid = userCredential.user.uid;
         
         // Create user profile in Firestore
         const { password, ...userProfileData } = user;
-        const userProfile: User = { ...userProfileData, id: uid, email: user.email };
+        const userProfile: User = { ...userProfileData, id: uid };
         const docRef = doc(firestore, 'users', uid);
         setDocumentNonBlocking(docRef, userProfile, { merge: false });
 
@@ -313,5 +315,3 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 }
-
-    

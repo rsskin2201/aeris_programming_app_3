@@ -30,7 +30,6 @@ export type User = {
   id: string; // Firebase Auth UID
   name: string;
   username: string;
-  email: string;
   role: Role;
   zone: Zone;
   status: UserStatus;
@@ -82,7 +81,6 @@ export type Status = (typeof STATUS)[keyof typeof STATUS];
 export type PasswordResetRequest = {
     id: string;
     username: string;
-    email: string;
     date: Date;
     recipientRole: Role;
 };
