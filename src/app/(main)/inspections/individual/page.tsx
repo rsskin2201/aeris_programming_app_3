@@ -241,6 +241,10 @@ export default function IndividualInspectionPage() {
     if (isCollaborator && fieldName === 'empresaColaboradora') {
         return true;
     }
+    
+    if (isCollaborator && fieldName === 'inspector') {
+        return true;
+    }
 
     if (pageMode === 'edit' && currentRecord) {
         const isClosed = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CANCELADA, STATUS.CONECTADA, STATUS.PENDIENTE_CORRECCION].includes(currentRecord.status as any);
@@ -960,5 +964,3 @@ export default function IndividualInspectionPage() {
     </div>
   );
 }
-
-    
