@@ -119,7 +119,7 @@ service cloud.firestore {
         role == 'Administrador' ||
         role == 'Visual' ||
         role == 'Empresa Colaboradora' ||
-        role == 'Gestor de Expansión' ||
+        role == 'Gestor' ||
         role == 'Empresa Control de Calidad' ||
         role == 'Soporte a Procesos' ||
         role == 'Canales' ||
@@ -136,7 +136,7 @@ service cloud.firestore {
       return isSignedIn() && (
         role == 'Administrador' ||
         role == 'Empresa Colaboradora' ||
-        role == 'Gestor de Expansión' ||
+        role == 'Gestor' ||
         role == 'Empresa Control de Calidad'
       );
     }

@@ -1,6 +1,6 @@
 export const ROLES = {
   ADMIN: 'Administrador',
-  GESTOR: 'Gestor de Expansión',
+  GESTOR: 'Gestor',
   COLABORADOR: 'Empresa Colaboradora',
   SOPORTE: 'Soporte a Procesos',
   COORDINADOR_SSPP: 'Coordinador SSPP',
