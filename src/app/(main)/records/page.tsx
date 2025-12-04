@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { InspectionRecord } from "@/lib/mock-data";
+import { InspectionRecord, Inspector } from "@/lib/mock-data";
 import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, ListTodo, Server, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppContext } from '@/hooks/use-app-context';
@@ -50,6 +50,7 @@ const statusOptions = Object.values(STATUS).map(s => ({ value: s, label: s }));
 const initialFilters = {
     id: '',
     gestor: '',
+    inspector: '',
     empresa: '',
     sector: '',
     poliza: '',
@@ -112,10 +113,12 @@ export default function RecordsPage() {
   const expansionManagersQuery = useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]);
   const collaboratorsQuery = useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
   const sectorsQuery = useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]);
+  const inspectorsQuery = useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]);
   
   const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
+  const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
 
   const inspectionsQuery = useMemoFirebase(() => buildQuery('inspections'), [firestore, user, zone]);
 
@@ -126,6 +129,7 @@ export default function RecordsPage() {
     return records.filter(record => {
       if (filters.id && !record.id.toLowerCase().includes(filters.id.toLowerCase())) return false;
       if (filters.gestor && record.gestor !== filters.gestor) return false;
+      if (filters.inspector && record.inspector !== filters.inspector) return false;
       if (filters.empresa && record.collaboratorCompany !== filters.empresa) return false;
       if (filters.sector && record.sector !== filters.sector) return false;
       if (filters.poliza && record.poliza && !record.poliza.includes(filters.poliza)) return false;
@@ -246,6 +250,16 @@ export default function RecordsPage() {
                             <SelectContent>
                                 <SelectItem value="all">Todos</SelectItem>
                                 {expansionManagers?.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="inspector">Inspector Asignado</Label>
+                        <Select value={filters.inspector} onValueChange={(v) => handleFilterChange('inspector', v)}>
+                            <SelectTrigger id="inspector"><SelectValue placeholder="Todos" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
+                                {inspectors?.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>

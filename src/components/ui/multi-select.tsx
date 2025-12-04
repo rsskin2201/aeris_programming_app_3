@@ -77,11 +77,10 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
     const [selectedValues, setSelectedValues] = React.useState<string[]>(defaultValue)
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
 
+    // Sync defaultValue with internal state
     React.useEffect(() => {
-        if (JSON.stringify(defaultValue) !== JSON.stringify(selectedValues)) {
-            setSelectedValues(defaultValue);
-        }
-    }, [defaultValue, selectedValues]);
+        setSelectedValues(defaultValue);
+    }, [defaultValue]);
 
     const handleInputKeyDown = (
       event: React.KeyboardEvent<HTMLInputElement>
@@ -182,18 +181,12 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
             <CommandList>
               <CommandEmpty>No se encontraron resultados.</CommandEmpty>
               <CommandGroup>
-                {options.map((option, index) => {
+                {options.map((option) => {
                   const isSelected = selectedValues.includes(option.value)
                   return (
                     <CommandItem
                       key={option.value}
                       onSelect={() => toggleOption(option.value)}
-                      style={{
-                        animationDelay: `${index * animation}ms`,
-                        opacity: 0,
-                        animationFillMode: 'forwards',
-                        animationName: 'fadeIn',
-                      }}
                       className="cursor-pointer"
                     >
                       <div className="flex items-center w-full">
