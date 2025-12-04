@@ -27,7 +27,7 @@ const multiSelectVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
@@ -78,8 +78,10 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
 
     React.useEffect(() => {
-        setSelectedValues(defaultValue)
-    }, [defaultValue])
+        if (JSON.stringify(defaultValue) !== JSON.stringify(selectedValues)) {
+            setSelectedValues(defaultValue);
+        }
+    }, [defaultValue, selectedValues]);
 
     const handleInputKeyDown = (
       event: React.KeyboardEvent<HTMLInputElement>
@@ -100,6 +102,11 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
         : [...selectedValues, value]
       setSelectedValues(newSelectedValues)
       onValueChange(newSelectedValues)
+    }
+    
+    const handleClear = () => {
+        setSelectedValues([]);
+        onValueChange([]);
     }
 
     return (
@@ -151,8 +158,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                     className="h-4 w-4 cursor-pointer text-muted-foreground"
                     onClick={(event) => {
                       event.stopPropagation()
-                      setSelectedValues([])
-                      onValueChange([])
+                      handleClear();
                     }}
                   />
                   <span className="mx-2 h-6 w-[1px] shrink-0 bg-border" />
