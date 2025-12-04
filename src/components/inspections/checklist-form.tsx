@@ -255,7 +255,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                                                 <div className="flex items-center gap-2">
                                                     <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Seleccionar marca" /></SelectTrigger></FormControl><SelectContent>{availableBrands.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select>
                                                     {canRequestMeter && (
-                                                        <Button type="button" variant="outline" size="icon" onClick={() => setIsRequestMeterOpen(true)}>
+                                                        <Button type="button" variant="outline" size="icon" onClick={() => setIsRequestMeterOpen(true)} className="bg-green-100 border-green-300 text-green-800 hover:bg-green-200">
                                                             <PlusCircle className="h-4 w-4" />
                                                         </Button>
                                                     )}
