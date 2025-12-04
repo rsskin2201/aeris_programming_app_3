@@ -438,7 +438,6 @@ export default function IndividualInspectionPage() {
         oferta: values.oferta || '',
         observaciones: values.observaciones || '',
         collaboratorCompany: values.empresaColaboradora || '',
-        fechaProgramacion: values.fechaProgramacion,
         horarioProgramacion: values.horarioProgramacion || '',
         instalador: values.instalador || '',
         inspector: values.inspector || '',

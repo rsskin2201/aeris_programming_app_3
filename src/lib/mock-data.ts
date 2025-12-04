@@ -1,14 +1,14 @@
 import { Role, ROLES, User, Zone, ZONES, Status, STATUS, UserStatus, USER_STATUS } from '@/lib/types';
 
 export const mockUsers: User[] = [
-  { name: 'Admin User', username: 'admin', role: ROLES.ADMIN, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { name: 'Gerardo Gestor', username: 'gestor', role: ROLES.GESTOR, zone: 'Zona Norte', status: USER_STATUS.ACTIVO },
-  { name: 'Ana Colaboradora', username: 'colaboradora', role: ROLES.COLABORADOR, zone: 'Bajio Norte', status: USER_STATUS.ACTIVO },
-  { name: 'Sofia Soporte', username: 'soporte', role: ROLES.SOPORTE, zone: 'Zona Centro', status: USER_STATUS.ACTIVO },
-  { name: 'Samuel Coordinador', username: 'coordinador', role: ROLES.COORDINADOR_SSPP, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { name: 'Carla Calidad', username: 'calidad', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
-  { name: 'Carlos Canales', username: 'canales', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { name: 'Victor Visual', username: 'visual', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.INACTIVO },
+  { id: '1', name: 'Admin User', username: 'admin', role: ROLES.ADMIN, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { id: '2', name: 'Gerardo Gestor', username: 'gestor', role: ROLES.GESTOR, zone: 'Zona Norte', status: USER_STATUS.ACTIVO },
+  { id: '3', name: 'Ana Colaboradora', username: 'colaboradora', role: ROLES.COLABORADOR, zone: 'Bajio Norte', status: USER_STATUS.ACTIVO },
+  { id: '4', name: 'Sofia Soporte', username: 'soporte', role: ROLES.SOPORTE, zone: 'Zona Centro', status: USER_STATUS.ACTIVO },
+  { id: '5', name: 'Samuel Coordinador', username: 'coordinador', role: ROLES.COORDINADOR_SSPP, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { id: '6', name: 'Carla Calidad', username: 'calidad', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
+  { id: '7', name: 'Carlos Canales', username: 'canales', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { id: '8', name: 'Victor Visual', username: 'visual', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.INACTIVO },
 ];
 
 export type InspectionRecord = {
@@ -16,8 +16,8 @@ export type InspectionRecord = {
   type: 'Individual PES' | 'Masiva PES' | 'Especial' | string;
   address: string;
   client: string;
-  requestDate: string;
-  createdAt: string;
+  requestDate: string; // yyyy-MM-dd
+  createdAt: string; // yyyy-MM-dd HH:mm:ss
   createdBy: string;
   status: Status;
   inspector: string;
@@ -29,7 +29,7 @@ export type InspectionRecord = {
   caso: string;
   serieMdd?: string;
   mercado: string;
-  horarioProgramacion?: string;
+  horarioProgramacion: string;
   observaciones?: string;
 
   // Checklist fields
@@ -240,3 +240,12 @@ export const sampleSectors: Sector[] = [
     { id: 'SEC-002', zone: 'Zona Centro', assignment: 'Saturación', subAssignment: 'CENTRO HISTORICO', sector: 'CENTRO', sectorKey: 'CEN01', status: 'Activo', createdAt: '2023-02-15' },
     { id: 'SEC-003', zone: 'Bajio Norte', assignment: 'Expansión', subAssignment: 'PARQUE INDUSTRIAL', sector: 'INDUSTRIAL QUERETARO', sectorKey: 'INDQRO', status: 'Inactivo', createdAt: '2023-03-20' },
 ];
+
+export type Meter = {
+  id: string;
+  marca: string;
+  tipo: string;
+  zona: Zone;
+  status: 'Activo' | 'Inactivo';
+  createdAt: string;
+};

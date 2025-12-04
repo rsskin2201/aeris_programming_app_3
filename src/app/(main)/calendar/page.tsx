@@ -85,6 +85,7 @@ const daysOfWeek = [
   'Martes',
   'Miércoles',
   'Jueves',
+
   'Viernes',
   'Sábado',
   'Domingo',
@@ -244,7 +245,8 @@ export default function CalendarPage() {
       if (!record.requestDate || !record.horarioProgramacion) return;
       const recordDate = parse(record.requestDate, 'yyyy-MM-dd', new Date());
       const [hour] = record.horarioProgramacion.split(':');
-      const dateTimeKey = format(recordDate, `yyyy-MM-dd-${hour}`);
+      const dateKey = format(recordDate, 'yyyy-MM-dd');
+      const dateTimeKey = `${dateKey}-${hour.padStart(2, '0')}`;
       if (!inspections[dateTimeKey]) {
         inspections[dateTimeKey] = [];
       }
@@ -469,7 +471,8 @@ export default function CalendarPage() {
   
   const renderInspectionsForSlot = (day: Date, hour: string) => {
     const hourNumber = parseInt(hour.split(':')[0]);
-    const slotKey = `${format(day, 'yyyy-MM-dd')}-${String(hourNumber).padStart(2, '0')}`;
+    const dateKey = format(day, 'yyyy-MM-dd');
+    const slotKey = `${dateKey}-${String(hourNumber).padStart(2, '0')}`;
     const slotInspections = inspectionsByTime[slotKey] || [];
 
     return slotInspections.map((inspection) => {
@@ -533,7 +536,7 @@ export default function CalendarPage() {
           return (
             <div
               key={day.toString()}
-              className={cn('border-l', 
+              className={cn('border-l relative', 
                 isSameDay(day, new Date()) && 'bg-blue-500/10',
                 isBlocked && 'bg-muted-foreground/30'
               )}
@@ -543,7 +546,7 @@ export default function CalendarPage() {
                   key={`${day}-${hour}`}
                   onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
                   className={cn(
-                    'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer relative',
+                    'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer',
                     isSunday(day) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                     isSunday(day) && weekendsEnabled && 'bg-green-100/50',
                     isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
@@ -581,7 +584,7 @@ export default function CalendarPage() {
       <div className="flex-1">
         <div
           className={cn(
-            'border-l',
+            'border-l relative',
             isSameDay(currentDate, new Date()) && 'bg-blue-500/10',
             isBlocked && 'bg-muted-foreground/30'
           )}
@@ -591,7 +594,7 @@ export default function CalendarPage() {
               key={`${currentDate}-${hour}`}
               onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
               className={cn(
-                'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer relative',
+                'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer',
                 isSunday(currentDate) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                 isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50',
                 isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
