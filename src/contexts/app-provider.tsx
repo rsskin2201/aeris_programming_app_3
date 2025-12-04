@@ -83,36 +83,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const seedUsers = async () => {
       if (!firestore || !auth) return;
+      
+      const ensureFirestoreDoc = async (uid: string, mockUser: Omit<User, 'id'>) => {
+        const userDocRef = doc(firestore, 'users', uid);
+        const userDoc = await getDoc(userDocRef);
+        if (!userDoc.exists()) {
+            console.log(`Firestore doc for ${mockUser.username} not found, creating...`);
+            const { password, ...userProfileData } = mockUser as any;
+            const userProfile: User = { ...userProfileData, id: uid };
+            setDocumentNonBlocking(userDocRef, userProfile, { merge: true });
+        }
+      };
   
       for (const mockUser of mockUsersSeed) {
-        // Check if user already exists in Firestore by username
-        const usersRef = collection(firestore, 'users');
-        const q = query(usersRef, where("username", "==", mockUser.username));
-        const querySnapshot = await getDocs(q);
-  
-        if (querySnapshot.empty) {
-          try {
-            console.log(`User ${mockUser.username} not found in Firestore, attempting to create...`);
-            const email = `${mockUser.username}@aeris.com`;
-            // User does not exist in Firestore, so create in Auth and then in Firestore
-            const userCredential = await createUserWithEmailAndPassword(auth, email, mockUser.password);
-            const uid = userCredential.user.uid;
-            
-            const { password, ...userProfileData } = mockUser;
-            const userProfile: User = { ...userProfileData, id: uid };
-            const docRef = doc(firestore, 'users', uid);
-            
-            setDocumentNonBlocking(docRef, userProfile, { merge: false });
-            console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
-  
-          } catch (error: any) {
-            if (error.code === 'auth/email-already-in-use') {
-              console.warn(`Auth user with email for ${mockUser.username} already exists. Firestore doc might be missing or this is a remnant of a previous failed seed.`);
-            } else {
-              console.error(`Error creating user ${mockUser.username}:`, error);
+        const email = `${mockUser.username}@aeris.com`;
+        try {
+          // 1. Try to sign in silently
+          const userCredential = await signInWithEmailAndPassword(auth, email, mockUser.password);
+          // If successful, user exists in Auth. Ensure Firestore doc also exists.
+          await ensureFirestoreDoc(userCredential.user.uid, mockUser);
+
+        } catch (error: any) {
+          if (error.code === 'auth/user-not-found') {
+            // 2. If user doesn't exist, create them in Auth and Firestore
+            try {
+              console.log(`User ${mockUser.username} not found, creating...`);
+              const newUserCredential = await createUserWithEmailAndPassword(auth, email, mockUser.password);
+              await ensureFirestoreDoc(newUserCredential.user.uid, mockUser);
+              console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
+            } catch (createError: any) {
+               console.error(`Failed to create new user ${mockUser.username}:`, createError);
             }
+          } else if (error.code !== 'auth/invalid-credential') {
+             // Log other errors, but ignore invalid-credential which is expected if a user is logged in
+             console.warn(`An error occurred during user seeding for ${mockUser.username}:`, error.code);
           }
         }
+      }
+      // After seeding, sign out to ensure a clean state for the actual user
+      if (auth.currentUser && mockUsersSeed.some(u => `${u.username}@aeris.com` === auth.currentUser?.email)) {
+        await signOut(auth);
       }
     };
   
