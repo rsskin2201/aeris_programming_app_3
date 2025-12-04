@@ -4,10 +4,10 @@ import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { getDoc, doc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, FirestorePermissionError } from '@/firebase';
-import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest } from '@/lib/types';
+import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest, NewMeterRequest } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS } from '@/lib/types';
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
-import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, mockUsers } from '@/lib/mock-data';
+import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter, mockUsers } from '@/lib/mock-data';
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,6 +19,7 @@ interface AppContextType {
   logout: () => void;
   addMultipleUsers: (users: (Omit<User, 'id'> & { password?: string })[]) => void;
   requestPasswordReset: (username: string, email: string) => void;
+  requestNewMeter: (request: Omit<NewMeterRequest, 'id' | 'date'>) => void;
 
 
   operatorName: string | null;
@@ -48,6 +49,7 @@ interface AppContextType {
   addMultipleInstallers: (data: Installer[]) => void;
   addMultipleExpansionManagers: (data: ExpansionManager[]) => void;
   addMultipleSectors: (data: Sector[]) => void;
+  addMultipleMeters: (data: Meter[]) => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -235,6 +237,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         details: `Usuario: ${username}, Correo: ${email}`,
     });
   }, [addNotification]);
+  
+  const requestNewMeter = useCallback((request: Omit<NewMeterRequest, 'id' | 'date'>) => {
+    addNotification({
+        recipientRole: ROLES.ADMIN,
+        message: `Solicitud de Alta de Medidor`,
+        details: `Solicitante: ${request.requesterName} (${request.requesterRole}) | Zona: ${request.zone} | Marca: ${request.marca} | Tipo: ${request.tipo}`,
+    });
+     addNotification({
+        recipientRole: ROLES.COORDINADOR_SSPP,
+        message: `Solicitud de Alta de Medidor`,
+        details: `Solicitante: ${request.requesterName} (${request.requesterRole}) | Zona: ${request.zone} | Marca: ${request.marca} | Tipo: ${request.tipo}`,
+    });
+  }, [addNotification]);
 
 
   const confirmZone = useCallback((newZone: Zone) => {
@@ -260,6 +275,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addMultipleInstallers = addMultipleEntities('instaladores');
   const addMultipleExpansionManagers = addMultipleEntities('gestores_expansion');
   const addMultipleSectors = addMultipleEntities('sectores');
+  const addMultipleMeters = addMultipleEntities('medidores');
 
 
   const toggleForms = useCallback(() => setFormsEnabled(prev => !prev), []);
@@ -305,6 +321,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removeBlockedDay,
       addNotification,
       requestPasswordReset,
+      requestNewMeter,
       markNotificationAsRead,
       addMultipleUsers,
       addMultipleCollaborators,
@@ -313,10 +330,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addMultipleInstallers,
       addMultipleExpansionManagers,
       addMultipleSectors,
+      addMultipleMeters,
     }),
     [
       user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters
     ]
   );
 
