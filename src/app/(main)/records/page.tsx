@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { InspectionRecord, Inspector } from "@/lib/mock-data";
-import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, ListTodo, Server, Loader2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, ListTodo, Server, Loader2, RefreshCw } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useAppContext } from '@/hooks/use-app-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
@@ -65,9 +65,10 @@ const initialFilters = {
 const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
 const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD];
 const canExportRoles = Object.values(ROLES);
+const reprogrammableStatuses: Status[] = [STATUS.CANCELADA, STATUS.NO_APROBADA, STATUS.RECHAZADA];
 
 export default function RecordsPage() {
-  const { user, zone } = useAppContext();
+  const { user, zone, reprogramInspection } = useAppContext();
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -183,6 +184,10 @@ export default function RecordsPage() {
         title: "Exportación Completa",
         description: `${filteredRecords.length} registros han sido exportados a CSV.`
     });
+  };
+
+  const handleReprogram = (record: InspectionRecord) => {
+    reprogramInspection(record);
   };
 
   return (
@@ -425,6 +430,15 @@ export default function RecordsPage() {
                                   <Pencil className="mr-2 h-4 w-4" />
                                   Modificar
                               </DropdownMenuItem>
+                          )}
+                          {canModify && reprogrammableStatuses.includes(record.status) && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleReprogram(record)}>
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Reprogramar
+                              </DropdownMenuItem>
+                            </>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>

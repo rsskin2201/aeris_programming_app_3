@@ -105,6 +105,10 @@ export type InspectionRecord = {
   motivoRechazo?: string;
   lastModifiedBy?: string;
   lastModifiedAt?: string;
+
+  // Reprogramación fields
+  reprogrammedFromId?: string;
+  reprogrammedToId?: string;
 };
 
 export const mockRecords: InspectionRecord[] = [

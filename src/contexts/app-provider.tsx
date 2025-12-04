@@ -5,11 +5,13 @@ import { createContext, useState, useMemo, useCallback, useEffect } from 'react'
 import { getDoc, doc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest, NewMeterRequest } from '@/lib/types';
-import { ZONES, ROLES, USER_STATUS } from '@/lib/types';
+import { ZONES, ROLES, USER_STATUS, STATUS } from '@/lib/types';
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
 import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter, mockUsers } from '@/lib/mock-data';
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 
 interface AppContextType {
   // Auth State
@@ -20,6 +22,7 @@ interface AppContextType {
   addMultipleUsers: (users: (Omit<User, 'id'> & { password?: string })[]) => void;
   requestPasswordReset: (username: string, email: string) => void;
   requestNewMeter: (request: Omit<NewMeterRequest, 'id' | 'date'>) => void;
+  reprogramInspection: (record: InspectionRecord) => void;
 
 
   operatorName: string | null;
@@ -71,6 +74,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const auth = useAuth();
   const firestore = useFirestore();
+  const router = useRouter();
   const { toast } = useToast();
   const { user: firebaseUser, loading: isUserLoading } = useFirebaseAuthUser();
 
@@ -251,6 +255,50 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [addNotification]);
 
+  const reprogramInspection = useCallback((record: InspectionRecord) => {
+    if (!firestore) return;
+
+    // 1. Clone the record
+    const { id: oldId, status: oldStatus, ...restOfRecord } = record;
+    const newId = `INSP-RP-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    const newRecord: InspectionRecord = {
+      ...restOfRecord,
+      id: newId,
+      status: STATUS.REGISTRADA, // 2. Reset status
+      createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+      createdBy: user?.username || 'desconocido',
+      reprogrammedFromId: oldId, // 3. Add trace
+    };
+
+    // 4. Save the new record
+    const newDocRef = doc(firestore, 'inspections', newId);
+    setDocumentNonBlocking(newDocRef, newRecord, { merge: false });
+
+    // 5. Update the old record
+    const oldDocRef = doc(firestore, 'inspections', oldId);
+    const updatedOldRecord: Partial<InspectionRecord> = {
+        status: `${oldStatus} - REPROGRAMADA` as Status,
+        reprogrammedToId: newId,
+    };
+    updateDocumentNonBlocking(oldDocRef, updatedOldRecord);
+
+    toast({
+        title: "Registro Clonado para Reprogramación",
+        description: "Serás redirigido al nuevo borrador en un momento."
+    });
+
+    // 6. Navigate to the new record's edit page
+    let path = '/inspections/individual'; // Default path
+    if (newRecord.type === 'Masiva PES') {
+      path = '/inspections/massive';
+    } else if (newRecord.type === 'Especial') {
+      path = '/inspections/special';
+    }
+    router.push(`${path}?id=${newId}&mode=edit&from=records`);
+
+  }, [firestore, user, router, toast]);
+
 
   const confirmZone = useCallback((newZone: Zone) => {
     setZone(newZone);
@@ -331,10 +379,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addMultipleExpansionManagers,
       addMultipleSectors,
       addMultipleMeters,
+      reprogramInspection,
     }),
     [
       user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters, reprogramInspection
     ]
   );
 
