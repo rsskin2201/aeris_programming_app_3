@@ -149,7 +149,7 @@ export default function CalendarPage() {
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+    if (![ROLES.ADMIN, ROLES.CANALES].includes(user.role) && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
     return query(collection(firestore, collectionName), ...constraints);
@@ -668,29 +668,33 @@ export default function CalendarPage() {
                             </Select>
                         </div>
 
-                        {(isGestor || isCoordinator || isAdmin) && (
-                            <div className="space-y-2">
-                                <Label htmlFor="filter-gestor">Gestor de Expansión</Label>
-                                <Select value={activeFilters.gestor || 'all'} onValueChange={(v) => handleFilterChange('gestor', v)}>
-                                    <SelectTrigger id="filter-gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos</SelectItem>
-                                        {availableManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-                        {(isCollaborator || isCoordinator || isAdmin) && (
-                             <div className="space-y-2">
-                                <Label htmlFor="filter-instalador">Instalador</Label>
-                                <Select value={activeFilters.instalador || 'all'} onValueChange={(v) => handleFilterChange('instalador', v)}>
-                                    <SelectTrigger id="filter-instalador"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos</SelectItem>
-                                        {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        {![ROLES.CALIDAD].includes(user?.role || '') && (
+                            <>
+                                {(isGestor || isCoordinator || isAdmin) && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="filter-gestor">Gestor de Expansión</Label>
+                                        <Select value={activeFilters.gestor || 'all'} onValueChange={(v) => handleFilterChange('gestor', v)}>
+                                            <SelectTrigger id="filter-gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">Todos</SelectItem>
+                                                {availableManagers.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                                {(isCollaborator || isCoordinator || isAdmin) && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="filter-instalador">Instalador</Label>
+                                        <Select value={activeFilters.instalador || 'all'} onValueChange={(v) => handleFilterChange('instalador', v)}>
+                                            <SelectTrigger id="filter-instalador"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">Todos</SelectItem>
+                                                {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                            </>
                         )}
                         {(isQualityControl || isCoordinator || isAdmin) && (
                              <div className="space-y-2">
