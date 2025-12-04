@@ -237,13 +237,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [auth, firestore]);
 
-  // Placeholder functions for mock data manipulation
-  const addMultipleCollaborators = (data: any[]) => console.log('Adding collaborators', data);
-  const addMultipleQualityControlCompanies = (data: any[]) => console.log('Adding quality companies', data);
-  const addMultipleInspectors = (data: any[]) => console.log('Adding inspectors', data);
-  const addMultipleInstallers = (data: any[]) => console.log('Adding installers', data);
-  const addMultipleExpansionManagers = (data: any[]) => console.log('Adding managers', data);
-  const addMultipleSectors = (data: any[]) => console.log('Adding sectors', data);
+  const addMultipleEntities = (collectionName: string) => (data: any[]) => {
+    if (!firestore) return;
+    data.forEach(item => {
+        if (!item.id) {
+            console.warn("Skipping item without ID in bulk add:", item);
+            return;
+        }
+        const docRef = doc(firestore, collectionName, item.id);
+        setDocumentNonBlocking(docRef, item, { merge: true });
+    });
+  };
+
+  const addMultipleCollaborators = addMultipleEntities('empresas_colaboradoras');
+  const addMultipleQualityControlCompanies = addMultipleEntities('empresas_control_calidad');
+  const addMultipleInspectors = addMultipleEntities('inspectores');
+  const addMultipleInstallers = addMultipleEntities('instaladores');
+  const addMultipleExpansionManagers = addMultipleEntities('gestores_expansion');
+  const addMultipleSectors = addMultipleEntities('sectores');
 
 
   const toggleForms = useCallback(() => setFormsEnabled(prev => !prev), []);

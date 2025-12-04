@@ -21,7 +21,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { ROLES } from "@/lib/types";
+import { PERMISSIONS, ROLES } from "@/lib/types";
 
 
 const entities = [
@@ -38,7 +38,8 @@ const statusColors: Record<string, string> = {
 };
 
 const viewOnlyRoles = [ROLES.VISUAL];
-const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD, ROLES.CANALES];
+const canModifyRoles = [ROLES.ADMIN, ROLES.CANALES];
+const canUploadRoles = [ROLES.ADMIN, ROLES.CANALES];
 
 export default function EntitiesPage() {
   const { user, zone } = useAppContext();
@@ -59,12 +60,12 @@ export default function EntitiesPage() {
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
   
   const canModify = user && canModifyRoles.includes(user.role);
-  const canUpload = user && [ROLES.ADMIN, ROLES.CANALES].includes(user.role);
+  const canUpload = user && canUploadRoles.includes(user.role);
 
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+    if (user.role !== ROLES.ADMIN && user.role !== ROLES.CANALES && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
     return query(collection(firestore, collectionName), ...constraints);

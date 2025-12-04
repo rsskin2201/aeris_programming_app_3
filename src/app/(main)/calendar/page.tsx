@@ -74,9 +74,9 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, QueryConstraint } from 'firebase/firestore';
 
 const adminRoles = [ROLES.ADMIN];
-const canToggleFormsRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
+const canToggleFormsRoles = [ROLES.ADMIN];
 const canBlockDaysRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
-const canExportRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP, ROLES.VISUAL];
+const canExportRoles = [ROLES.ADMIN, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP, ROLES.VISUAL, ROLES.CANALES];
 
 const daysOfWeek = [
   'Lunes',

@@ -139,34 +139,32 @@ export default function EntityUploadPage() {
   const handleFinalUpload = (newRecords: any[]) => {
     setIsUploading(true);
     
-    setTimeout(() => {
-        try {
-            switch(entityType) {
-                case 'collaborators': addMultipleCollaborators(newRecords as CollaboratorCompany[]); break;
-                case 'quality': addMultipleQualityControlCompanies(newRecords as QualityControlCompany[]); break;
-                case 'inspectors': addMultipleInspectors(newRecords as Inspector[]); break;
-                case 'installers': addMultipleInstallers(newRecords as Installer[]); break;
-                case 'managers': addMultipleExpansionManagers(newRecords as ExpansionManager[]); break;
-                case 'sectors': addMultipleSectors(newRecords as Sector[]); break;
-                default: throw new Error('Tipo de entidad no soportada para carga masiva.');
-            }
-
-            setIsUploading(false);
-            setIsEditorOpen(false);
-            setFile(null);
-            toast({
-                title: "Carga Exitosa",
-                description: `Se han cargado y procesado ${newRecords.length} registros de ${entityInfo[entityType].name}.`
-            });
-        } catch (e: any) {
-            setIsUploading(false);
-             toast({
-                variant: 'destructive',
-                title: "Error en la Carga",
-                description: e.message || "Ocurrió un problema al procesar los registros."
-            });
+    try {
+        switch(entityType) {
+            case 'collaborators': addMultipleCollaborators(newRecords as CollaboratorCompany[]); break;
+            case 'quality': addMultipleQualityControlCompanies(newRecords as QualityControlCompany[]); break;
+            case 'inspectors': addMultipleInspectors(newRecords as Inspector[]); break;
+            case 'installers': addMultipleInstallers(newRecords as Installer[]); break;
+            case 'managers': addMultipleExpansionManagers(newRecords as ExpansionManager[]); break;
+            case 'sectors': addMultipleSectors(newRecords as Sector[]); break;
+            default: throw new Error('Tipo de entidad no soportada para carga masiva.');
         }
-    }, 1500);
+
+        setIsUploading(false);
+        setIsEditorOpen(false);
+        setFile(null);
+        toast({
+            title: "Carga Exitosa",
+            description: `Se han cargado y procesado ${newRecords.length} registros de ${entityInfo[entityType].name}.`
+        });
+    } catch (e: any) {
+        setIsUploading(false);
+         toast({
+            variant: 'destructive',
+            title: "Error en la Carga",
+            description: e.message || "Ocurrió un problema al procesar los registros."
+        });
+    }
   }
 
   const downloadTemplate = () => {

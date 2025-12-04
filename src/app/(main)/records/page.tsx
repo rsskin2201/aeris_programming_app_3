@@ -106,14 +106,7 @@ export default function RecordsPage() {
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
 
-  const inspectionsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
-        constraints.push(where('zone', '==', zone));
-    }
-    return query(collection(firestore, 'inspections'), ...constraints);
-  }, [firestore, user, zone]);
+  const inspectionsQuery = useMemoFirebase(() => buildQuery('inspections'), [firestore, user, zone]);
 
   const { data: records, isLoading } = useCollection<InspectionRecord>(inspectionsQuery);
 
