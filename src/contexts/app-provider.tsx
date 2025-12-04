@@ -85,7 +85,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!firestore || !auth) return;
 
         for (const mockUser of mockUsersSeed) {
-            const q = query(collection(firestore, 'users'), where("username", "==", mockUser.username));
+            const usersRef = collection(firestore, 'users');
+            const q = query(usersRef, where("username", "==", mockUser.username));
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
@@ -99,7 +100,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     console.log(`Successfully created Auth and Firestore user: ${mockUser.username}`);
                 } catch (error: any) {
                     if (error.code === 'auth/email-already-in-use') {
-                         console.warn(`Auth user with email ${mockUser.email} already exists but Firestore doc might be missing.`);
+                        console.warn(`Auth user with email ${mockUser.email} already exists but Firestore doc might be missing.`);
                     } else {
                         console.error(`Error creating user ${mockUser.username}:`, error);
                     }
@@ -304,3 +305,5 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 }
+
+    
