@@ -323,6 +323,41 @@
         "name",
         "role"
       ]
+    },
+    "Meter": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Meter",
+      "type": "object",
+      "description": "Represents a type of gas meter (MDD).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the meter record."
+        },
+        "marca": {
+          "type": "string",
+          "description": "The brand of the meter."
+        },
+        "tipo": {
+          "type": "string",
+          "description": "The type or model of the meter."
+        },
+        "zona": {
+          "type": "string",
+          "description": "The zone where this meter type is applicable."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the meter type (e.g., Activo, Inactivo)."
+        }
+      },
+      "required": [
+        "id",
+        "marca",
+        "tipo",
+        "zona",
+        "status"
+      ]
     }
   },
   "auth": {
@@ -457,6 +492,22 @@
             {
               "name": "userId",
               "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/medidores/{medidorId}",
+        "definition": {
+          "entityName": "Meter",
+          "schema": {
+            "$ref": "#/backend/entities/Meter"
+          },
+          "description": "Stores meter (MDD) types.",
+          "params": [
+            {
+              "name": "medidorId",
+              "description": "Unique identifier for the meter type."
             }
           ]
         }
