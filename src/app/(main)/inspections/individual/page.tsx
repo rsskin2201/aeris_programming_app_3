@@ -80,6 +80,14 @@ const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMAD
 const checklistRoles = [ROLES.CALIDAD, ROLES.SOPORTE, ROLES.ADMIN];
 const supportRoles = [ROLES.SOPORTE, ROLES.ADMIN];
 const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CONECTADA, STATUS.PENDIENTE_CORRECCION];
+const nonAdminRolesWithZoneFilter = [
+  ROLES.COLABORADOR,
+  ROLES.GESTOR,
+  ROLES.SOPORTE,
+  ROLES.CALIDAD,
+  ROLES.COORDINADOR_SSPP,
+  ROLES.VISUAL,
+];
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
@@ -109,7 +117,7 @@ export default function IndividualInspectionPage() {
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+    if (nonAdminRolesWithZoneFilter.includes(user.role) && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
     return query(collection(firestore, collectionName), ...constraints);
@@ -387,16 +395,12 @@ export default function IndividualInspectionPage() {
     const docRef = doc(firestore, 'inspections', recordToSave.id);
     setDocumentNonBlocking(docRef, recordToSave, { merge: true });
 
-    if (pageMode === 'edit' && currentRecord) {
-         if (values.status !== currentRecord.status) {
-            if (values.status === STATUS.APROBADA) {
-                // Simplified notification logic
-            } else if (values.status === STATUS.NO_APROBADA || values.status === STATUS.RECHAZADA) {
-                // Simplified notification logic
-            }
-        }
-    } else {
-        // Simplified notification logic
+    if (pageMode === 'new') {
+        addNotification({
+          recipientUsername: 'coordinador',
+          message: `Nueva inspección individual ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
+          link: `/inspections/individual?id=${recordToSave.id}&mode=view`
+        });
     }
     
     setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
@@ -956,3 +960,5 @@ export default function IndividualInspectionPage() {
     </div>
   );
 }
+
+    

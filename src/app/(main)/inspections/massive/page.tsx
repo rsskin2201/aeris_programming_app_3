@@ -80,6 +80,16 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const nonAdminRolesWithZoneFilter = [
+  ROLES.COLABORADOR,
+  ROLES.GESTOR,
+  ROLES.SOPORTE,
+  ROLES.CALIDAD,
+  ROLES.COORDINADOR_SSPP,
+  ROLES.VISUAL,
+];
+
+
 export default function MassiveInspectionPage() {
   const { toast } = useToast();
   const { user, weekendsEnabled, blockedDays, zone, addNotification } = useAppContext();
@@ -95,7 +105,7 @@ export default function MassiveInspectionPage() {
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+    if (nonAdminRolesWithZoneFilter.includes(user.role) && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
     return query(collection(firestore, collectionName), ...constraints);
@@ -261,7 +271,11 @@ export default function MassiveInspectionPage() {
         setDocumentNonBlocking(docRef, recordToSave, { merge: true });
     });
 
-    // Simplified notification logic
+    addNotification({
+        recipientUsername: 'coordinador',
+        message: `Nueva inspección masiva con ${createdIds.length} registros creada por ${user?.username}.`,
+        link: `/records` // General link as there are multiple records
+    });
     
     setCreatedRecordInfo({ ids: createdIds, status: values.status });
     setIsSuccessDialogOpen(true);
@@ -792,3 +806,5 @@ export default function MassiveInspectionPage() {
     </div>
   );
 }
+
+    
