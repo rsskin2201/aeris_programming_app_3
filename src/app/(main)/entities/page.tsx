@@ -5,7 +5,7 @@ import { collection, query, where, QueryConstraint } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/componentsui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, PlusCircle, Settings, Upload } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -65,7 +65,7 @@ export default function EntitiesPage() {
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    if (zone !== 'Todas las zonas') {
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
     return query(collection(firestore, collectionName), ...constraints);
@@ -622,3 +622,5 @@ export default function EntitiesPage() {
     </div>
   );
 }
+
+    
