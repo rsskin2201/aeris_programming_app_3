@@ -60,7 +60,7 @@ export const EQUIPO = [
     'PLANTA DE LUZ',
     'SECADORA'
 ] as const;
-export const FORMA_PAGO = ['PAGO A EC', 'PENDIENTE', 'IACEPTA', 'PAGO POR LOTE', 'OXXO', 'TRANSFERENCIA'] as const;
+export const FORMA_PAGO = ['PAGO A EC', 'PENDIENTE', 'IACEPTA', 'PAGO POR LOTE', 'OXXO', 'TRANSFERENCIA', 'TIENDA DE CONVENIENCIA'] as const;
 export const MOTIVO_CANCELACION = [
     'CLIENTE AUSENTE',
     'CLIENTE CANCELO',

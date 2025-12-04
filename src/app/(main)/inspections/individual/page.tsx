@@ -79,7 +79,7 @@ type FormValues = z.infer<typeof formSchema>;
 const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMADA_POR_GE, STATUS.REGISTRADA];
 const checklistRoles = [ROLES.CALIDAD, ROLES.SOPORTE, ROLES.ADMIN];
 const supportRoles = [ROLES.SOPORTE, ROLES.ADMIN];
-const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CONECTADA, STATUS.PENDIENTE_CORRECCION];
+const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CONECTADA, STATUS.FALTA_INFORMACION];
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
@@ -229,6 +229,10 @@ export default function IndividualInspectionPage() {
 
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
     if (pageMode === 'view') return true;
+
+    if (pageMode === 'edit' && currentRecord?.status === STATUS.CONECTADA && user?.role !== ROLES.ADMIN) {
+        return true;
+    }
     
     if (isCollaborator && fieldName === 'empresaColaboradora') {
         return true;
@@ -239,7 +243,7 @@ export default function IndividualInspectionPage() {
     }
 
     if (pageMode === 'edit' && currentRecord) {
-        const isClosed = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CANCELADA, STATUS.CONECTADA, STATUS.PENDIENTE_CORRECCION].includes(currentRecord.status as any);
+        const isClosed = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CANCELADA, STATUS.CONECTADA, STATUS.FALTA_INFORMACION].includes(currentRecord.status as any);
         if (isClosed && user?.role !== ROLES.ADMIN) return true;
 
         if (isCollaborator && fieldName === 'status') {
@@ -248,6 +252,13 @@ export default function IndividualInspectionPage() {
 
         const now = new Date();
         const eighteenHoursBefore = set(parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()), { hours: -6 });
+
+        if (user?.role === ROLES.SOPORTE) {
+            const addressFields: (keyof FormValues)[] = ['municipality', 'colonia', 'calle', 'numero', 'portal', 'escalera', 'piso', 'puerta'];
+            if (addressFields.includes(fieldName)) {
+                return true;
+            }
+        }
 
         switch (fieldName) {
             case 'status':
@@ -293,7 +304,7 @@ export default function IndividualInspectionPage() {
   const showSupportButton = useMemo(() => {
     if (pageMode !== 'edit' || !user || !currentRecord) return false;
     const canAccess = supportRoles.includes(user.role);
-    const isValidStatus = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.PENDIENTE_CORRECCION, STATUS.CONECTADA].includes(currentRecord.status as any);
+    const isValidStatus = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.FALTA_INFORMACION, STATUS.CONECTADA].includes(currentRecord.status as any);
     return canAccess && isValidStatus;
   }, [pageMode, user, currentRecord]);
   

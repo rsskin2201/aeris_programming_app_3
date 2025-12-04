@@ -78,7 +78,7 @@ export function SupportValidationForm({ record, user, onClose, onSave }: Support
         if (values.fechaConexion && values.datosConfirmados) {
             newStatus = STATUS.CONECTADA;
         } else if (values.tipoRechazo && values.motivoRechazo) {
-            newStatus = STATUS.PENDIENTE_CORRECCION;
+            newStatus = STATUS.FALTA_INFORMACION;
         } else {
             // This case should be prevented by the zod refine validation
             toast({
@@ -169,7 +169,7 @@ export function SupportValidationForm({ record, user, onClose, onSave }: Support
                 </div>
 
                 <div className="space-y-4 p-4 border rounded-md bg-muted/50">
-                     <h4 className="font-semibold text-lg">Opción 2: Marcar como Pendiente de Corrección</h4>
+                     <h4 className="font-semibold text-lg">Opción 2: Marcar como Falta de Información</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}

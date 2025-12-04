@@ -100,7 +100,7 @@ const statusColors: Record<Status, string> = {
     'RECHAZADA': 'bg-red-700/80 border-red-800 text-white',
     'CANCELADA': 'bg-red-800/80 border-red-900 text-white',
     'CONECTADA': 'bg-purple-600/80 border-purple-700 text-white',
-    'PENDIENTE CORRECCION': 'bg-yellow-600/80 border-yellow-700 text-white',
+    'FALTA INFORMACION': 'bg-yellow-600/80 border-yellow-700 text-white',
 };
 
 const nonAdminRolesWithZoneFilter = [

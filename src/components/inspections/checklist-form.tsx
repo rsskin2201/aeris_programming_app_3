@@ -360,7 +360,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                                     )} />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                       <FormField control={form.control} name="formaDePago" render={({ field }) => (<FormItem><FormLabel>FORMA DE PAGO</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl><SelectContent>{FORMA_PAGO.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                                      <FormField control={form.control} name="equipoExtra" render={({ field }) => (<FormItem><FormLabel>EQUIPO EXTRA</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                      <FormField control={form.control} name="equipoExtra" render={({ field }) => (<FormItem><FormLabel>EQUIPO EXTRA (Calibraciones Adicionales)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
 
@@ -390,7 +390,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                                                 <SelectContent>
                                                     <SelectItem value={STATUS.APROBADA}>APROBADA</SelectItem>
                                                     <SelectItem value={STATUS.NO_APROBADA}>NO APROBADA</SelectItem>
-                                                    <SelectItem value={STATUS.PENDIENTE_CORRECCION}>PENDIENTE CORRECCION</SelectItem>
+                                                    <SelectItem value={STATUS.FALTA_INFORMACION}>FALTA INFORMACION</SelectItem>
                                                     <SelectItem value={STATUS.CANCELADA}>CANCELADA</SelectItem>
                                                 </SelectContent>
                                             </Select>
