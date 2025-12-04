@@ -179,25 +179,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const usersRef = collection(firestore, "users");
     const q = query(usersRef, where("username", "==", username));
     
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-        throw { code: 'auth/invalid-credential', message: 'Usuario o contraseña incorrectos.' };
-    }
-
-    const userDoc = querySnapshot.docs[0];
-    const userProfile = { id: userDoc.id, ...userDoc.data() } as User;
-    
-    const email = `${userProfile.username}@aeris.com`;
-
     try {
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            throw { code: 'auth/invalid-credential', message: 'Usuario o contraseña incorrectos.' };
+        }
+
+        const userDoc = querySnapshot.docs[0];
+        const userProfile = { id: userDoc.id, ...userDoc.data() } as User;
+        
+        const email = `${userProfile.username}@aeris.com`;
+
         await signInWithEmailAndPassword(auth, email, password);
         // On successful sign-in, Firebase automatically handles the user state.
         // The `useEffect` listening to `firebaseUser` will then fetch the profile.
         return userProfile;
+
     } catch (error: any) {
-        console.error("Login process failed after finding user profile:", error);
-        throw error; // Re-throw the original Firebase auth error
+      if (error.code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+            path: usersRef.path,
+            operation: 'list', // getDocs is a list operation
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        // We still throw a user-friendly error to be caught by the form
+        throw new Error('No tienes permiso para realizar esta acción. Contacta a un administrador.');
+      }
+      
+      console.error("Login process failed:", error);
+      throw error; // Re-throw other errors (like auth/wrong-password) to be handled by the form
     }
   }, [auth, firestore]);
 
