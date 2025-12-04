@@ -20,7 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { CollaboratorCompany, ExpansionManager, Inspector, ROLES, Role, STATUS, Sector, User as AppUser } from "@/lib/types";
+import { CollaboratorCompany, ExpansionManager, Inspector, ROLES, Role, STATUS, Sector, User as AppUser, Status } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA, mockMunicipalities } from "@/lib/form-options";
@@ -231,21 +231,43 @@ export default function MassiveInspectionPage() {
     
     values.inspections.forEach(detail => {
         const recordToSave: InspectionRecord = {
-            ...values,
-            ...detail,
+            // Common data
+            zone: values.zone,
+            sector: values.sector || '',
+            municipality: values.municipality,
+            colonia: values.colonia,
+            calle: values.calle,
+            numero: values.numero,
+            tipoInspeccion: values.tipoInspeccion,
+            tipoProgramacion: values.tipoProgramacion,
+            tipoMdd: values.tipoMdd,
+            mercado: values.mercado,
+            oferta: values.oferta || '',
+            observaciones: values.observaciones || '',
+            collaboratorCompany: values.empresaColaboradora,
+            fechaProgramacion: values.fechaProgramacion,
+            horarioProgramacion: values.horarioProgramacion,
+            instalador: values.instalador,
+            inspector: values.inspector || '',
+            gestor: values.gestor,
+            status: values.status as Status,
+
+            // Detail data
+            id: detail.id,
+            poliza: detail.poliza || '',
+            caso: detail.caso || '',
+            portal: detail.portal || '',
+            escalera: detail.escalera || '',
+            piso: detail.piso || '',
+            puerta: detail.puerta || '',
+            
+            // Generated/Contextual data
             client: 'Cliente (TBD)',
             address: `${values.calle} ${values.numero}, ${detail.puerta || ''}`,
             requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
             type: 'Masiva PES',
             createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
             createdBy: user?.username || 'desconocido',
-            inspector: values.inspector || 'N/A',
-            horarioProgramacion: values.horarioProgramacion,
-            zone: values.zone,
-            id: detail.id,
-            serieMdd: undefined, // ensure it's not present or handled correctly
-            observaciones: values.observaciones,
-            collaboratorCompany: values.empresaColaboradora
         };
         createdIds.push(detail.id);
         const docRef = doc(firestore, 'inspections', detail.id);

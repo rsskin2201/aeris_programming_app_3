@@ -20,7 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser } from "@/lib/types";
+import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser, Status } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO, mockMunicipalities } from "@/lib/form-options";
@@ -223,21 +223,39 @@ export default function SpecialInspectionPage() {
     setIsSubmitting(true);
     
     const recordToSave: InspectionRecord = {
-        ...values,
+        id: values.id || generateId(),
+        zone: values.zone,
+        sector: values.sector || '',
+        poliza: values.poliza || '',
+        caso: values.caso || '',
+        municipality: values.municipality,
+        colonia: values.colonia,
+        calle: values.calle,
+        numero: values.numero,
+        portal: values.portal || '',
+        escalera: values.escalera || '',
+        piso: values.piso || '',
+        puerta: values.puerta || '',
+        tipoInspeccion: values.tipoInspeccion,
+        tipoProgramacion: values.tipoProgramacion,
+        tipoMdd: values.tipoMdd || '',
+        mercado: values.mercado,
+        oferta: values.oferta || '',
+        observaciones: values.observaciones || '',
+        collaboratorCompany: values.empresaColaboradora,
+        fechaProgramacion: values.fechaProgramacion,
+        horarioProgramacion: values.horarioProgramacion,
+        instalador: values.instalador,
+        inspector: values.inspector || '',
+        gestor: values.gestor,
+        status: values.status as Status,
+
         client: 'Cliente (TBD)',
         address: `${values.calle} ${values.numero}, ${values.colonia}`,
         requestDate: format(values.fechaProgramacion, 'yyyy-MM-dd'),
         type: 'Especial',
         createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
         createdBy: user?.username || 'desconocido',
-        inspector: values.inspector || 'N/A',
-        horarioProgramacion: values.horarioProgramacion,
-        zone: values.zone,
-        id: values.id || generateId(),
-        serieMdd: undefined,
-        mercado: values.mercado,
-        observaciones: values.observaciones,
-        collaboratorCompany: values.empresaColaboradora,
     };
     
     const docRef = doc(firestore, 'inspections', recordToSave.id);

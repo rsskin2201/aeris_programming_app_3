@@ -18,6 +18,7 @@ import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc } from 'firebase/firestore';
 
 const isValidDate = (dateStr: string) => {
+    if (!dateStr) return false;
     const formats = ['yyyy-MM-dd', 'dd/MM/yyyy'];
     for (const fmt of formats) {
         if (isValid(parse(dateStr, fmt, new Date()))) {
@@ -28,6 +29,7 @@ const isValidDate = (dateStr: string) => {
 };
 
 const parseToUniformDate = (dateStr: string): string => {
+    if (!dateStr) return '';
     if (isValid(parse(dateStr, 'dd/MM/yyyy', new Date()))) {
         const parsedDate = parse(dateStr, 'dd/MM/yyyy', new Date());
         return formatDate(parsedDate, 'yyyy-MM-dd');
@@ -181,7 +183,8 @@ export default function SalesforceUploadPage() {
     newRecords.forEach(rec => {
         const fullAddress = [rec.calle, rec.numero, rec.colonia].filter(Boolean).join(', ');
         const id = `SF-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-        const recordToSave: InspectionRecord = {
+        
+        const recordToSave = {
             ...rec,
             id,
             type: rec.tipoInspeccion || 'Masiva Salesforce',
@@ -192,10 +195,15 @@ export default function SalesforceUploadPage() {
             status: rec.status || STATUS.REGISTRADA,
             zone: rec.zone || zone,
             requestDate: rec.requestDate ? parseToUniformDate(rec.requestDate) : '',
-        } as InspectionRecord;
+        };
+
+        // Ensure all fields are defined, falling back to empty strings
+        const finalRecord = Object.fromEntries(
+            Object.entries(recordToSave).map(([key, value]) => [key, value === undefined || value === null ? '' : value])
+        );
 
         const docRef = doc(firestore, 'inspections', id);
-        setDocumentNonBlocking(docRef, recordToSave, { merge: true });
+        setDocumentNonBlocking(docRef, finalRecord, { merge: true });
     });
 
     addNotification({
