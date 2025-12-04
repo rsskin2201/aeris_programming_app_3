@@ -15,7 +15,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
@@ -217,14 +216,18 @@ export default function Header() {
             <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Mi Cuenta ({user.role})</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                 <DropdownMenuCheckboxItem
-                    checked={devModeEnabled}
-                    onCheckedChange={toggleDevMode}
-                  >
-                    <FlaskConical className="mr-2 h-4 w-4" />
-                    Modo Desarrollo
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuSeparator />
+                {user.role === ROLES.ADMIN && (
+                  <>
+                    <DropdownMenuCheckboxItem
+                        checked={devModeEnabled}
+                        onCheckedChange={toggleDevMode}
+                    >
+                        <FlaskConical className="mr-2 h-4 w-4" />
+                        Modo Desarrollo
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={logout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Cerrar sesión</span>

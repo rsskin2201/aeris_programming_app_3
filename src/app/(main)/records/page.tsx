@@ -20,13 +20,14 @@ import { addDays, format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { STATUS, ROLES, User, CollaboratorCompany, Sector, ExpansionManager } from '@/lib/types';
+import { STATUS, ROLES, User, CollaboratorCompany, Sector, ExpansionManager, Status } from '@/lib/types';
 import { TIPO_INSPECCION_ESPECIAL, TIPO_INSPECCION_MASIVA, MERCADO } from '@/lib/form-options';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, QueryConstraint } from 'firebase/firestore';
+import { MultiSelect } from '@/components/ui/multi-select';
 
 const statusColors: Record<InspectionRecord['status'], string> = {
   [STATUS.REGISTRADA]: 'bg-gray-500/80 border-gray-600 text-white',
@@ -44,6 +45,8 @@ const statusColors: Record<InspectionRecord['status'], string> = {
 
 const allInspectionTypes = [...new Set(['Individual PES', 'Masiva PES', ...TIPO_INSPECCION_MASIVA, ...TIPO_INSPECCION_ESPECIAL])];
 
+const statusOptions = Object.values(STATUS).map(s => ({ value: s, label: s }));
+
 const initialFilters = {
     id: '',
     gestor: '',
@@ -52,7 +55,7 @@ const initialFilters = {
     poliza: '',
     caso: '',
     serieMdd: '',
-    status: '',
+    status: [] as string[],
     tipoInspeccion: '',
     mercado: '',
     date: undefined as DateRange | undefined,
@@ -87,7 +90,7 @@ export default function RecordsPage() {
   const canExport = user && canExportRoles.includes(user.role);
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value || '' }));
+    setFilters(prev => ({ ...prev, [key]: value || (Array.isArray(prev[key]) ? [] : '') }));
   }
 
   const clearFilters = () => {
@@ -128,7 +131,7 @@ export default function RecordsPage() {
       if (filters.poliza && record.poliza && !record.poliza.includes(filters.poliza)) return false;
       if (filters.caso && record.caso && !record.caso.includes(filters.caso)) return false;
       if (filters.serieMdd && record.serieMdd !== filters.serieMdd) return false;
-      if (filters.status && record.status !== filters.status) return false;
+      if (filters.status.length > 0 && !filters.status.includes(record.status)) return false;
       if (filters.tipoInspeccion && record.type !== filters.tipoInspeccion) return false;
       if (filters.mercado && record.mercado !== filters.mercado) return false;
       if (filters.date?.from && parse(record.requestDate, 'yyyy-MM-dd', new Date()) < filters.date.from) return false;
@@ -280,13 +283,13 @@ export default function RecordsPage() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="status">Status</Label>
-                         <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
-                            <SelectTrigger id="status"><SelectValue placeholder="Todos" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todos</SelectItem>
-                                {Object.values(STATUS).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <MultiSelect
+                            options={statusOptions}
+                            onValueChange={(v) => handleFilterChange('status', v)}
+                            defaultValue={filters.status}
+                            placeholder="Seleccionar estatus..."
+                            className="w-full"
+                        />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="tipoInspeccion">Tipo de Inspección</Label>
