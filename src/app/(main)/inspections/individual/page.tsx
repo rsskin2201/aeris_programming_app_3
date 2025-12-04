@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle, CalendarIcon as CalendarIconLucide, ListChecks, File as FileIcon, BadgeCheck, Copy } from "lucide-react";
+import { ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle, CalendarIcon as CalendarIconLucide, ListChecks, File as FileIcon, BadgeCheck, Copy, Clock } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse, isBefore, set, endOfDay } from "date-fns";
@@ -20,7 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser, ChangeHistory } from "@/lib/types";
+import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser, ChangeHistory, Status } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, mockMunicipalities } from "@/lib/form-options";
@@ -31,6 +31,7 @@ import { Label } from "@/components/ui/label";
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
+import { ChangeHistoryViewer } from "@/components/inspections/change-history-viewer";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -102,6 +103,7 @@ export default function IndividualInspectionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [isSupportFormOpen, setIsSupportFormOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [pageMode, setPageMode] = useState<'new' | 'view' | 'edit'>('new');
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
@@ -187,7 +189,7 @@ export default function IndividualInspectionPage() {
              form.reset({
                 ...currentRecord,
                 id: currentRecord.id,
-                zone: currentRecord.zone,
+                zone: currentRecord.zone || '',
                 sector: currentRecord.sector || '',
                 poliza: currentRecord.poliza || '',
                 caso: currentRecord.caso || '',
@@ -373,6 +375,7 @@ export default function IndividualInspectionPage() {
     const changes: { field: string; oldValue: string; newValue: string }[] = [];
     const oldValues = {
       ...currentRecord,
+      empresaColaboradora: currentRecord.collaboratorCompany,
       fechaProgramacion: parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()),
     };
 
@@ -414,32 +417,32 @@ export default function IndividualInspectionPage() {
     }
     
     const recordToSave: InspectionRecord = {
-        ...currentRecord,
+        ...(currentRecord || {}),
         id: values.id || generateId(),
         zone: values.zone,
         sector: values.sector || '',
         poliza: values.poliza || '',
         caso: values.caso || '',
-        municipality: values.municipality,
-        colonia: values.colonia,
-        calle: values.calle,
-        numero: values.numero,
+        municipality: values.municipality || '',
+        colonia: values.colonia || '',
+        calle: values.calle || '',
+        numero: values.numero || '',
         portal: values.portal || '',
         escalera: values.escalera || '',
         piso: values.piso || '',
         puerta: values.puerta || '',
-        tipoInspeccion: values.tipoInspeccion,
-        tipoProgramacion: values.tipoProgramacion,
-        tipoMdd: values.tipoMdd,
-        mercado: values.mercado,
+        tipoInspeccion: values.tipoInspeccion || '',
+        tipoProgramacion: values.tipoProgramacion || '',
+        tipoMdd: values.tipoMdd || '',
+        mercado: values.mercado || '',
         oferta: values.oferta || '',
         observaciones: values.observaciones || '',
-        collaboratorCompany: values.empresaColaboradora,
+        collaboratorCompany: values.empresaColaboradora || '',
         fechaProgramacion: values.fechaProgramacion,
-        horarioProgramacion: values.horarioProgramacion,
-        instalador: values.instalador,
+        horarioProgramacion: values.horarioProgramacion || '',
+        instalador: values.instalador || '',
         inspector: values.inspector || '',
-        gestor: values.gestor,
+        gestor: values.gestor || '',
         status: values.status as Status,
 
         client: currentRecord?.client || 'Cliente (TBD)',
@@ -479,6 +482,7 @@ export default function IndividualInspectionPage() {
     } else if (currentRecord) {
         form.reset({
             ...currentRecord,
+            empresaColaboradora: currentRecord.collaboratorCompany,
             fechaProgramacion: parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()),
         });
     }
@@ -523,6 +527,7 @@ export default function IndividualInspectionPage() {
         form.reset({ // Re-sync main form if needed
             ...newRecord,
             fechaProgramacion: parse(newRecord.requestDate, 'yyyy-MM-dd', new Date()),
+            empresaColaboradora: newRecord.collaboratorCompany,
         });
     }
   }
@@ -566,6 +571,17 @@ export default function IndividualInspectionPage() {
                 </div>
             </div>
             <div className="flex items-center gap-2">
+                {pageMode !== 'new' && (
+                    <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">
+                                <Clock className="mr-2 h-4 w-4"/>
+                                Ver Historial de Cambios
+                            </Button>
+                        </DialogTrigger>
+                        <ChangeHistoryViewer inspectionId={recordId!} />
+                    </Dialog>
+                )}
                 {showChecklistButton && (
                     <Dialog open={isChecklistOpen} onOpenChange={setIsChecklistOpen}>
                         <DialogTrigger asChild>
