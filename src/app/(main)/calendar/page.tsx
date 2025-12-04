@@ -209,6 +209,7 @@ export default function CalendarPage() {
     const inspections: Record<string, typeof filteredRecordsForView> = {};
     if (!filteredRecordsForView) return inspections;
     filteredRecordsForView.forEach((record) => {
+      if (!record.requestDate) return;
       const recordDate = parseISO(record.requestDate);
       const dateKey = format(recordDate, 'yyyy-MM-dd');
       if (!inspections[dateKey]) {
@@ -223,6 +224,7 @@ export default function CalendarPage() {
     const inspections: Record<string, typeof filteredRecordsForView> = {};
     if (!filteredRecordsForView) return inspections;
     filteredRecordsForView.forEach((record) => {
+      if (!record.requestDate) return;
       const recordDate = parseISO(record.requestDate);
       const dateTimeKey = format(recordDate, 'yyyy-MM-dd-HH');
       if (!inspections[dateTimeKey]) {
@@ -333,6 +335,7 @@ export default function CalendarPage() {
       }
       
       const recordsToExport = filteredRecordsForView?.filter(rec => {
+          if (!rec.requestDate) return false;
           const recDate = parseISO(rec.requestDate);
           return recDate >= start && recDate <= end;
       }) || [];
