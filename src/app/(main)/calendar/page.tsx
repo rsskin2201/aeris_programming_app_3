@@ -43,10 +43,12 @@ import {
   startOfWeek,
   isSunday,
   isSameDay,
-  parseISO,
+  parse,
   getYear,
   getMonth,
   getDay,
+  isWithinInterval,
+  parseISO,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ROLES, Status, STATUS } from '@/lib/types';
@@ -103,6 +105,9 @@ const statusColors: Record<Status, string> = {
     'FALTA INFORMACION': 'bg-yellow-600/80 border-yellow-700 text-white',
 };
 
+const fadedStatuses: Status[] = [STATUS.REGISTRADA, STATUS.CONFIRMADA_POR_GE];
+const hiddenStatuses: Status[] = [STATUS.CANCELADA];
+
 const nonAdminRolesWithZoneFilter = [
   ROLES.COLABORADOR,
   ROLES.GESTOR,
@@ -111,6 +116,16 @@ const nonAdminRolesWithZoneFilter = [
   ROLES.COORDINADOR_SSPP,
   ROLES.VISUAL,
 ];
+
+const getInspectionDurationInHours = (record: InspectionRecord): number => {
+    if (record.id.includes("INSP-PS") || record.id.includes("SF")) {
+        return 2;
+    }
+    if (record.id.includes("INSP-IM") && record.tipoInspeccion === 'Programacion PES') {
+        return 2; // Duration for the whole massive block
+    }
+    return 1;
+};
 
 export default function CalendarPage() {
   const {
@@ -150,28 +165,17 @@ export default function CalendarPage() {
   const canExport = user && canExportRoles.includes(user.role);
   
   const isCollaborator = user?.role === ROLES.COLABORADOR;
-  const isQualityControl = user?.role === ROLES.CALIDAD;
-  const isCoordinator = user?.role === ROLES.COORDINADOR_SSPP;
-  const isGestor = user?.role === ROLES.GESTOR;
-  const isAdmin = user?.role === ROLES.ADMIN;
 
   const buildQuery = (collectionName: string) => {
-    if (!firestore || !user) return null;
-    const constraints: QueryConstraint[] = [];
-    if (zone !== 'Todas las zonas') {
-        constraints.push(where('zone', '==', zone));
-    }
-    return query(collection(firestore, collectionName), ...constraints);
-  };
-  
-  const inspectionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
     if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
-    return query(collection(firestore, 'inspections'), ...constraints);
-  }, [firestore, user, zone]);
+    return query(collection(firestore, collectionName), ...constraints);
+  };
+  
+  const inspectionsQuery = useMemoFirebase(() => buildQuery('inspections'), [firestore, user, zone]);
 
   const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
   
@@ -183,11 +187,11 @@ export default function CalendarPage() {
   const filteredRecordsForView = useMemo(() => {
     if (!records) return [];
     
-    let filtered = records;
+    let filtered = records.filter(r => !hiddenStatuses.includes(r.status));
 
     // Role-based pre-filtering
     if (isCollaborator && user?.name) {
-      filtered = records.filter(record => record.collaboratorCompany === user.name);
+      filtered = filtered.filter(record => record.collaboratorCompany === user.name);
     }
     
     // Active filters from UI
@@ -223,7 +227,7 @@ export default function CalendarPage() {
     if (!filteredRecordsForView) return inspections;
     filteredRecordsForView.forEach((record) => {
       if (!record.requestDate) return;
-      const recordDate = parseISO(record.requestDate);
+      const recordDate = parse(record.requestDate, 'yyyy-MM-dd', new Date());
       const dateKey = format(recordDate, 'yyyy-MM-dd');
       if (!inspections[dateKey]) {
         inspections[dateKey] = [];
@@ -237,9 +241,10 @@ export default function CalendarPage() {
     const inspections: Record<string, typeof filteredRecordsForView> = {};
     if (!filteredRecordsForView) return inspections;
     filteredRecordsForView.forEach((record) => {
-      if (!record.requestDate) return;
-      const recordDate = parseISO(record.requestDate);
-      const dateTimeKey = format(recordDate, 'yyyy-MM-dd-HH');
+      if (!record.requestDate || !record.horarioProgramacion) return;
+      const recordDate = parse(record.requestDate, 'yyyy-MM-dd', new Date());
+      const [hour, minute] = record.horarioProgramacion.split(':');
+      const dateTimeKey = format(recordDate, `yyyy-MM-dd-${hour}`);
       if (!inspections[dateTimeKey]) {
         inspections[dateTimeKey] = [];
       }
@@ -328,37 +333,33 @@ export default function CalendarPage() {
   }
 
   const { exportData, exportCount } = useMemo(() => {
-      let start: Date;
-      let end: Date;
-
-      switch(view) {
-          case 'day':
-              start = startOfDay(currentDate);
-              end = start;
-              break;
-          case 'week':
-              start = startOfWeek(currentDate, { weekStartsOn: 1 });
-              end = endOfWeek(currentDate, { weekStartsOn: 1 });
-              break;
-          case 'month':
-          default:
-              start = startOfMonth(currentDate);
-              end = endOfMonth(currentDate);
-              break;
-      }
-      
-      const recordsToExport = filteredRecordsForView?.filter(rec => {
-          if (!rec.requestDate) return false;
-          const recDate = parseISO(rec.requestDate);
-          return recDate >= start && recDate <= end;
-      }) || [];
-
-      return {
-          exportData: recordsToExport,
-          exportCount: recordsToExport.length,
-          exportRange: { from: start, to: end }
-      };
-
+    let start: Date, end: Date;
+    switch(view) {
+      case 'day':
+        start = startOfDay(currentDate);
+        end = startOfDay(currentDate); // Only this day
+        break;
+      case 'week':
+        start = startOfWeek(currentDate, { weekStartsOn: 1 });
+        end = endOfWeek(currentDate, { weekStartsOn: 1 });
+        break;
+      case 'month':
+      default:
+        start = startOfMonth(currentDate);
+        end = endOfMonth(currentDate);
+        break;
+    }
+  
+    const recordsToExport = filteredRecordsForView.filter(rec => {
+      if (!rec.requestDate) return false;
+      const recDate = parse(rec.requestDate, 'yyyy-MM-dd', new Date());
+      return isWithinInterval(recDate, { start, end });
+    }) || [];
+  
+    return {
+      exportData: recordsToExport,
+      exportCount: recordsToExport.length,
+    };
   }, [view, currentDate, filteredRecordsForView]);
   
   const handleExport = () => {
@@ -471,30 +472,43 @@ export default function CalendarPage() {
     const slotKey = `${format(day, 'yyyy-MM-dd')}-${String(hourNumber).padStart(2, '0')}`;
     const slotInspections = inspectionsByTime[slotKey] || [];
 
-    if (slotInspections.length === 0) return null;
-
-    return slotInspections.map((inspection) => (
-      <TooltipProvider key={inspection.id}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={cn("mb-1 rounded-md p-1 text-xs shadow-sm hover:opacity-80 border-l-4", statusColors[inspection.status])}>
-              <p className="truncate font-medium">{inspection.client}</p>
-              <p className="truncate text-xs">{inspection.address}</p>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-             <div className="p-1 text-sm">
-                <p className="font-bold">{inspection.client}</p>
-                <p><strong>ID:</strong> {inspection.id}</p>
-                <p><strong>Dirección:</strong> {inspection.address}</p>
-                <p><strong>Inspector:</strong> {inspection.inspector}</p>
-                <p><strong>Estatus:</strong> <span className='font-semibold'>{inspection.status}</span></p>
-             </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    ));
-  };
+    return slotInspections.map((inspection) => {
+        const duration = getInspectionDurationInHours(inspection);
+        const isFaded = fadedStatuses.includes(inspection.status);
+        const height = `calc(${duration * 4}rem - 2px)`; // 4rem per hour (h-16), minus borders
+        
+        return (
+            <TooltipProvider key={inspection.id}>
+                <Tooltip>
+                <TooltipTrigger asChild>
+                    <div
+                        style={{ height }}
+                        className={cn(
+                            "absolute w-[calc(100%-8px)] left-1 z-10 rounded-md p-1 text-xs shadow-sm hover:opacity-80 border-l-4 overflow-hidden", 
+                            statusColors[inspection.status],
+                            isFaded && "opacity-70",
+                        )}
+                        >
+                        <p className="truncate font-medium">{inspection.client}</p>
+                        <p className="truncate text-xs">{inspection.address}</p>
+                         {inspection.id.includes("INSP-IM") && <p className="text-xs font-bold">(Masiva)</p>}
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <div className="p-1 text-sm">
+                        <p className="font-bold">{inspection.client}</p>
+                        <p><strong>ID:</strong> {inspection.id}</p>
+                        <p><strong>Dirección:</strong> {inspection.address}</p>
+                        <p><strong>Inspector:</strong> {inspection.inspector}</p>
+                        <p><strong>Estatus:</strong> <span className='font-semibold'>{inspection.status}</span></p>
+                        <p><strong>Duración:</strong> {duration}h</p>
+                    </div>
+                </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        );
+    });
+};
 
 
   const renderWeekView = () => (
@@ -529,7 +543,7 @@ export default function CalendarPage() {
                   key={`${day}-${hour}`}
                   onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
                   className={cn(
-                    'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer overflow-y-auto',
+                    'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer',
                     isSunday(day) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                     isSunday(day) && weekendsEnabled && 'bg-green-100/50',
                     isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
@@ -577,7 +591,7 @@ export default function CalendarPage() {
               key={`${currentDate}-${hour}`}
               onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
               className={cn(
-                'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer overflow-y-auto',
+                'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer',
                 isSunday(currentDate) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                 isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50',
                 isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
