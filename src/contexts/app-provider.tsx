@@ -175,25 +175,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
     if (!auth || !firestore) throw new Error("Firebase services not available.");
-    
-    const email = `${username}@aeris.com`; // Internal convention
+
+    const usersRef = collection(firestore, 'users');
+    const q = query(usersRef, where("username", "==", username));
 
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const authedUser = userCredential.user;
-        
-        const userDocRef = doc(firestore, 'users', authedUser.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (!userDoc.exists()) {
-            await signOut(auth);
-            throw { code: 'auth/user-not-found', message: 'No profile found for this user.' };
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            throw new Error("Usuario o contraseña incorrectos.");
         }
 
-        return { id: userDoc.id, ...userDoc.data() } as User;
+        const userDoc = querySnapshot.docs[0];
+        const userProfile = { id: userDoc.id, ...userDoc.data() } as User;
+        
+        const email = `${userProfile.username}@aeris.com`;
+
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        
+        return userProfile;
+
     } catch (error: any) {
-        console.error("Login process failed:", error);
-        throw error; // Re-throw auth errors to be handled by the form
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: usersRef.path,
+                operation: 'list',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw new Error('No tienes permiso para realizar esta acción. Contacta a un administrador.');
+      } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+          throw new Error('Usuario o contraseña incorrectos.');
+      }
+      
+      console.error("Login process failed:", error);
+      throw error;
     }
   }, [auth, firestore]);
 
