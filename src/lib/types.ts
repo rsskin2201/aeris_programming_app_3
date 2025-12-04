@@ -94,4 +94,14 @@ export type AppNotification = {
     date: Date;
     read: boolean;
     link?: string;
+};
+
+export type NewMeterRequest = {
+  id: string;
+  requesterName: string;
+  requesterRole: Role;
+  zone: Zone;
+  marca: string;
+  tipo: string;
+  date: Date;
 }

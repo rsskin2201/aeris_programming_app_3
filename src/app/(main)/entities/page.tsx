@@ -14,9 +14,10 @@ import { QualityControlCompanyForm } from "@/components/entities/quality-control
 import { InspectorForm } from "@/components/entities/inspector-form";
 import { InstallerForm } from "@/components/entities/installer-form";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import type { CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector } from "@/lib/mock-data";
+import type { CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter } from "@/lib/mock-data";
 import { ExpansionManagerForm } from "@/components/entities/expansion-manager-form";
 import { SectorForm } from "@/components/entities/sector-form";
+import { MeterForm } from "@/components/entities/meter-form";
 import { useAppContext } from "@/hooks/use-app-context";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { cn } from "@/lib/utils";
@@ -25,7 +26,7 @@ import { PERMISSIONS, ROLES } from "@/lib/types";
 
 
 const entities = [
-  "Empresa Colaboradora", "Instalador", "Gestor de Expansión", "Empresa de Control de Calidad", "Inspector", "Sectores"
+  "Empresa Colaboradora", "Instalador", "Gestor de Expansión", "Empresa de Control de Calidad", "Inspector", "Sectores", "Medidores"
 ];
 
 const statusColors: Record<string, string> = {
@@ -51,6 +52,7 @@ export default function EntitiesPage() {
   const [installerDialogOpen, setInstallerDialogOpen] = useState(false);
   const [managerDialogOpen, setManagerDialogOpen] = useState(false);
   const [sectorDialogOpen, setSectorDialogOpen] = useState(false);
+  const [meterDialogOpen, setMeterDialogOpen] = useState(false);
   
   const [selectedCollaborator, setSelectedCollaborator] = useState<CollaboratorCompany | null>(null);
   const [selectedQualityCompany, setSelectedQualityCompany] = useState<QualityControlCompany | null>(null);
@@ -58,6 +60,7 @@ export default function EntitiesPage() {
   const [selectedInstaller, setSelectedInstaller] = useState<Installer | null>(null);
   const [selectedManager, setSelectedManager] = useState<ExpansionManager | null>(null);
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
+  const [selectedMeter, setSelectedMeter] = useState<Meter | null>(null);
   
   const canModify = user && canModifyRoles.includes(user.role);
   const canUpload = user && canUploadRoles.includes(user.role);
@@ -88,6 +91,10 @@ export default function EntitiesPage() {
   
   const sectorsQuery = useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
+  
+  const metersQuery = useMemoFirebase(() => buildQuery('medidores'), [firestore, user, zone]);
+  const { data: meters } = useCollection<Meter>(metersQuery);
+
 
   const handleEditCollaborator = (company: CollaboratorCompany) => {
     setSelectedCollaborator(company);
@@ -147,6 +154,16 @@ export default function EntitiesPage() {
   const handleNewSector = () => {
     setSelectedSector(null);
     setSectorDialogOpen(true);
+  };
+  
+  const handleEditMeter = (meter: Meter) => {
+    setSelectedMeter(meter);
+    setMeterDialogOpen(true);
+  };
+
+  const handleNewMeter = () => {
+    setSelectedMeter(null);
+    setMeterDialogOpen(true);
   };
 
   const handleStatusChange = (item: any, newStatus: string) => {
@@ -618,9 +635,76 @@ export default function EntitiesPage() {
               {canModify && <SectorForm sector={selectedSector} onClose={() => setSectorDialogOpen(false)} />}
             </Dialog>
           </TabsContent>
+
+          <TabsContent value="Medidores">
+            <Dialog open={meterDialogOpen} onOpenChange={setMeterDialogOpen}>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Listado de: Medidores (MDD)</CardTitle>
+                    <CardDescription>Gestiona los tipos de medidores.</CardDescription>
+                  </div>
+                  {canModify && (
+                  <DialogTrigger asChild>
+                    <Button onClick={handleNewMeter}>
+                      <PlusCircle className="mr-2" />
+                      Nuevo Registro
+                    </Button>
+                  </DialogTrigger>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Marca</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Zona</TableHead>
+                        <TableHead>Estatus</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {meters?.map(item => (
+                        <TableRow key={item.id} className="hover:bg-muted/60">
+                          <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
+                          <TableCell className="py-2 px-4 font-medium">{item.marca}</TableCell>
+                          <TableCell className="py-2 px-4">{item.tipo}</TableCell>
+                          <TableCell className="py-2 px-4">{item.zona}</TableCell>
+                          <TableCell className="py-2 px-4">
+                            <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
+                          </TableCell>
+                          <TableCell className="py-2 px-4 text-right">
+                            {canModify && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Toggle menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleEditMeter(item)}>Editar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activo')} className="text-green-600">Activar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactivo')} className="text-yellow-600">Poner Inactivo</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {/* TODO: Add Pagination Controls */}
+                </CardContent>
+              </Card>
+              {canModify && <MeterForm meter={selectedMeter} onClose={() => setMeterDialogOpen(false)} />}
+            </Dialog>
+          </TabsContent>
+
         </Tabs>
     </div>
   );
 }
-
-    
