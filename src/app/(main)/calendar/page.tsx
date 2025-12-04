@@ -484,7 +484,7 @@ export default function CalendarPage() {
                     <div
                         style={{ height }}
                         className={cn(
-                            "absolute w-[calc(100%-8px)] left-1 z-10 rounded-md p-1 text-xs shadow-sm hover:opacity-80 border-l-4 overflow-hidden", 
+                            "absolute w-[calc(100%-8px)] left-1 z-20 rounded-md p-1 text-xs shadow-sm hover:opacity-80 border-l-4 overflow-hidden", 
                             statusColors[inspection.status],
                             isFaded && "opacity-70",
                         )}
@@ -533,7 +533,7 @@ export default function CalendarPage() {
           return (
             <div
               key={day.toString()}
-              className={cn('border-l relative', 
+              className={cn('border-l', 
                 isSameDay(day, new Date()) && 'bg-blue-500/10',
                 isBlocked && 'bg-muted-foreground/30'
               )}
@@ -543,7 +543,7 @@ export default function CalendarPage() {
                   key={`${day}-${hour}`}
                   onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
                   className={cn(
-                    'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer',
+                    'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer relative',
                     isSunday(day) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                     isSunday(day) && weekendsEnabled && 'bg-green-100/50',
                     isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
@@ -581,7 +581,7 @@ export default function CalendarPage() {
       <div className="flex-1">
         <div
           className={cn(
-            'border-l relative',
+            'border-l',
             isSameDay(currentDate, new Date()) && 'bg-blue-500/10',
             isBlocked && 'bg-muted-foreground/30'
           )}
@@ -591,7 +591,7 @@ export default function CalendarPage() {
               key={`${currentDate}-${hour}`}
               onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
               className={cn(
-                'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer',
+                'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer relative',
                 isSunday(currentDate) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                 isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50',
                 isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
