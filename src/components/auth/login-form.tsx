@@ -24,9 +24,10 @@ export function LoginForm() {
   const [isForgotPassOpen, setIsForgotPassOpen] = useState(false);
   const [isSubmittingForgot, setIsSubmittingForgot] = useState(false);
   const [forgotUsername, setForgotUsername] = useState('');
+  const [forgotEmail, setForgotEmail] = useState('');
   
   const router = useRouter();
-  const { login } = useAppContext();
+  const { login, requestPasswordReset } = useAppContext();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -50,28 +51,10 @@ export function LoginForm() {
         router.push('/');
       }
     } catch (error: any) {
-      console.error("Login failed:", error);
-      let description = 'Ocurrió un error inesperado.';
-      if (error.code) {
-        switch (error.code) {
-          case 'auth/user-not-found':
-          case 'auth/wrong-password':
-          case 'auth/invalid-credential':
-            description = 'Usuario o contraseña incorrectos.';
-            break;
-          case 'auth/invalid-email':
-            description = 'El formato del usuario no es válido.';
-            break;
-          default:
-            description = `Error de autenticación. Por favor, inténtalo de nuevo.`;
-        }
-      } else {
-        description = error.message || description;
-      }
       toast({
         variant: 'destructive',
         title: 'Error de autenticación',
-        description,
+        description: error.message || 'Ocurrió un error inesperado.',
       });
     } finally {
       setIsLoading(false);
@@ -79,16 +62,27 @@ export function LoginForm() {
   }
 
   const handleForgotPasswordSubmit = () => {
-    // This functionality would require a backend function to send a reset email.
-    // For now, it will just show a confirmation toast.
+    if (!forgotUsername || !forgotEmail) {
+        toast({
+            variant: 'destructive',
+            title: 'Campos incompletos',
+            description: 'Por favor, ingresa tu usuario y correo electrónico.'
+        });
+        return;
+    }
+
     setIsSubmittingForgot(true);
+    requestPasswordReset(forgotUsername, forgotEmail);
+    
     setTimeout(() => {
         toast({
-            title: 'Funcionalidad no implementada',
-            description: 'La recuperación de contraseña se implementará en una futura versión.'
+            title: 'Solicitud Enviada',
+            description: 'Se ha notificado al administrador para restablecer tu contraseña.'
         });
         setIsSubmittingForgot(false);
         setIsForgotPassOpen(false);
+        setForgotUsername('');
+        setForgotEmail('');
     }, 1000);
   }
 
@@ -145,7 +139,7 @@ export function LoginForm() {
                 <DialogHeader>
                     <DialogTitle>Recuperar Contraseña</DialogTitle>
                     <DialogDescription>
-                        Esta función (no implementada) enviaría un correo para restablecer tu contraseña.
+                        Ingresa tu usuario y correo electrónico. El administrador será notificado para restablecer tu contraseña.
                     </DialogDescription>
                 </DialogHeader>
                  <div className="py-4 space-y-4">
@@ -157,6 +151,17 @@ export function LoginForm() {
                             value={forgotUsername}
                             onChange={(e) => setForgotUsername(e.target.value)}
                             placeholder="tu.usuario"
+                            className="mt-2"
+                        />
+                    </div>
+                     <div>
+                        <Label htmlFor="forgot-email">Correo Electrónico</Label>
+                        <Input 
+                            id="forgot-email" 
+                            type="email"
+                            value={forgotEmail}
+                            onChange={(e) => setForgotEmail(e.target.value)}
+                            placeholder="tu.correo@ejemplo.com"
                             className="mt-2"
                         />
                     </div>

@@ -90,7 +90,7 @@ export default function Header() {
 
   if (!user) return null;
 
-  const userNotifications = notifications.filter(n => n.recipientUsername === user.username);
+  const userNotifications = notifications.filter(n => n.recipientUsername === user.username || n.recipientRole === user.role);
   const unreadCount = userNotifications.filter(n => !n.read).length;
 
 
@@ -108,7 +108,7 @@ export default function Header() {
                     <span className="sr-only">Notificaciones</span>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80">
+            <PopoverContent align="end" className="w-96">
                 <div className="flex items-center justify-between">
                     <p className="font-medium">Notificaciones</p>
                     <Badge variant="secondary">{unreadCount} nuevas</Badge>
@@ -119,9 +119,10 @@ export default function Header() {
                         <p className="text-sm text-muted-foreground text-center py-4">No tienes notificaciones.</p>
                     ) : (
                       userNotifications.map(n => (
-                         <div key={n.id} className={cn("text-sm p-2 rounded-md", !n.read && "bg-accent/50")}>
-                            <p>{n.message}</p>
-                            <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                         <div key={n.id} className={cn("p-3 rounded-md border", !n.read ? "bg-accent/20 border-accent/50" : "bg-transparent")}>
+                            <p className="text-sm font-medium">{n.message}</p>
+                            <p className="text-xs text-muted-foreground break-words">{n.details}</p>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
                                 <span>hace {formatDistanceToNow(n.date, { locale: es })}</span>
                                 {!n.read && (
                                   <Button size="sm" variant="ghost" className="h-auto px-2 py-1 text-primary hover:text-primary" onClick={() => markNotificationAsRead(n.id)}>

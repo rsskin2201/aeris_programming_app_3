@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { getDoc, doc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, FirestorePermissionError } from '@/firebase';
-import type { User, Role, Zone, BlockedDay, AppNotification } from '@/lib/types';
+import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS } from '@/lib/types';
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
 import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, mockUsers } from '@/lib/mock-data';
@@ -18,6 +18,7 @@ interface AppContextType {
   login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
   addMultipleUsers: (users: (Omit<User, 'id'> & { password?: string })[]) => void;
+  requestPasswordReset: (username: string, email: string) => void;
 
 
   operatorName: string | null;
@@ -175,8 +176,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
     if (!auth || !firestore) throw new Error("Firebase services not available.");
-
-    const email = `${username}@aeris.com`; // Internal convention
+    
+    const email = `${username.toLowerCase().trim()}@aeris.com`;
 
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -186,13 +187,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const userDoc = await getDoc(userDocRef);
 
         if (!userDoc.exists()) {
-            throw new Error('No se encontró el perfil de usuario.');
+            await signOut(auth);
+            throw new Error('No se encontró el perfil de usuario asociado a estas credenciales.');
         }
 
         return { id: userDoc.id, ...userDoc.data() } as User;
-
     } catch (error: any) {
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+      if (error.code === 'permission-denied') {
+          throw new Error('No tienes permiso para realizar esta acción. Contacta a un administrador.');
+      } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
           throw new Error('Usuario o contraseña incorrectos.');
       }
       
@@ -208,6 +211,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setOperatorName(null);
     setIsZoneConfirmed(false);
   }, [auth]);
+  
+  const addNotification = useCallback((notificationData: Omit<AppNotification, 'id' | 'date' | 'read'>) => {
+    const newNotification: AppNotification = {
+      ...notificationData,
+      id: `notif-${Date.now()}-${Math.random()}`,
+      date: new Date(),
+      read: false,
+    };
+    setNotifications(prev => [newNotification, ...prev]);
+  }, []);
+
+  const requestPasswordReset = useCallback((username: string, email: string) => {
+    const resetRequest: PasswordResetRequest = {
+        id: `reset-${Date.now()}`,
+        username,
+        email,
+        date: new Date(),
+    };
+    addNotification({
+        recipientRole: ROLES.ADMIN,
+        message: `Solicitud de reseteo de contraseña`,
+        details: `Usuario: ${username}, Correo: ${email}`,
+    });
+  }, [addNotification]);
+
 
   const confirmZone = useCallback((newZone: Zone) => {
     setZone(newZone);
@@ -250,16 +278,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const addNotification = useCallback((notificationData: Omit<AppNotification, 'id' | 'date' | 'read'>) => {
-    const newNotification: AppNotification = {
-      ...notificationData,
-      id: `notif-${Date.now()}-${Math.random()}`,
-      date: new Date(),
-      read: false,
-    };
-    setNotifications(prev => [newNotification, ...prev]);
-  }, []);
-
   const markNotificationAsRead = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   }, []);
@@ -286,6 +304,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addBlockedDay,
       removeBlockedDay,
       addNotification,
+      requestPasswordReset,
       markNotificationAsRead,
       addMultipleUsers,
       addMultipleCollaborators,
@@ -297,7 +316,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors
     ]
   );
 

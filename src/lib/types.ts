@@ -81,14 +81,16 @@ export type Status = (typeof STATUS)[keyof typeof STATUS];
 export type PasswordResetRequest = {
     id: string;
     username: string;
+    email: string;
     date: Date;
-    recipientRole: Role;
 };
 
 export type AppNotification = {
     id: string;
-    recipientUsername: string;
+    recipientUsername?: string;
+    recipientRole?: Role;
     message: string;
+    details?: string;
     date: Date;
     read: boolean;
     link?: string;
