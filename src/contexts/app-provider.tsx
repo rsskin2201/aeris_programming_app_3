@@ -176,39 +176,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
     if (!auth || !firestore) throw new Error("Firebase services not available.");
     
-    const usersRef = collection(firestore, "users");
-    const q = query(usersRef, where("username", "==", username));
-    
-    try {
-        const querySnapshot = await getDocs(q);
+    const email = `${username}@aeris.com`; // Internal convention
 
-        if (querySnapshot.empty) {
-            throw { code: 'auth/invalid-credential', message: 'Usuario o contraseña incorrectos.' };
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const authedUser = userCredential.user;
+        
+        const userDocRef = doc(firestore, 'users', authedUser.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+            await signOut(auth);
+            throw { code: 'auth/user-not-found', message: 'No profile found for this user.' };
         }
 
-        const userDoc = querySnapshot.docs[0];
-        const userProfile = { id: userDoc.id, ...userDoc.data() } as User;
-        
-        const email = `${userProfile.username}@aeris.com`;
-
-        await signInWithEmailAndPassword(auth, email, password);
-        // On successful sign-in, Firebase automatically handles the user state.
-        // The `useEffect` listening to `firebaseUser` will then fetch the profile.
-        return userProfile;
-
+        return { id: userDoc.id, ...userDoc.data() } as User;
     } catch (error: any) {
-      if (error.code === 'permission-denied') {
-        const permissionError = new FirestorePermissionError({
-            path: usersRef.path,
-            operation: 'list', // getDocs is a list operation
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        // We still throw a user-friendly error to be caught by the form
-        throw new Error('No tienes permiso para realizar esta acción. Contacta a un administrador.');
-      }
-      
-      console.error("Login process failed:", error);
-      throw error; // Re-throw other errors (like auth/wrong-password) to be handled by the form
+        console.error("Login process failed:", error);
+        throw error; // Re-throw auth errors to be handled by the form
     }
   }, [auth, firestore]);
 
