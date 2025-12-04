@@ -23,7 +23,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isForgotPassOpen, setIsForgotPassOpen] = useState(false);
   const [isSubmittingForgot, setIsSubmittingForgot] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotUsername, setForgotUsername] = useState('');
   
   const router = useRouter();
   const { login } = useAppContext();
@@ -150,12 +150,12 @@ export function LoginForm() {
                 </DialogHeader>
                  <div className="py-4 space-y-4">
                      <div>
-                        <Label htmlFor="forgot-email">Nombre de Usuario</Label>
+                        <Label htmlFor="forgot-username">Nombre de Usuario</Label>
                         <Input 
-                            id="forgot-email" 
+                            id="forgot-username" 
                             type="text"
-                            value={forgotEmail}
-                            onChange={(e) => setForgotEmail(e.target.value)}
+                            value={forgotUsername}
+                            onChange={(e) => setForgotUsername(e.target.value)}
                             placeholder="tu.usuario"
                             className="mt-2"
                         />

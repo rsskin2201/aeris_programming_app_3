@@ -97,8 +97,8 @@ export function UserForm({ user, onClose }: UserFormProps) {
     
     try {
         let userId = user?.id;
-        if (!isEditMode) {
-             addMultipleUsers([values as Omit<User, 'id'>]);
+        if (!isEditMode && values.password) {
+             addMultipleUsers([{...values, password: values.password}]);
         } else if (userId) {
              const dataToSave: Partial<User> = {
                 name: values.name,
