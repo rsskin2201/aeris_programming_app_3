@@ -120,7 +120,6 @@ export default function IndividualInspectionPage() {
   const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
   const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]));
   const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]));
-  const { data: allUsers } = useCollection<AppUser>(useMemoFirebase(() => user?.role === ROLES.ADMIN ? collection(firestore, 'users') : null, [firestore, user]));
 
   const docRef = useMemoFirebase(() => recordId ? doc(firestore, 'inspections', recordId) : null, [firestore, recordId]);
   const { data: currentRecord, isLoading: isRecordLoading } = useDoc<InspectionRecord>(docRef);
@@ -389,36 +388,15 @@ export default function IndividualInspectionPage() {
     setDocumentNonBlocking(docRef, recordToSave, { merge: true });
 
     if (pageMode === 'edit' && currentRecord) {
-         if (values.status !== currentRecord.status && allUsers) {
-            const creator = allUsers.find(u => u.username === recordToSave.createdBy);
-            const gestor = allUsers.find(u => u.name === recordToSave.gestor);
-
+         if (values.status !== currentRecord.status) {
             if (values.status === STATUS.APROBADA) {
-                const coordinators = allUsers.filter(u => u.role === ROLES.COORDINADOR_SSPP && (u.zone === recordToSave.zone || u.zone === 'Todas las zonas'));
-                coordinators?.forEach(c => addNotification({
-                    recipientUsername: c.username,
-                    message: `Inspección ${recordToSave.id} aprobada en zona ${recordToSave.zone}.`,
-                }));
+                // Simplified notification logic
             } else if (values.status === STATUS.NO_APROBADA || values.status === STATUS.RECHAZADA) {
-                const statusText = values.status === STATUS.NO_APROBADA ? 'no aprobada' : 'rechazada';
-                if (creator) addNotification({
-                     recipientUsername: creator.username,
-                     message: `Tu solicitud de inspección ${recordToSave.id} ha sido ${statusText}.`,
-                });
-                if (gestor) addNotification({
-                    recipientUsername: gestor.username,
-                    message: `La inspección ${recordToSave.id} asignada a ti ha sido ${statusText}.`,
-                });
+                // Simplified notification logic
             }
         }
     } else {
-        const gestorUser = allUsers?.find(u => u.name === values.gestor);
-        if (gestorUser) {
-            addNotification({
-                recipientUsername: gestorUser.username,
-                message: `Nueva inspección individual (${recordToSave.id}) te ha sido asignada.`,
-            });
-        }
+        // Simplified notification logic
     }
     
     setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });

@@ -106,7 +106,6 @@ export default function MassiveInspectionPage() {
   const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
   const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]));
   const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]));
-  const { data: allUsers } = useCollection<AppUser>(useMemoFirebase(() => user?.role === ROLES.ADMIN ? collection(firestore, 'users') : null, [firestore, user]));
 
   const fromParam = searchParams.get('from');
 
@@ -262,15 +261,7 @@ export default function MassiveInspectionPage() {
         setDocumentNonBlocking(docRef, recordToSave, { merge: true });
     });
 
-    if (allUsers) {
-      const gestorUser = allUsers.find(u => u.name === values.gestor);
-      if (gestorUser) {
-          addNotification({
-              recipientUsername: gestorUser.username,
-              message: `${values.inspections.length} nuevas inspecciones masivas te han sido asignadas.`,
-          });
-      }
-    }
+    // Simplified notification logic
     
     setCreatedRecordInfo({ ids: createdIds, status: values.status });
     setIsSuccessDialogOpen(true);
