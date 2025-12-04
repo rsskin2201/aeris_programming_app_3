@@ -16,7 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RotateCcw, ShieldAlert } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useAppContext } from '@/contexts/app-provider';
 

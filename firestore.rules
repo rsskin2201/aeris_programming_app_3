@@ -25,7 +25,7 @@
  *   user's profile, a deliberate trade-off for centralized role management.
  * - Read-Only Catalogs: Collections containing reference data (like companies,
  *   inspectors, sectors) are readable by any authenticated user but are only
- *   writable by users with the 'Administrator' or 'Canales' role.
+ *   writable by users with the 'Administrador' or 'Canales' role.
  * - Query Constraints: The rules cannot filter data. For `list` operations
  *   on inspections, the client application is responsible for adding a `where`
  *   clause to filter by the user's assigned zone (e.g.,
@@ -92,7 +92,7 @@ service cloud.firestore {
     }
 
     /**
-     * Checks if the user has the 'Administrator' role.
+     * Checks if the user has the 'Administrador' role.
      */
     function isAdmin() {
       return isSignedIn() && userRole() == 'Administrador';
