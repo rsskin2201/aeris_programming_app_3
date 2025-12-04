@@ -143,9 +143,6 @@ export default function SalesforceUploadPage() {
   const { user, zone, addNotification } = useAppContext();
   const firestore = useFirestore();
 
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const { data: allUsers } = useCollection<AppUser>(usersQuery);
-
   const handleFileChange = (files: FileList | null) => {
     if (files && files[0]) {
       if (files[0].type === 'text/csv' || files[0].name.endsWith('.csv')) {
@@ -201,17 +198,16 @@ export default function SalesforceUploadPage() {
         setDocumentNonBlocking(docRef, recordToSave, { merge: true });
     });
 
-    const usersToNotify = allUsers?.filter(u => 
-        (u.role === ROLES.COORDINADOR_SSPP || u.role === ROLES.CALIDAD) &&
-        (u.zone === zone || u.zone === 'Todas las zonas')
-    );
-    
-    usersToNotify?.forEach(notifiedUser => {
-        addNotification({
-            recipientUsername: notifiedUser.username,
-            message: `Se han cargado ${newRecords.length} registros masivos en la zona ${zone}.`,
-        });
+    addNotification({
+        recipientUsername: 'coordinador', // Simplified for now
+        message: `Se han cargado ${newRecords.length} registros masivos en la zona ${zone}.`,
     });
+    
+    addNotification({
+        recipientUsername: 'calidad', // Simplified for now
+        message: `Se han cargado ${newRecords.length} registros masivos en la zona ${zone}.`,
+    });
+
 
     setIsUploading(false);
     setIsEditorOpen(false);
