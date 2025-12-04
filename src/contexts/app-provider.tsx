@@ -176,33 +176,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
     if (!auth || !firestore) throw new Error("Firebase services not available.");
 
-    const usersRef = collection(firestore, 'users');
-    const q = query(usersRef, where("username", "==", username));
+    const email = `${username}@aeris.com`; // Internal convention
 
     try {
-        const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) {
-            throw new Error("Usuario o contraseña incorrectos.");
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const authedUser = userCredential.user;
+        
+        const userDocRef = doc(firestore, 'users', authedUser.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+            throw new Error('No se encontró el perfil de usuario.');
         }
 
-        const userDoc = querySnapshot.docs[0];
-        const userProfile = { id: userDoc.id, ...userDoc.data() } as User;
-        
-        const email = `${userProfile.username}@aeris.com`;
-
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        
-        return userProfile;
+        return { id: userDoc.id, ...userDoc.data() } as User;
 
     } catch (error: any) {
-        if (error.code === 'permission-denied') {
-            const permissionError = new FirestorePermissionError({
-                path: usersRef.path,
-                operation: 'list',
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            throw new Error('No tienes permiso para realizar esta acción. Contacta a un administrador.');
-      } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
           throw new Error('Usuario o contraseña incorrectos.');
       }
       
