@@ -80,14 +80,6 @@ const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMAD
 const checklistRoles = [ROLES.CALIDAD, ROLES.SOPORTE, ROLES.ADMIN];
 const supportRoles = [ROLES.SOPORTE, ROLES.ADMIN];
 const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CONECTADA, STATUS.PENDIENTE_CORRECCION];
-const nonAdminRolesWithZoneFilter = [
-  ROLES.COLABORADOR,
-  ROLES.GESTOR,
-  ROLES.SOPORTE,
-  ROLES.CALIDAD,
-  ROLES.COORDINADOR_SSPP,
-  ROLES.VISUAL,
-];
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
@@ -117,7 +109,7 @@ export default function IndividualInspectionPage() {
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    if (nonAdminRolesWithZoneFilter.includes(user.role) && zone !== 'Todas las zonas') {
+    if (zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
     return query(collection(firestore, collectionName), ...constraints);
@@ -309,36 +301,27 @@ export default function IndividualInspectionPage() {
   
   const availableSectors = useMemo(() => {
     if (!sectors) return [];
-    const currentZone = formData.zone;
-    if (currentZone === 'Todas las zonas') {
-        return sectors;
-    }
-    return sectors.filter(s => s.zone === currentZone);
-  }, [formData.zone, sectors]);
+    return sectors.filter(s => s.status === 'Activo');
+  }, [sectors]);
 
     const availableInstallers = useMemo(() => {
         if (!installers) return [];
-        if (!isCollaborator) return installers.filter(i => i.status === 'Activo');
-        return installers.filter(i => 
-            i.collaboratorCompany === collaboratorCompany && i.status === 'Activo'
+        const activeInstallers = installers.filter(i => i.status === 'Activo');
+        if (!isCollaborator) return activeInstallers;
+        return activeInstallers.filter(i => 
+            i.collaboratorCompany === collaboratorCompany
         );
     }, [isCollaborator, collaboratorCompany, installers]);
     
     const availableManagers = useMemo(() => {
         if (!expansionManagers) return [];
-        return expansionManagers.filter(m => 
-            (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
-            m.status === 'Activo'
-        );
-    }, [formData.zone, expansionManagers]);
+        return expansionManagers.filter(m => m.status === 'Activo');
+    }, [expansionManagers]);
 
     const availableInspectors = useMemo(() => {
         if (!inspectors) return [];
-        return inspectors.filter(m => 
-            (m.zone === formData.zone || formData.zone === 'Todas las zonas') && 
-            m.status === 'Activo'
-        );
-    }, [formData.zone, inspectors]);
+        return inspectors.filter(m => m.status === 'Activo');
+    }, [inspectors]);
 
     const availableStatusOptions = useMemo(() => {
         if (isCollaborator && pageMode === 'edit') {

@@ -5,7 +5,7 @@ import { collection, query, where, QueryConstraint } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/componentsui/table";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, PlusCircle, Settings, Upload } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -40,14 +40,6 @@ const statusColors: Record<string, string> = {
 const viewOnlyRoles = [ROLES.VISUAL];
 const canModifyRoles = [ROLES.ADMIN, ROLES.CANALES];
 const canUploadRoles = [ROLES.ADMIN, ROLES.CANALES];
-const nonAdminRolesWithZoneFilter = [
-  ROLES.COLABORADOR,
-  ROLES.GESTOR,
-  ROLES.SOPORTE,
-  ROLES.CALIDAD,
-  ROLES.COORDINADOR_SSPP,
-  ROLES.VISUAL,
-];
 
 export default function EntitiesPage() {
   const { user, zone } = useAppContext();
@@ -73,7 +65,7 @@ export default function EntitiesPage() {
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    if (nonAdminRolesWithZoneFilter.includes(user.role) && zone !== 'Todas las zonas') {
+    if (zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
     return query(collection(firestore, collectionName), ...constraints);

@@ -158,13 +158,21 @@ export default function CalendarPage() {
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
-    if (nonAdminRolesWithZoneFilter.includes(user.role) && zone !== 'Todas las zonas') {
+    if (zone !== 'Todas las zonas') {
         constraints.push(where('zone', '==', zone));
     }
     return query(collection(firestore, collectionName), ...constraints);
   };
   
-  const inspectionsQuery = useMemoFirebase(() => buildQuery('inspections'), [firestore, user, zone]);
+  const inspectionsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    const constraints: QueryConstraint[] = [];
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+        constraints.push(where('zone', '==', zone));
+    }
+    return query(collection(firestore, 'inspections'), ...constraints);
+  }, [firestore, user, zone]);
+
   const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
   
   const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
@@ -193,16 +201,21 @@ export default function CalendarPage() {
   }, [records, isCollaborator, user, activeFilters]);
 
   const availableManagers = useMemo(() => 
-    expansionManagers?.filter(m => m.status === 'Activo' && (m.zone === zone || zone === 'Todas las zonas')) || [], 
-  [expansionManagers, zone]);
+    expansionManagers?.filter(m => m.status === 'Activo') || [], 
+  [expansionManagers]);
   
-  const availableInstallers = useMemo(() => 
-    installers?.filter(i => i.status === 'Activo' && (isCollaborator ? i.collaboratorCompany === user?.name : true)) || [], 
-  [installers, user, isCollaborator]);
+  const availableInstallers = useMemo(() => {
+    if (!installers) return [];
+    const activeInstallers = installers.filter(i => i.status === 'Activo');
+    if (isCollaborator) {
+      return activeInstallers.filter(i => i.collaboratorCompany === user?.name);
+    }
+    return activeInstallers;
+  }, [installers, user, isCollaborator]);
 
   const availableInspectors = useMemo(() => 
-    inspectors?.filter(i => i.status === 'Activo' && (isAdmin || zone === 'Todas las zonas' || i.zone === zone)) || [], 
-  [inspectors, isAdmin, zone]);
+    inspectors?.filter(i => i.status === 'Activo') || [], 
+  [inspectors]);
 
 
   const inspectionsByDay = useMemo(() => {

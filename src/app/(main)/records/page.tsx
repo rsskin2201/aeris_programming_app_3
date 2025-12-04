@@ -65,15 +65,6 @@ const initialFilters = {
 const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
 const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD];
 const canExportRoles = Object.values(ROLES);
-const nonAdminRolesWithZoneFilter = [
-  ROLES.COLABORADOR,
-  ROLES.GESTOR,
-  ROLES.SOPORTE,
-  ROLES.CALIDAD,
-  ROLES.COORDINADOR_SSPP,
-  ROLES.VISUAL,
-];
-
 
 export default function RecordsPage() {
   const { user, zone } = useAppContext();
@@ -100,16 +91,23 @@ export default function RecordsPage() {
 
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
-    
     const constraints: QueryConstraint[] = [];
-    
-    if (nonAdminRolesWithZoneFilter.includes(user.role) && zone !== 'Todas las zonas') {
-      constraints.push(where('zone', '==', zone));
+    if (zone !== 'Todas las zonas') {
+        constraints.push(where('zone', '==', zone));
     }
-    
     return query(collection(firestore, collectionName), ...constraints);
   };
 
+  const inspectionsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    const constraints: QueryConstraint[] = [];
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+        constraints.push(where('zone', '==', zone));
+    }
+    return query(collection(firestore, 'inspections'), ...constraints);
+  }, [firestore, user, zone]);
+
+  
   const expansionManagersQuery = useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]);
   const collaboratorsQuery = useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
   const sectorsQuery = useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]);
@@ -119,9 +117,6 @@ export default function RecordsPage() {
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
   const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
-
-  const inspectionsQuery = useMemoFirebase(() => buildQuery('inspections'), [firestore, user, zone]);
-
   const { data: records, isLoading } = useCollection<InspectionRecord>(inspectionsQuery);
 
   const filteredRecords = useMemo(() => {
