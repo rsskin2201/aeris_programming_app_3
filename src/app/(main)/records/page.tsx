@@ -171,7 +171,38 @@ export default function RecordsPage() {
   }
 
   const handleExport = () => {
-    const csv = Papa.unparse(filteredRecords);
+    const dataForCsv = filteredRecords.map(record => ({
+      'Fecha de Creación del Registro': record.createdAt,
+      'ID': record.id,
+      'POLIZA': record.poliza,
+      'CASO (AT)': record.caso,
+      'ZONA': record.zone,
+      'SECTOR': record.sector,
+      'MUNICIPIO': record.municipality,
+      'COLONIA': record.colonia,
+      'CALLE': record.calle,
+      'NUMERO': record.numero,
+      'PORTAL': record.portal,
+      'ESCALERA': record.escalera,
+      'PISO': record.piso,
+      'PUERTA': record.puerta,
+      'TIPO DE INSPECCION': record.tipoInspeccion,
+      'TIPO DE PROGRAMACION': record.tipoProgramacion,
+      'TIPO MDD': record.tipoMdd,
+      'MERCADO': record.mercado,
+      'OFERTA/CAMPAÑA': record.oferta,
+      'EMPRESA COLABORADORA': record.collaboratorCompany,
+      'FECHA PROGRAMACION': record.requestDate,
+      'HORARIO PROGRAMACION': record.horarioProgramacion,
+      'INSTALADOR': record.instalador,
+      'GESTOR': record.gestor,
+      'INSPECTOR': record.inspector,
+      'STATUS': record.status,
+      'Observaciones': record.observaciones,
+      'Fecha de Ultima Modificación': record.lastModifiedAt,
+    }));
+
+    const csv = Papa.unparse(dataForCsv);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     if (link.download !== undefined) {
