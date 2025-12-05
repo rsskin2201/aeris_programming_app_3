@@ -86,43 +86,6 @@ export default function RecordsPage() {
   const topScrollRef = useRef<HTMLDivElement>(null);
   const bottomScrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const topScroll = topScrollRef.current;
-    const bottomScroll = bottomScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-
-    if (!topScroll || !bottomScroll) return;
-
-    const syncScroll = (source: 'top' | 'bottom') => (event: Event) => {
-      if (source === 'top') {
-        bottomScroll.scrollLeft = (event.target as HTMLDivElement).scrollLeft;
-      } else {
-        topScroll.scrollLeft = (event.target as HTMLDivElement).scrollLeft;
-      }
-    };
-    
-    const handleTopScroll = syncScroll('top');
-    const handleBottomScroll = syncScroll('bottom');
-
-    topScroll.addEventListener('scroll', handleTopScroll);
-    bottomScroll.addEventListener('scroll', handleBottomScroll);
-    
-    // Initial sync
-    bottomScroll.scrollLeft = topScroll.scrollLeft;
-
-    return () => {
-      topScroll.removeEventListener('scroll', handleTopScroll);
-      bottomScroll.removeEventListener('scroll', handleBottomScroll);
-    };
-  }, [paginatedRecords]); // Re-sync if data changes which might affect scroll width
-
-  const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value || (Array.isArray(prev[key]) ? [] : '') }));
-  }
-
-  const clearFilters = () => {
-    setFilters(initialFilters);
-  }
-
   const buildQuery = (collectionName: string) => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
@@ -178,6 +141,43 @@ export default function RecordsPage() {
     const endIndex = startIndex + rowsPerPage;
     return filteredRecords.slice(startIndex, endIndex);
   }, [filteredRecords, page, rowsPerPage]);
+
+  useEffect(() => {
+    const topScroll = topScrollRef.current;
+    const bottomScroll = bottomScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+
+    if (!topScroll || !bottomScroll) return;
+
+    const syncScroll = (source: 'top' | 'bottom') => (event: Event) => {
+      if (source === 'top') {
+        bottomScroll.scrollLeft = (event.target as HTMLDivElement).scrollLeft;
+      } else {
+        topScroll.scrollLeft = (event.target as HTMLDivElement).scrollLeft;
+      }
+    };
+    
+    const handleTopScroll = syncScroll('top');
+    const handleBottomScroll = syncScroll('bottom');
+
+    topScroll.addEventListener('scroll', handleTopScroll);
+    bottomScroll.addEventListener('scroll', handleBottomScroll);
+    
+    // Initial sync
+    bottomScroll.scrollLeft = topScroll.scrollLeft;
+
+    return () => {
+      topScroll.removeEventListener('scroll', handleTopScroll);
+      bottomScroll.removeEventListener('scroll', handleBottomScroll);
+    };
+  }, [paginatedRecords]); // Re-sync if data changes which might affect scroll width
+
+  const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value || (Array.isArray(prev[key]) ? [] : '') }));
+  }
+
+  const clearFilters = () => {
+    setFilters(initialFilters);
+  }
 
   const totalPages = Math.ceil(filteredRecords.length / rowsPerPage);
 
