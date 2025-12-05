@@ -567,5 +567,3 @@ export default function RecordsPage() {
     </div>
   );
 }
-
-    

@@ -6,7 +6,7 @@ import * as z from "zod";
 import { CalendarIcon as CalendarIconLucide, ChevronLeft, Loader2, CheckCircle, AlertCircle, FileCheck2, Copy } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { format, isSunday, parse } from "date-fns";
+import { format, isSunday, parse, parseISO } from "date-fns";
 import { es } from 'date-fns/locale';
 import React, { useEffect, useMemo, useState } from "react";
 
@@ -54,7 +54,7 @@ const formSchema = z.object({
   oferta: z.string().optional(),
   observaciones: z.string().optional(),
 
-  empresaColaboradora: z.string().min(1, "La empresa colaboradora es requerida."),
+  collaboratorCompany: z.string().min(1, "La empresa colaboradora es requerida."),
   fechaProgramacion: z.date({ required_error: "La fecha de programación es requerida." }),
   horarioProgramacion: z.string().min(1, "El horario es requerido."),
   instalador: z.string().min(1, "El instalador es requerido."),
@@ -142,7 +142,7 @@ export default function SpecialInspectionPage() {
       mercado: '',
       oferta: '',
       observaciones: '',
-      empresaColaboradora: isCollaborator ? collaboratorCompany : "",
+      collaboratorCompany: isCollaborator ? collaboratorCompany : "",
       horarioProgramacion: '09:00',
       instalador: '',
       inspector: '',
@@ -177,7 +177,7 @@ export default function SpecialInspectionPage() {
               mercado: currentRecord.mercado || '',
               oferta: currentRecord.oferta || '',
               observaciones: currentRecord.observaciones || '',
-              empresaColaboradora: currentRecord.collaboratorCompany || '',
+              collaboratorCompany: currentRecord.collaboratorCompany || '',
               fechaProgramacion: currentRecord.requestDate ? parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()) : new Date(),
               horarioProgramacion: currentRecord.horarioProgramacion || '',
               instalador: currentRecord.instalador || '',
@@ -206,7 +206,7 @@ export default function SpecialInspectionPage() {
             mercado: "",
             oferta: "",
             observaciones: "",
-            empresaColaboradora: isCollaborator ? collaboratorCompany : "",
+            collaboratorCompany: isCollaborator ? collaboratorCompany : "",
             horarioProgramacion: timeParam || "09:00",
             instalador: "",
             inspector: "",
@@ -221,7 +221,7 @@ export default function SpecialInspectionPage() {
   const formData = form.watch();
 
   const isInspectorFieldDisabled = useMemo(() => {
-    return ![ROLES.ADMIN, ROLES.CALIDAD].includes(user!.role);
+    return !(user && [ROLES.ADMIN, ROLES.CALIDAD].includes(user.role));
   }, [user]);
 
   const availableSectors = useMemo(() => {
@@ -306,7 +306,7 @@ export default function SpecialInspectionPage() {
         mercado: values.mercado,
         oferta: values.oferta || '',
         observaciones: values.observaciones || '',
-        collaboratorCompany: values.empresaColaboradora,
+        collaboratorCompany: values.collaboratorCompany,
         horarioProgramacion: values.horarioProgramacion,
         instalador: values.instalador,
         inspector: values.inspector || '',
@@ -603,7 +603,7 @@ export default function SpecialInspectionPage() {
               </CardHeader>
               <CardContent className="grid gap-6">
                 <div className="grid md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="empresaColaboradora" render={({ field }) => (
+                    <FormField control={form.control} name="collaboratorCompany" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Empresa Colaboradora</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ''} disabled={isCollaborator}>
@@ -752,7 +752,7 @@ export default function SpecialInspectionPage() {
                             {renderFieldWithFeedback('observaciones', 'Observaciones', formData.observaciones)}
 
                             <h3 className="font-semibold text-lg mb-2 mt-4">Asignación y Estatus</h3>
-                            {renderFieldWithFeedback('empresaColaboradora', 'Empresa Colaboradora', formData.empresaColaboradora)}
+                            {renderFieldWithFeedback('collaboratorCompany', 'Empresa Colaboradora', formData.collaboratorCompany)}
                             {renderFieldWithFeedback('instalador', 'Instalador', formData.instalador)}
                             {renderFieldWithFeedback('inspector', 'Inspector', formData.inspector)}
                             {renderFieldWithFeedback('fechaProgramacion', 'Fecha Programación', formData.fechaProgramacion)}

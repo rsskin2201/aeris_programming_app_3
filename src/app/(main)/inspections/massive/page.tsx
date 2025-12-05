@@ -58,7 +58,7 @@ const formSchema = z.object({
   oferta: z.string().optional(),
   observaciones: z.string().optional(),
 
-  empresaColaboradora: z.string().min(1, "La empresa colaboradora es requerida."),
+  collaboratorCompany: z.string().min(1, "La empresa colaboradora es requerida."),
   fechaProgramacion: z.date({ required_error: "La fecha de programación es requerida." }),
   horarioProgramacion: z.string().min(1, "El horario es requerido."),
   instalador: z.string().min(1, "El instalador es requerido."),
@@ -137,7 +137,7 @@ export default function MassiveInspectionPage() {
       mercado: "",
       oferta: "",
       observaciones: "",
-      empresaColaboradora: isCollaborator ? collaboratorCompany : "",
+      collaboratorCompany: isCollaborator ? collaboratorCompany : "",
       horarioProgramacion: "",
       instalador: "",
       inspector: "",
@@ -164,7 +164,7 @@ export default function MassiveInspectionPage() {
       mercado: "",
       oferta: "",
       observaciones: "",
-      empresaColaboradora: isCollaborator ? collaboratorCompany : "",
+      collaboratorCompany: isCollaborator ? collaboratorCompany : "",
       horarioProgramacion: timeParam || "",
       instalador: "",
       inspector: "",
@@ -266,7 +266,7 @@ export default function MassiveInspectionPage() {
             mercado: values.mercado,
             oferta: values.oferta || '',
             observaciones: values.observaciones || '',
-            collaboratorCompany: values.empresaColaboradora,
+            collaboratorCompany: values.collaboratorCompany,
             horarioProgramacion: values.horarioProgramacion,
             instalador: values.instalador,
             inspector: values.inspector || '',
@@ -602,7 +602,7 @@ export default function MassiveInspectionPage() {
               </CardHeader>
               <CardContent className="grid gap-6">
                  <div className="grid md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="empresaColaboradora" render={({ field }) => (
+                    <FormField control={form.control} name="collaboratorCompany" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Empresa Colaboradora</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ''} disabled={isCollaborator}>
@@ -744,7 +744,7 @@ export default function MassiveInspectionPage() {
                                 {renderFieldWithFeedback('observaciones', 'Observaciones', formData.observaciones)}
 
                                 <h3 className="font-semibold text-lg mb-2 mt-4">Asignación y Estatus</h3>
-                                {renderFieldWithFeedback('empresaColaboradora', 'Empresa Colaboradora', formData.empresaColaboradora)}
+                                {renderFieldWithFeedback('collaboratorCompany', 'Empresa Colaboradora', formData.collaboratorCompany)}
                                 {renderFieldWithFeedback('instalador', 'Instalador', formData.instalador)}
                                 {renderFieldWithFeedback('inspector', 'Inspector', formData.inspector)}
                                 {renderFieldWithFeedback('fechaProgramacion', 'Fecha Programación', formData.fechaProgramacion)}

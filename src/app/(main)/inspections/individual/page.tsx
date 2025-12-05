@@ -6,7 +6,7 @@ import * as z from "zod";
 import { ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle, CalendarIcon as CalendarIconLucide, ListChecks, File as FileIcon, BadgeCheck, Copy, Clock } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { format, isSunday, parse, isBefore, set, endOfDay } from "date-fns";
+import { format, isSunday, parse, isBefore, set, endOfDay, parseISO } from "date-fns";
 import { es } from 'date-fns/locale';
 import React, { useEffect, useMemo, useState } from "react";
 
@@ -57,7 +57,7 @@ const formSchema = z.object({
   oferta: z.string().optional(),
   observaciones: z.string().optional(),
 
-  empresaColaboradora: z.string().min(1, "La empresa colaboradora es requerida."),
+  collaboratorCompany: z.string().min(1, "La empresa colaboradora es requerida."),
   fechaProgramacion: z.date({ required_error: "La fecha de programación es requerida." }),
   horarioProgramacion: z.string().min(1, "El horario es requerido."),
   instalador: z.string().min(1, "El instalador es requerido."),
@@ -175,7 +175,7 @@ export default function IndividualInspectionPage() {
       mercado: '',
       oferta: '',
       observaciones: '',
-      empresaColaboradora: '',
+      collaboratorCompany: '',
       horarioProgramacion: '09:00',
       instalador: '',
       inspector: '',
@@ -209,7 +209,7 @@ export default function IndividualInspectionPage() {
           mercado: currentRecord.mercado || '',
           oferta: currentRecord.oferta || '',
           observaciones: currentRecord.observaciones || '',
-          empresaColaboradora: currentRecord.collaboratorCompany || '',
+          collaboratorCompany: currentRecord.collaboratorCompany || '',
           fechaProgramacion: currentRecord.requestDate ? parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()) : new Date(),
           horarioProgramacion: currentRecord.horarioProgramacion || '09:00',
           instalador: currentRecord.instalador || '',
@@ -243,7 +243,7 @@ export default function IndividualInspectionPage() {
         mercado: '',
         oferta: '',
         observaciones: '',
-        empresaColaboradora: isCollaborator ? (user?.name || '') : '',
+        collaboratorCompany: isCollaborator ? (user?.name || '') : '',
         fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
         horarioProgramacion: timeParam || '09:00',
         instalador: '',
@@ -271,7 +271,7 @@ export default function IndividualInspectionPage() {
       }
     }
     
-    if (isCollaborator && fieldName === 'empresaColaboradora') {
+    if (isCollaborator && fieldName === 'collaboratorCompany') {
         return true;
     }
     
@@ -304,7 +304,7 @@ export default function IndividualInspectionPage() {
                 return ![ROLES.ADMIN, ROLES.CALIDAD].includes(user!.role);
             case 'gestor':
                 return ![ROLES.ADMIN, ROLES.SOPORTE].includes(user!.role) && !isCollaborator;
-            case 'empresaColaboradora':
+            case 'collaboratorCompany':
                 return ![ROLES.GESTOR, ROLES.ADMIN, ROLES.SOPORTE].includes(user!.role);
             case 'poliza':
             case 'caso':
@@ -410,7 +410,7 @@ export default function IndividualInspectionPage() {
     const changes: { field: string; oldValue: string; newValue: string }[] = [];
     const oldValues = {
       ...currentRecord,
-      empresaColaboradora: currentRecord.collaboratorCompany,
+      collaboratorCompany: currentRecord.collaboratorCompany,
       fechaProgramacion: parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()),
     };
 
@@ -472,7 +472,7 @@ export default function IndividualInspectionPage() {
         mercado: values.mercado || '',
         oferta: values.oferta || '',
         observaciones: values.observaciones || '',
-        collaboratorCompany: values.empresaColaboradora || '',
+        collaboratorCompany: values.collaboratorCompany || '',
         horarioProgramacion: values.horarioProgramacion || '',
         instalador: values.instalador || '',
         inspector: values.inspector || '',
@@ -555,7 +555,7 @@ export default function IndividualInspectionPage() {
         form.reset({ // Re-sync main form if needed
             ...newRecord,
             fechaProgramacion: parse(newRecord.requestDate, 'yyyy-MM-dd', new Date()),
-            empresaColaboradora: newRecord.collaboratorCompany,
+            collaboratorCompany: newRecord.collaboratorCompany,
         });
     }
   }
@@ -844,10 +844,10 @@ export default function IndividualInspectionPage() {
               </CardHeader>
               <CardContent className="grid gap-6">
                  <div className="grid md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="empresaColaboradora" render={({ field }) => (
+                    <FormField control={form.control} name="collaboratorCompany" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Empresa Colaboradora</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('empresaColaboradora')}>
+                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('collaboratorCompany')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
@@ -1012,7 +1012,7 @@ export default function IndividualInspectionPage() {
                               {renderFieldWithFeedback('observaciones', 'Observaciones', formData.observaciones)}
 
                               <h3 className="font-semibold text-lg mb-2 mt-4">Asignación y Estatus</h3>
-                              {renderFieldWithFeedback('empresaColaboradora', 'Empresa Colaboradora', formData.empresaColaboradora)}
+                              {renderFieldWithFeedback('collaboratorCompany', 'Empresa Colaboradora', formData.collaboratorCompany)}
                               {renderFieldWithFeedback('instalador', 'Instalador', formData.instalador)}
                               {renderFieldWithFeedback('inspector', 'Inspector', formData.inspector)}
                               {renderFieldWithFeedback('fechaProgramacion', 'Fecha Programación', formData.fechaProgramacion)}
