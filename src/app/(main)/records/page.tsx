@@ -188,7 +188,6 @@ export default function RecordsPage() {
   }
 
   const handleAction = (recordId: string, mode: 'view' | 'edit') => {
-    // All record types will be handled by the individual inspection page for viewing/editing.
     const path = '/inspections/individual';
     router.push(`${path}?id=${recordId}&mode=${mode}&from=records`);
   }
@@ -510,7 +509,7 @@ export default function RecordsPage() {
                                     <Eye className="mr-2 h-4 w-4" />
                                     Visualizar
                                 </DropdownMenuItem>
-                                {canModify && (
+                                {canModify && (user.role === ROLES.ADMIN || !(record.id.startsWith('SF-') && [STATUS.CANCELADA, STATUS.NO_APROBADA].includes(record.status))) && (
                                     <DropdownMenuItem onClick={() => handleAction(record.id, 'edit')}>
                                         <Pencil className="mr-2 h-4 w-4" />
                                         Modificar
