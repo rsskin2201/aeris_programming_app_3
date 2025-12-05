@@ -151,12 +151,12 @@ const SlotInspectionsDialog = ({ inspections, date, hour, onOpenChange }: { insp
             <div className="max-h-[60vh] overflow-y-auto">
                 <div className="space-y-3 p-1">
                     {inspections.map(inspection => (
-                        <div key={inspection.id} className={cn("p-4 rounded-lg border-l-4 cursor-pointer transition-all duration-200 hover:border-primary hover:scale-[1.02]", statusColors[inspection.status])} onClick={() => handleViewRecord(inspection)}>
+                        <div key={inspection.id} className={cn("p-4 rounded-lg border-l-4 cursor-pointer transition-colors duration-200 border-2 border-transparent hover:border-primary", statusColors[inspection.status])} onClick={() => handleViewRecord(inspection)}>
                             <div className="flex items-center justify-between">
-                                <p className="font-bold text-lg">{inspection.tipoInspeccion}</p>
-                                <Badge variant="secondary" className="font-mono">{inspection.id}</Badge>
+                                <p className="font-bold text-lg truncate">{inspection.tipoInspeccion}</p>
+                                <Badge variant="secondary" className="font-mono text-xs">{inspection.id}</Badge>
                             </div>
-                            <p className="text-sm mt-1">{inspection.address}</p>
+                            <p className="text-sm mt-1 truncate">{inspection.address}</p>
                             <div className="flex items-center justify-between text-xs mt-2">
                                 <span>Inspector: {inspection.inspector || 'No asignado'}</span>
                                 <span className='font-semibold'>{inspection.status}</span>
