@@ -243,8 +243,14 @@ export default function IndividualInspectionPage() {
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
     if (pageMode === 'view') return true;
 
-    if (pageMode === 'edit' && currentRecord?.status === STATUS.CONECTADA && user?.role !== ROLES.ADMIN) {
+    if (pageMode === 'edit' && currentRecord) {
+      if (currentRecord.status.endsWith('- REPROGRAMADA') && user?.role !== ROLES.ADMIN) {
         return true;
+      }
+
+      if (currentRecord.status === STATUS.CONECTADA && user?.role !== ROLES.ADMIN) {
+        return true;
+      }
     }
     
     if (isCollaborator && fieldName === 'empresaColaboradora') {
