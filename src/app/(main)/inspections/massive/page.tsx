@@ -26,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA, mockMunicipalities } from "@/lib/form-options";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -237,6 +237,8 @@ export default function MassiveInspectionPage() {
     switch (fromParam) {
       case 'calendar':
         return '/calendar';
+      case 'records':
+        return '/records';
       default:
         return '/inspections';
     }

@@ -274,6 +274,8 @@ export default function SpecialInspectionPage() {
     switch (fromParam) {
       case 'calendar':
         return '/calendar';
+      case 'records':
+        return '/records';
       default:
         return '/inspections';
     }

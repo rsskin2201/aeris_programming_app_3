@@ -188,17 +188,8 @@ export default function RecordsPage() {
   }
 
   const handleAction = (recordId: string, mode: 'view' | 'edit') => {
-    // This part might need adjustment depending on the inspection type
-    const record = records?.find(r => r.id === recordId);
-    let path = '/inspections/individual'; // Default path
-    if (record?.id.startsWith('INSP-IM')) {
-      path = '/inspections/massive';
-    } else if (record?.id.startsWith('INSP-ES')) {
-      path = '/inspections/special';
-    } else if (record?.id.startsWith('SF-')) {
-       // Salesforce records likely use the individual view, but this could be another page
-      path = '/inspections/individual';
-    }
+    // All record types will be handled by the individual inspection page for viewing/editing.
+    const path = '/inspections/individual';
     router.push(`${path}?id=${recordId}&mode=${mode}&from=records`);
   }
 
