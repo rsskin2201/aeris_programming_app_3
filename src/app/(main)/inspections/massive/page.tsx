@@ -80,6 +80,16 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const getInitialStatus = (role: Role | undefined) => {
+    switch (role) {
+      case ROLES.GESTOR: return STATUS.CONFIRMADA_POR_GE;
+      case ROLES.COLABORADOR:
+      default: return STATUS.REGISTRADA;
+    }
+};
+
+const generateId = () => `INSP-IM-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+
 export default function MassiveInspectionPage() {
   const { toast } = useToast();
   const { user, weekendsEnabled, blockedDays, zone, addNotification } = useAppContext();
@@ -110,21 +120,32 @@ export default function MassiveInspectionPage() {
   const fromParam = searchParams.get('from');
 
   const isCollaborator = user?.role === ROLES.COLABORADOR;
-  const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption
-
-  const getInitialStatus = (role: Role | undefined) => {
-    switch (role) {
-      case ROLES.GESTOR: return STATUS.CONFIRMADA_POR_GE;
-      case ROLES.COLABORADOR:
-      default: return STATUS.REGISTRADA;
-    }
-  };
-
-  const generateId = () => `INSP-IM-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+  const collaboratorCompany = isCollaborator ? user?.name || '' : '';
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    mode: 'onChange',
+    defaultValues: {
+      zone: '',
+      sector: "",
+      municipality: "",
+      colonia: "",
+      calle: "",
+      numero: "",
+      tipoInspeccion: "Programacion PES",
+      tipoProgramacion: "",
+      tipoMdd: "",
+      mercado: "",
+      oferta: "",
+      observaciones: "",
+      empresaColaboradora: "",
+      horarioProgramacion: "",
+      instalador: "",
+      inspector: "",
+      gestor: "",
+      status: STATUS.REGISTRADA,
+      inspections: [],
+      fechaProgramacion: new Date(),
+    }
   });
 
   useEffect(() => {
@@ -152,7 +173,8 @@ export default function MassiveInspectionPage() {
       inspections: [{ id: generateId(), poliza: "", caso: "", portal: "", escalera: "", piso: "", puerta: "" }],
       fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
     });
-  }, [user?.role, zone, isCollaborator, collaboratorCompany, searchParams, form, getInitialStatus]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -172,9 +194,9 @@ export default function MassiveInspectionPage() {
 
     const availableInstallers = useMemo(() => {
         if (!installers) return [];
-        const activeInstallers = installers.filter(i => i.status === 'Activo');
+        const activeInstallers = installers.filter((i: any) => i.status === 'Activo');
         if (!isCollaborator) return activeInstallers;
-        return activeInstallers.filter(i => 
+        return activeInstallers.filter((i: any) => 
             i.collaboratorCompany === collaboratorCompany
         );
     }, [isCollaborator, collaboratorCompany, installers]);
@@ -608,7 +630,7 @@ export default function MassiveInspectionPage() {
                         <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                            {availableInstallers.map((i: any) => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />
