@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -133,6 +133,18 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
     return filteredRecords.slice(startIndex, endIndex);
   }, [filteredRecords, page, rowsPerPage]);
 
+  const createQueryString = useCallback(
+    (paramsToUpdate: Record<string, string | number>) => {
+      const params = new URLSearchParams(searchParams.toString())
+      Object.entries(paramsToUpdate).forEach(([name, value]) => {
+        params.set(name, String(value));
+      });
+ 
+      return params.toString()
+    },
+    [searchParams]
+  );
+  
   useEffect(() => {
     const topScroll = topScrollRef.current;
     const bottomScroll = bottomScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
@@ -162,17 +174,6 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
     };
   }, [paginatedRecords]);
   
-  const createQueryString = useCallback(
-    (paramsToUpdate: Record<string, string | number>) => {
-      const params = new URLSearchParams(searchParams.toString())
-      Object.entries(paramsToUpdate).forEach(([name, value]) => {
-        params.set(name, String(value));
-      });
- 
-      return params.toString()
-    },
-    [searchParams]
-  )
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value || (Array.isArray(prev[key]) ? [] : '') }));
@@ -453,6 +454,7 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
             </Dialog>
           </div>
         )}
+      </div>
 
       <div className="w-full">
             <div ref={topScrollRef} className="overflow-x-auto overflow-y-hidden">
@@ -527,13 +529,13 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
                                     <Eye className="mr-2 h-4 w-4" />
                                     Visualizar
                                 </DropdownMenuItem>
-                                {canModify && (user.role === ROLES.ADMIN || !(record.id.startsWith('SF-') && [STATUS.CANCELADA, STATUS.NO_APROBADA].includes(record.status))) && (
+                                {canModify && (user.role === ROLES.ADMIN || !(record.id.startsWith('SF-') && [STATUS.CANCELADA, STATUS.NO_APROBADA].includes(record.status as any))) && (
                                     <DropdownMenuItem onClick={() => handleAction(record.id, 'edit')}>
                                         <Pencil className="mr-2 h-4 w-4" />
                                         Modificar
                                     </DropdownMenuItem>
                                 )}
-                                {canModify && reprogrammableStatuses.includes(record.status) && !record.id.startsWith('SF-') && (
+                                {canModify && reprogrammableStatuses.includes(record.status as any) && !record.id.startsWith('SF-') && (
                                 <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => handleReprogram(record)}>
