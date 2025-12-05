@@ -126,6 +126,12 @@ const getInspectionDurationInHours = (record: InspectionRecord): number => {
     if (record.id.includes("INSP-IM") && record.tipoInspeccion === 'Programacion PES') {
         return 2; // Duration for the whole massive block
     }
+    if (record.id.startsWith("INSP-RP")) {
+        if (record.tipoInspeccion === 'Programacion PES') {
+            return 2;
+        }
+        return 1;
+    }
     return 1;
 };
 
