@@ -154,34 +154,6 @@ export default function IndividualInspectionPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
-    defaultValues: {
-      id: '',
-      zone: '',
-      sector: '',
-      poliza: '',
-      caso: '',
-      municipality: '',
-      colonia: '',
-      calle: '',
-      numero: '',
-      portal: '',
-      escalera: '',
-      piso: '',
-      puerta: '',
-      tipoInspeccion: '',
-      tipoProgramacion: '',
-      tipoMdd: '',
-      mercado: '',
-      oferta: '',
-      observaciones: '',
-      empresaColaboradora: '',
-      horarioProgramacion: '',
-      instalador: '',
-      inspector: '',
-      gestor: '',
-      status: '',
-      motivoRechazo: '',
-    }
   });
   
 useEffect(() => {
@@ -190,7 +162,7 @@ useEffect(() => {
     
     if (recordId) {
         setPageMode(mode === 'view' ? 'view' : 'edit');
-        if (currentRecord) { // Ensure currentRecord is loaded
+        if (currentRecord) { 
             form.reset({
                 id: currentRecord.id || '',
                 zone: currentRecord.zone || '',
@@ -263,7 +235,9 @@ useEffect(() => {
       if (currentRecord.status && currentRecord.status.endsWith('- REPROGRAMADA') && user?.role !== ROLES.ADMIN) {
         return true;
       }
-
+      if (!!currentRecord.reprogrammedFromId && fieldName === 'tipoProgramacion') {
+        return true;
+      }
       if (currentRecord.status === STATUS.CONECTADA && user?.role !== ROLES.ADMIN) {
         return true;
       }

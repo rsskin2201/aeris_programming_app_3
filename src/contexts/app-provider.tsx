@@ -265,10 +265,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const newRecord: InspectionRecord = {
       ...restOfRecord,
       id: newId,
-      status: STATUS.REGISTRADA, // 2. Reset status
+      status: STATUS.REGISTRADA,
+      tipoProgramacion: 'REPROGRAMACION',
       createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       createdBy: user?.username || 'desconocido',
-      reprogrammedFromId: oldId, // 3. Add trace
+      reprogrammedFromId: oldId,
     };
 
     // 4. Save the new record
