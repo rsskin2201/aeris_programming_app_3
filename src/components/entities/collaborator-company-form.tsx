@@ -77,6 +77,7 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
   }
 
   function onSubmit(values: FormValues) {
+    if (!firestore) return;
     const dataToSave: CollaboratorCompany = {
         ...values,
         id: values.id!,

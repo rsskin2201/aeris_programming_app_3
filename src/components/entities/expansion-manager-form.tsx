@@ -80,6 +80,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
   }
 
   function onSubmit(values: FormValues) {
+    if (!firestore) return;
     const dataToSave: ExpansionManager = {
         ...values,
         id: values.id!,

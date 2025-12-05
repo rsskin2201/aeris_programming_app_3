@@ -77,6 +77,7 @@ export function QualityControlCompanyForm({ company, onClose }: QualityControlCo
   }
 
   function onSubmit(values: FormValues) {
+    if (!firestore) return;
     const dataToSave: QualityControlCompany = {
         ...values,
         id: values.id!,

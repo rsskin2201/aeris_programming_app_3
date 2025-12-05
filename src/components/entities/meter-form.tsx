@@ -76,6 +76,7 @@ export function MeterForm({ meter, onClose }: MeterFormProps) {
   }
 
   function onSubmit(values: FormValues) {
+    if (!firestore) return;
     const dataToSave: Meter = {
         ...values,
         id: values.id!,

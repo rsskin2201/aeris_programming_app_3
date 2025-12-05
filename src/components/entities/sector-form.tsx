@@ -80,6 +80,7 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
   }
 
   function onSubmit(values: FormValues) {
+    if (!firestore) return;
     const dataToSave: Sector = {
         ...values,
         id: values.id!,

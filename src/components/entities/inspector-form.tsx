@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { ZONES } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
@@ -47,7 +47,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
   const { user } = useAppContext();
   const firestore = useFirestore();
 
-  const qualityCompaniesQuery = useMemoFirebase(() => collection(firestore, 'empresas_control_calidad'), [firestore]);
+  const qualityCompaniesQuery = useMemo(() => firestore ? collection(firestore, 'empresas_control_calidad') : null, [firestore]);
   const { data: qualityCompanies } = useCollection<QualityControlCompany>(qualityCompaniesQuery);
 
   const isEditMode = !!inspector;
@@ -79,6 +79,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
   }
 
   function onSubmit(values: FormValues) {
+    if (!firestore) return;
     const dataToSave: Inspector = {
         ...values,
         id: values.id!,
