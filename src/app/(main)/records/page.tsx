@@ -169,7 +169,7 @@ export default function RecordsPage() {
       topScroll.removeEventListener('scroll', handleTopScroll);
       bottomScroll.removeEventListener('scroll', handleBottomScroll);
     };
-  }, [paginatedRecords]); // Re-sync if data changes which might affect scroll width
+  }, [paginatedRecords]);
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value || (Array.isArray(prev[key]) ? [] : '') }));
@@ -458,27 +458,27 @@ export default function RecordsPage() {
                 ) : (
                 <Table>
                     <TableHeader>
-                    <TableRow>
-                        <TableHead className="h-10 px-2">Estatus</TableHead>
-                        <TableHead className="h-10 px-2">Fecha Alta</TableHead>
-                        <TableHead className="h-10 px-2">Fecha Prog.</TableHead>
-                        <TableHead className="h-10 px-2">Sector</TableHead>
-                        <TableHead className="h-10 px-2">Póliza</TableHead>
-                        <TableHead className="h-10 px-2">Caso (AT)</TableHead>
-                        <TableHead className="h-10 px-2">Municipio</TableHead>
-                        <TableHead className="h-10 px-2">Colonia</TableHead>
-                        <TableHead className="h-10 px-2">Calle</TableHead>
-                        <TableHead className="h-10 px-2">Número</TableHead>
-                        <TableHead className="h-10 px-2">Portal</TableHead>
-                        <TableHead className="h-10 px-2">Puerta</TableHead>
-                        <TableHead className="h-10 px-2">Tipo Inspección</TableHead>
-                        <TableHead className="h-10 px-2">Tipo Prog.</TableHead>
-                        <TableHead className="h-10 px-2">Mercado</TableHead>
-                        <TableHead className="h-10 px-2">Empresa Colab.</TableHead>
-                        <TableHead className="h-10 px-2">Gestor</TableHead>
-                        <TableHead className="h-10 px-2">Inspector</TableHead>
-                        <TableHead className="h-10 px-2">Últ. Mod.</TableHead>
-                        <TableHead className="sticky right-0 bg-card h-10 px-2">Acciones</TableHead>
+                    <TableRow className='bg-primary/90 hover:bg-primary/90'>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Estatus</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Fecha Alta</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Fecha Prog.</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Sector</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Póliza</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Caso (AT)</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Municipio</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Colonia</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Calle</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Número</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Portal</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Puerta</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Tipo Inspección</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Tipo Prog.</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Mercado</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Empresa Colab.</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Gestor</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Inspector</TableHead>
+                        <TableHead className="h-10 px-2 text-xs font-bold text-primary-foreground">Últ. Mod.</TableHead>
+                        <TableHead className="sticky right-0 bg-primary/90 h-10 px-2 text-xs font-bold text-primary-foreground">Acciones</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
