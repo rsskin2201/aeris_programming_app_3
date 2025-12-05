@@ -180,26 +180,26 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value || (Array.isArray(prev[key]) ? [] : '') }));
-  }
+  };
 
   const clearFilters = () => {
     setFilters(initialFilters);
-  }
+  };
 
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
       router.push(`${pathname}?${createQueryString({ page: newPage })}`);
     }
-  }
+  };
   
   const handleRowsPerPageChange = (value: string) => {
       router.push(`${pathname}?${createQueryString({ rows: value, page: 1 })}`);
-  }
+  };
 
   const handleAction = (recordId: string, mode: 'view' | 'edit') => {
     const path = '/inspections/individual';
     router.push(`${path}?id=${recordId}&mode=${mode}&from=records`);
-  }
+  };
 
   const handleExport = (allData: boolean) => {
     // Note: The 'allData' logic will be handled by a server action in a real high-scale scenario.
@@ -272,155 +272,9 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen} className='w-full'>
-            <div className="flex items-center justify-between">
-                <h3 className='text-xl font-semibold'>Filtros</h3>
-                <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                    <Filter className="mr-2 h-4 w-4" />
-                    {filtersOpen ? 'Ocultar' : 'Mostrar'} Filtros
-                    </Button>
-                </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent asChild>
-                <Card className="mt-2 p-6">
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                        <div className="space-y-2 lg:col-span-full">
-                            <Label htmlFor="id">ID de Inspección</Label>
-                            <Input id="id" placeholder="Buscar por ID..." value={filters.id} onChange={(e) => handleFilterChange('id', e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="gestor">Gestor Asignado</Label>
-                            <Select value={filters.gestor} onValueChange={(v) => handleFilterChange('gestor', v)}>
-                                <SelectTrigger id="gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    {expansionManagers?.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="inspector">Inspector Asignado</Label>
-                            <Select value={filters.inspector} onValueChange={(v) => handleFilterChange('inspector', v)}>
-                                <SelectTrigger id="inspector"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    {inspectors?.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="empresa">Empresa Colaboradora</Label>
-                            <Select value={filters.empresa} onValueChange={(v) => handleFilterChange('empresa', v)}>
-                                <SelectTrigger id="empresa"><SelectValue placeholder="Todas" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todas</SelectItem>
-                                    {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="sector">Sector</Label>
-                            <Select value={filters.sector} onValueChange={(v) => handleFilterChange('sector', v)}>
-                                <SelectTrigger id="sector"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    {sectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="poliza">Póliza</Label>
-                            <Input id="poliza" placeholder="Buscar por póliza..." value={filters.poliza} onChange={(e) => handleFilterChange('poliza', e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="caso">Caso</Label>
-                            <Input id="caso" placeholder="Buscar por caso AT..." value={filters.caso} onChange={(e) => handleFilterChange('caso', e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="serieMdd">Serie MDD</Label>
-                            <Input id="serieMdd" placeholder="Buscar por serie..." value={filters.serieMdd} onChange={(e) => handleFilterChange('serieMdd', e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="status">Status</Label>
-                            <MultiSelect
-                                options={statusOptions}
-                                onValueChange={(v) => handleFilterChange('status', v)}
-                                defaultValue={filters.status}
-                                placeholder="Seleccionar estatus..."
-                                className="w-full"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="tipoInspeccion">Tipo de Inspección</Label>
-                            <Select value={filters.tipoInspeccion} onValueChange={(v) => handleFilterChange('tipoInspeccion', v)}>
-                                <SelectTrigger id="tipoInspeccion"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    {allInspectionTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="mercado">Mercado</Label>
-                            <Select value={filters.mercado} onValueChange={(v) => handleFilterChange('mercado', v)}>
-                                <SelectTrigger id="mercado"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    {MERCADO.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="date-range">Rango de Fechas</Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    id="date-range"
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !filters.date && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {filters.date?.from ? (
-                                        filters.date.to ? (
-                                        <>
-                                            {format(filters.date.from, "LLL dd, y", { locale: es })} -{" "}
-                                            {format(filters.date.to, "LLL dd, y", { locale: es })}
-                                        </>
-                                        ) : (
-                                        format(filters.date.from, "LLL dd, y")
-                                        )
-                                    ) : (
-                                        <span>Selecciona un rango</span>
-                                    )}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={filters.date?.from}
-                                    selected={filters.date}
-                                    onSelect={(d) => handleFilterChange('date', d)}
-                                    numberOfMonths={2}
-                                    locale={es}
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                        <div className="flex items-end gap-2 lg:col-start-4">
-                            <Button variant="ghost" className="w-full" onClick={clearFilters}>Limpiar</Button>
-                        </div>
-                    </div>
-                </Card>
-            </CollapsibleContent>
-        </Collapsible>
-        
+        <h3 className='text-xl font-semibold'>Filtros</h3>
         {canExport && (
-          <div className='flex items-center gap-2 justify-end'>
+          <div className='flex items-center gap-2'>
             {canExportAll && 
                 <Button
                 variant="outline"
@@ -456,6 +310,153 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
           </div>
         )}
       </div>
+
+      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen} className='w-full'>
+          <div className="flex items-center justify-end">
+              <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                  <Filter className="mr-2 h-4 w-4" />
+                  {filtersOpen ? 'Ocultar' : 'Mostrar'} Filtros
+                  </Button>
+              </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent asChild>
+              <Card className="mt-2 p-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                      <div className="space-y-2 lg:col-span-full">
+                          <Label htmlFor="id">ID de Inspección</Label>
+                          <Input id="id" placeholder="Buscar por ID..." value={filters.id} onChange={(e) => handleFilterChange('id', e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="gestor">Gestor Asignado</Label>
+                          <Select value={filters.gestor} onValueChange={(v) => handleFilterChange('gestor', v)}>
+                              <SelectTrigger id="gestor"><SelectValue placeholder="Todos" /></SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="all">Todos</SelectItem>
+                                  {expansionManagers?.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="inspector">Inspector Asignado</Label>
+                          <Select value={filters.inspector} onValueChange={(v) => handleFilterChange('inspector', v)}>
+                              <SelectTrigger id="inspector"><SelectValue placeholder="Todos" /></SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="all">Todos</SelectItem>
+                                  {inspectors?.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="empresa">Empresa Colaboradora</Label>
+                          <Select value={filters.empresa} onValueChange={(v) => handleFilterChange('empresa', v)}>
+                              <SelectTrigger id="empresa"><SelectValue placeholder="Todas" /></SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="all">Todas</SelectItem>
+                                  {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="sector">Sector</Label>
+                          <Select value={filters.sector} onValueChange={(v) => handleFilterChange('sector', v)}>
+                              <SelectTrigger id="sector"><SelectValue placeholder="Todos" /></SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="all">Todos</SelectItem>
+                                  {sectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="poliza">Póliza</Label>
+                          <Input id="poliza" placeholder="Buscar por póliza..." value={filters.poliza} onChange={(e) => handleFilterChange('poliza', e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="caso">Caso</Label>
+                          <Input id="caso" placeholder="Buscar por caso AT..." value={filters.caso} onChange={(e) => handleFilterChange('caso', e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="serieMdd">Serie MDD</Label>
+                          <Input id="serieMdd" placeholder="Buscar por serie..." value={filters.serieMdd} onChange={(e) => handleFilterChange('serieMdd', e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="status">Status</Label>
+                          <MultiSelect
+                              options={statusOptions}
+                              onValueChange={(v) => handleFilterChange('status', v)}
+                              defaultValue={filters.status}
+                              placeholder="Seleccionar estatus..."
+                              className="w-full"
+                          />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="tipoInspeccion">Tipo de Inspección</Label>
+                          <Select value={filters.tipoInspeccion} onValueChange={(v) => handleFilterChange('tipoInspeccion', v)}>
+                              <SelectTrigger id="tipoInspeccion"><SelectValue placeholder="Todos" /></SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="all">Todos</SelectItem>
+                                  {allInspectionTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="mercado">Mercado</Label>
+                          <Select value={filters.mercado} onValueChange={(v) => handleFilterChange('mercado', v)}>
+                              <SelectTrigger id="mercado"><SelectValue placeholder="Todos" /></SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="all">Todos</SelectItem>
+                                  {MERCADO.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="date-range">Rango de Fechas</Label>
+                          <Popover>
+                              <PopoverTrigger asChild>
+                                  <Button
+                                  id="date-range"
+                                  variant={"outline"}
+                                  className={cn(
+                                      "w-full justify-start text-left font-normal",
+                                      !filters.date && "text-muted-foreground"
+                                  )}
+                                  >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {filters.date?.from ? (
+                                      filters.date.to ? (
+                                      <>
+                                          {format(filters.date.from, "LLL dd, y", { locale: es })} -{" "}
+                                          {format(filters.date.to, "LLL dd, y", { locale: es })}
+                                      </>
+                                      ) : (
+                                      format(filters.date.from, "LLL dd, y")
+                                      )
+                                  ) : (
+                                      <span>Selecciona un rango</span>
+                                  )}
+                                  </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                  initialFocus
+                                  mode="range"
+                                  defaultMonth={filters.date?.from}
+                                  selected={filters.date}
+                                  onSelect={(d) => handleFilterChange('date', d)}
+                                  numberOfMonths={2}
+                                  locale={es}
+                                  />
+                              </PopoverContent>
+                          </Popover>
+                      </div>
+                      <div className="flex items-end gap-2 lg:col-start-4">
+                          <Button variant="ghost" className="w-full" onClick={clearFilters}>Limpiar</Button>
+                      </div>
+                  </div>
+              </Card>
+          </CollapsibleContent>
+      </Collapsible>
+        
 
       <div className="w-full">
             <div ref={topScrollRef} className="overflow-x-auto overflow-y-hidden">
