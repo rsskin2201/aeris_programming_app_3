@@ -245,7 +245,6 @@ export default function MassiveInspectionPage() {
             oferta: values.oferta || '',
             observaciones: values.observaciones || '',
             collaboratorCompany: values.empresaColaboradora,
-            fechaProgramacion: values.fechaProgramacion,
             horarioProgramacion: values.horarioProgramacion,
             instalador: values.instalador,
             inspector: values.inspector || '',
@@ -370,7 +369,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="sector" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Sector</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {availableSectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
@@ -384,7 +383,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="municipality" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Municipio</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un municipio" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {mockMunicipalities.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
@@ -510,7 +509,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="tipoInspeccion" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Tipo de Inspección</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {TIPO_INSPECCION_MASIVA.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
@@ -522,7 +521,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="tipoProgramacion" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Tipo de Programación</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {TIPO_PROGRAMACION_PES.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
@@ -534,7 +533,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="tipoMdd" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Tipo MDD</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {TIPO_MDD.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
@@ -546,7 +545,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="mercado" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Mercado</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un mercado" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {MERCADO.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
@@ -588,7 +587,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="empresaColaboradora" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Empresa Colaboradora</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isCollaborator}>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isCollaborator}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
@@ -600,7 +599,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="gestor" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Gestor</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un gestor" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {availableManagers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
@@ -612,7 +611,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="instalador" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Instalador</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {availableInstallers.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
@@ -624,7 +623,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="inspector" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Inspector</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isInspectorFieldDisabled}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={isInspectorFieldDisabled}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un inspector" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
@@ -680,7 +679,7 @@ export default function MassiveInspectionPage() {
                 <FormField control={form.control} name="status" render={({ field }) => (
                    <FormItem>
                     <FormLabel>Status</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isCollaborator}>
+                     <Select onValueChange={field.onChange} value={field.value} disabled={isCollaborator}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
                         <SelectContent>
                            {availableStatusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
