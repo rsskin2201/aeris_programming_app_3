@@ -159,7 +159,7 @@ export default function IndividualInspectionPage() {
 useEffect(() => {
     const dateParam = searchParams.get('date');
     const timeParam = searchParams.get('time');
-    
+
     if (recordId) {
         setPageMode(mode === 'view' ? 'view' : 'edit');
         if (currentRecord) { 

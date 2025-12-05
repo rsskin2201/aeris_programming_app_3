@@ -48,22 +48,20 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
 
   const isEditMode = !!company;
 
-  const defaultValues = useMemo(() => ({
-    id: company?.id || `EC-${Date.now()}`,
-    name: company?.name || '',
-    rfc: company?.rfc || '',
-    zone: company?.zone || '',
-    status: company?.status || 'Activa',
-  }), [company]);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
   });
 
   useEffect(() => {
+    const defaultValues = {
+      id: company?.id || `EC-${Date.now()}`,
+      name: company?.name || '',
+      rfc: company?.rfc || '',
+      zone: company?.zone || '',
+      status: company?.status || 'Activa',
+    };
     form.reset(defaultValues);
-  }, [company, defaultValues, form]);
+  }, [company, form]);
   
   const { isSubmitting } = form.formState;
 
@@ -97,7 +95,14 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
   }
   
   const handleReset = () => {
-      form.reset(defaultValues);
+    const defaultValues = {
+      id: company?.id || `EC-${Date.now()}`,
+      name: company?.name || '',
+      rfc: company?.rfc || '',
+      zone: company?.zone || '',
+      status: company?.status || 'Activa',
+    };
+    form.reset(defaultValues);
   }
 
   return (
@@ -121,7 +126,7 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
             <FormField control={form.control} name="status" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Estatus</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un estatus" /></SelectTrigger></FormControl>
                     <SelectContent>
                         <SelectItem value="Activa">Activa</SelectItem>
@@ -165,7 +170,7 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
             <FormField control={form.control} name="zone" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Zona</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una zona" /></SelectTrigger></FormControl>
                         <SelectContent>
                         {availableZones.map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}

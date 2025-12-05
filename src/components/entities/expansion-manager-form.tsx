@@ -49,24 +49,22 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
 
   const isEditMode = !!manager;
 
-  const defaultValues = useMemo(() => ({
-    id: manager?.id || `GE-${Date.now()}`,
-    name: manager?.name || '',
-    position: 'Gestor de Expansion',
-    zone: manager?.zone || '',
-    assignment: manager?.assignment || '',
-    subAssignment: manager?.subAssignment || '',
-    status: manager?.status || 'Activo',
-  }), [manager]);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
   });
 
   useEffect(() => {
+    const defaultValues = {
+      id: manager?.id || `GE-${Date.now()}`,
+      name: manager?.name || '',
+      position: 'Gestor de Expansion',
+      zone: manager?.zone || '',
+      assignment: manager?.assignment || '',
+      subAssignment: manager?.subAssignment || '',
+      status: manager?.status || 'Activo',
+    };
     form.reset(defaultValues);
-  }, [manager, defaultValues, form]);
+  }, [manager, form]);
   
   const { isSubmitting } = form.formState;
   
@@ -100,7 +98,16 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
   }
   
   const handleReset = () => {
-      form.reset(defaultValues);
+    const defaultValues = {
+      id: manager?.id || `GE-${Date.now()}`,
+      name: manager?.name || '',
+      position: 'Gestor de Expansion',
+      zone: manager?.zone || '',
+      assignment: manager?.assignment || '',
+      subAssignment: manager?.subAssignment || '',
+      status: manager?.status || 'Activo',
+    };
+    form.reset(defaultValues);
   }
 
   return (
@@ -124,7 +131,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
             <FormField control={form.control} name="status" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Estatus</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un estatus" /></SelectTrigger></FormControl>
                     <SelectContent>
                         <SelectItem value="Activo">Activo</SelectItem>
@@ -161,7 +168,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
             <FormField control={form.control} name="zone" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Zona</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una zona" /></SelectTrigger></FormControl>
                         <SelectContent>
                         {availableZones.map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}
@@ -173,7 +180,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
              <FormField control={form.control} name="assignment" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Asignación</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una asignación" /></SelectTrigger></FormControl>
                         <SelectContent>
                             <SelectItem value="Expansión">Expansión</SelectItem>

@@ -47,22 +47,20 @@ export function MeterForm({ meter, onClose }: MeterFormProps) {
 
   const isEditMode = !!meter;
 
-  const defaultValues = useMemo(() => ({
-    id: meter?.id || `MDD-${Math.floor(10000000 + Math.random() * 90000000)}`,
-    marca: meter?.marca || '',
-    tipo: meter?.tipo || '',
-    zona: meter?.zona || '',
-    status: meter?.status || 'Activo',
-  }), [meter]);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
   });
 
   useEffect(() => {
+    const defaultValues = {
+      id: meter?.id || `MDD-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      marca: meter?.marca || '',
+      tipo: meter?.tipo || '',
+      zona: meter?.zona || '',
+      status: meter?.status || 'Activo',
+    };
     form.reset(defaultValues);
-  }, [meter, defaultValues, form]);
+  }, [meter, form]);
   
   const { isSubmitting } = form.formState;
   
@@ -96,7 +94,14 @@ export function MeterForm({ meter, onClose }: MeterFormProps) {
   }
   
   const handleReset = () => {
-      form.reset(defaultValues);
+    const defaultValues = {
+      id: meter?.id || `MDD-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      marca: meter?.marca || '',
+      tipo: meter?.tipo || '',
+      zona: meter?.zona || '',
+      status: meter?.status || 'Activo',
+    };
+    form.reset(defaultValues);
   }
 
   return (
@@ -120,7 +125,7 @@ export function MeterForm({ meter, onClose }: MeterFormProps) {
             <FormField control={form.control} name="status" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Estatus</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un estatus" /></SelectTrigger></FormControl>
                     <SelectContent>
                         <SelectItem value="Activo">Activo</SelectItem>
@@ -161,7 +166,7 @@ export function MeterForm({ meter, onClose }: MeterFormProps) {
             <FormField control={form.control} name="zona" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Zona</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una zona" /></SelectTrigger></FormControl>
                         <SelectContent>
                         {availableZones.map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}

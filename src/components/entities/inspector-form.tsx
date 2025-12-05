@@ -53,9 +53,13 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
   const isEditMode = !!inspector;
   const currentYear = new Date().getFullYear();
 
-  const defaultValues = useMemo(() => {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+  });
+
+  useEffect(() => {
     const parseDate = (dateStr: string | undefined) => dateStr ? parse(dateStr, 'yyyy-MM-dd', new Date()) : new Date();
-    return {
+    const defaultValues = {
       id: inspector?.id || `INSP-${Date.now()}`,
       name: inspector?.name || '',
       position: 'Inspector',
@@ -65,16 +69,8 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
       certEndDate: parseDate(inspector?.certEndDate),
       status: inspector?.status || 'Activo',
     }
-  }, [inspector]);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues,
-  });
-
-  useEffect(() => {
     form.reset(defaultValues);
-  }, [inspector, defaultValues, form]);
+  }, [inspector, form]);
   
   const { isSubmitting } = form.formState;
 
@@ -103,7 +99,18 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
   }
   
   const handleReset = () => {
-      form.reset(defaultValues);
+    const parseDate = (dateStr: string | undefined) => dateStr ? parse(dateStr, 'yyyy-MM-dd', new Date()) : new Date();
+    const defaultValues = {
+      id: inspector?.id || `INSP-${Date.now()}`,
+      name: inspector?.name || '',
+      position: 'Inspector',
+      qualityCompany: inspector?.qualityCompany || '',
+      zone: inspector?.zone || '',
+      certStartDate: parseDate(inspector?.certStartDate),
+      certEndDate: parseDate(inspector?.certEndDate),
+      status: inspector?.status || 'Activo',
+    }
+    form.reset(defaultValues);
   }
 
   return (
@@ -127,7 +134,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
             <FormField control={form.control} name="status" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Estatus</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un estatus" /></SelectTrigger></FormControl>
                     <SelectContent>
                         <SelectItem value="Activo">Activo</SelectItem>
@@ -164,7 +171,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
             <FormField control={form.control} name="qualityCompany" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Empresa de Control de Calidad</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
                         {qualityCompanies?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
@@ -178,7 +185,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
              <FormField control={form.control} name="zone" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Zona</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una zona" /></SelectTrigger></FormControl>
                         <SelectContent>
                         {ZONES.filter(z => z !== 'Todas las zonas').map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}

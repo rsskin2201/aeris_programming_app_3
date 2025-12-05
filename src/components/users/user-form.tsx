@@ -48,24 +48,22 @@ export function UserForm({ user, onClose }: UserFormProps) {
 
   const isEditMode = !!user;
 
-  const defaultValues = useMemo(() => ({
-    name: user?.name || '',
-    username: user?.username || '',
-    role: user?.role || ROLES.GESTOR,
-    zone: user?.zone || ZONES[0],
-    status: user?.status || USER_STATUS.ACTIVO,
-    password: '',
-  }), [user]);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
   });
   
   useEffect(() => {
+    const defaultValues = {
+      name: user?.name || '',
+      username: user?.username || '',
+      role: user?.role || ROLES.GESTOR,
+      zone: user?.zone || ZONES[0],
+      status: user?.status || USER_STATUS.ACTIVO,
+      password: '',
+    };
     form.reset(defaultValues);
     setNewPassword('');
-  }, [user, defaultValues, form]);
+  }, [user, form]);
   
   const { isSubmitting } = form.formState;
 
@@ -127,8 +125,16 @@ export function UserForm({ user, onClose }: UserFormProps) {
   }
   
   const handleReset = () => {
-      form.reset(defaultValues);
-      setNewPassword('');
+    const defaultValues = {
+      name: user?.name || '',
+      username: user?.username || '',
+      role: user?.role || ROLES.GESTOR,
+      zone: user?.zone || ZONES[0],
+      status: user?.status || USER_STATUS.ACTIVO,
+      password: '',
+    };
+    form.reset(defaultValues);
+    setNewPassword('');
   }
 
   return (
@@ -159,7 +165,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
                 <FormField control={form.control} name="role" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Rol</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un rol" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {Object.values(ROLES).map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
@@ -171,7 +177,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
                 <FormField control={form.control} name="zone" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Zona</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una zona" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {Object.values(ZONES).map(zone => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}
@@ -185,7 +191,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
             <FormField control={form.control} name="status" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Estatus</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un estatus" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {Object.values(USER_STATUS).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}

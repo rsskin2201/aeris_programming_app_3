@@ -49,24 +49,22 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
 
   const isEditMode = !!sector;
 
-  const defaultValues = useMemo(() => ({
-    id: sector?.id || `SEC-${Date.now()}`,
-    zone: sector?.zone || '',
-    assignment: sector?.assignment || '',
-    subAssignment: sector?.subAssignment || '',
-    sector: sector?.sector || '',
-    sectorKey: sector?.sectorKey || '',
-    status: sector?.status || 'Activo',
-  }), [sector]);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
   });
 
   useEffect(() => {
+    const defaultValues = {
+      id: sector?.id || `SEC-${Date.now()}`,
+      zone: sector?.zone || '',
+      assignment: sector?.assignment || '',
+      subAssignment: sector?.subAssignment || '',
+      sector: sector?.sector || '',
+      sectorKey: sector?.sectorKey || '',
+      status: sector?.status || 'Activo',
+    };
     form.reset(defaultValues);
-  }, [sector, defaultValues, form]);
+  }, [sector, form]);
   
   const { isSubmitting } = form.formState;
 
@@ -100,7 +98,16 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
   }
   
   const handleReset = () => {
-      form.reset(defaultValues);
+    const defaultValues = {
+      id: sector?.id || `SEC-${Date.now()}`,
+      zone: sector?.zone || '',
+      assignment: sector?.assignment || '',
+      subAssignment: sector?.subAssignment || '',
+      sector: sector?.sector || '',
+      sectorKey: sector?.sectorKey || '',
+      status: sector?.status || 'Activo',
+    };
+    form.reset(defaultValues);
   }
 
   return (
@@ -124,7 +131,7 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
             <FormField control={form.control} name="status" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Estatus</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un estatus" /></SelectTrigger></FormControl>
                     <SelectContent>
                         <SelectItem value="Activo">Activo</SelectItem>
@@ -141,7 +148,7 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
                 <FormField control={form.control} name="zone" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Zona</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una zona" /></SelectTrigger></FormControl>
                             <SelectContent>
                             {availableZones.map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}
@@ -153,7 +160,7 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
                 <FormField control={form.control} name="assignment" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Asignación</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una asignación" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 <SelectItem value="Expansión">Expansión</SelectItem>
