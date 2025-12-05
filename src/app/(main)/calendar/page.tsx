@@ -87,7 +87,7 @@ const daysOfWeek = [
   'Martes',
   'Miércoles',
   'Jueves',
-  'Viernes',
+ 'Viernes',
   'Sábado',
   'Domingo',
 ];
@@ -458,6 +458,8 @@ export default function CalendarPage() {
       'GESTOR': record.gestor,
       'INSPECTOR': record.inspector,
       'STATUS': record.status,
+      'Observaciones': record.observaciones,
+      'Fecha de Ultima Modificación': record.lastModifiedAt,
     }));
 
     const csv = Papa.unparse(dataForCsv);
