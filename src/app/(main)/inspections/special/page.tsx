@@ -26,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO, mockMunicipalities } from "@/lib/form-options";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -102,6 +102,10 @@ export default function SpecialInspectionPage() {
   const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]));
   const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]));
 
+  const recordId = searchParams.get('id');
+  const docRef = useMemoFirebase(() => recordId ? doc(firestore, 'inspections', recordId) : null, [firestore, recordId]);
+  const { data: currentRecord, isLoading: isRecordLoading } = useDoc<InspectionRecord>(docRef);
+
   const isCollaborator = user?.role === ROLES.COLABORADOR;
   const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption
 
@@ -124,35 +128,68 @@ export default function SpecialInspectionPage() {
     const dateParam = searchParams.get('date');
     const timeParam = searchParams.get('time');
 
-    form.reset({
-      id: generateId(),
-      zone: zone,
-      poliza: "",
-      caso: "",
-      municipality: "",
-      colonia: "",
-      calle: "",
-      numero: "",
-      portal: "",
-      escalera: "",
-      piso: "",
-      puerta: "",
-      tipoInspeccion: "",
-      tipoProgramacion: "",
-      tipoMdd: "",
-      mercado: "",
-      oferta: "",
-      observaciones: "",
-      empresaColaboradora: isCollaborator ? collaboratorCompany : "",
-      horarioProgramacion: timeParam || "",
-      instalador: "",
-      inspector: "",
-      gestor: "",
-      sector: "",
-      status: getInitialStatus(user?.role),
-      fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
-    });
-  }, [user?.role, zone, isCollaborator, collaboratorCompany, searchParams, form]);
+    if (recordId) {
+        if(currentRecord) {
+            form.reset({
+              id: currentRecord.id || '',
+              zone: currentRecord.zone || '',
+              sector: currentRecord.sector || '',
+              poliza: currentRecord.poliza || '',
+              caso: currentRecord.caso || '',
+              municipality: currentRecord.municipality || '',
+              colonia: currentRecord.colonia || '',
+              calle: currentRecord.calle || '',
+              numero: currentRecord.numero || '',
+              portal: currentRecord.portal || '',
+              escalera: currentRecord.escalera || '',
+              piso: currentRecord.piso || '',
+              puerta: currentRecord.puerta || '',
+              tipoInspeccion: currentRecord.tipoInspeccion || '',
+              tipoProgramacion: currentRecord.tipoProgramacion || '',
+              tipoMdd: currentRecord.tipoMdd || '',
+              mercado: currentRecord.mercado || '',
+              oferta: currentRecord.oferta || '',
+              observaciones: currentRecord.observaciones || '',
+              empresaColaboradora: currentRecord.collaboratorCompany || '',
+              fechaProgramacion: parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()),
+              horarioProgramacion: currentRecord.horarioProgramacion || '',
+              instalador: currentRecord.instalador || '',
+              inspector: currentRecord.inspector || '',
+              gestor: currentRecord.gestor || '',
+              status: currentRecord.status || '',
+            });
+        }
+    } else {
+        form.reset({
+            id: generateId(),
+            zone: zone,
+            poliza: "",
+            caso: "",
+            municipality: "",
+            colonia: "",
+            calle: "",
+            numero: "",
+            portal: "",
+            escalera: "",
+            piso: "",
+            puerta: "",
+            tipoInspeccion: "",
+            tipoProgramacion: "",
+            tipoMdd: "",
+            mercado: "",
+            oferta: "",
+            observaciones: "",
+            empresaColaboradora: isCollaborator ? collaboratorCompany : "",
+            horarioProgramacion: timeParam || "",
+            instalador: "",
+            inspector: "",
+            gestor: "",
+            sector: "",
+            status: getInitialStatus(user?.role),
+            fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
+        });
+    }
+  }, [user?.role, zone, isCollaborator, collaboratorCompany, searchParams, form, recordId, currentRecord]);
   
   const formData = form.watch();
 
@@ -306,6 +343,14 @@ export default function SpecialInspectionPage() {
       toast({ title: 'ID Copiado', description: 'El ID de la inspección se ha copiado.' });
     }
   };
+
+  if (isRecordLoading && recordId) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
 
   return (
