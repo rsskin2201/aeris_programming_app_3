@@ -3,12 +3,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, ListTodo, Server, Loader2, RefreshCw } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { useAppContext } from '@/hooks/use-app-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +12,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { addDays, format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, Server, Loader2, RefreshCw } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { useAppContext } from '@/hooks/use-app-context';
 import { cn } from '@/lib/utils';
 import { STATUS, ROLES, User, CollaboratorCompany, Sector, ExpansionManager, Status, InspectionRecord, Inspector } from '@/lib/types';
 import { TIPO_INSPECCION_ESPECIAL, TIPO_INSPECCION_MASIVA, MERCADO } from '@/lib/form-options';
@@ -28,6 +27,8 @@ import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, where, QueryConstraint } from 'firebase/firestore';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Card } from '../ui/card';
+
 
 const allInspectionTypes = [...new Set(['Individual PES', 'Masiva PES', ...TIPO_INSPECCION_MASIVA, ...TIPO_INSPECCION_ESPECIAL])];
 const statusOptions = Object.values(STATUS).map(s => ({ value: s, label: s }));
@@ -52,6 +53,105 @@ const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORA
 const canExportRoles = Object.values(ROLES);
 const canExportAllRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
 const reprogrammableStatuses: Status[] = [STATUS.CANCELADA, STATUS.NO_APROBADA, STATUS.RECHAZADA];
+
+// Definición completa de las cabeceras del CSV para la exportación total
+const fullExportHeaders: Record<keyof InspectionRecord, string> = {
+  id: 'ID',
+  type: 'Tipo de Registro',
+  createdAt: 'Fecha de Creación',
+  createdBy: 'Usuario Creación',
+  requestDate: 'Fecha Programación',
+  horarioProgramacion: 'Horario Programación',
+  status: 'Estatus',
+  lastModifiedAt: 'Fecha Últ. Modificación',
+  lastModifiedBy: 'Usuario Últ. Modificación',
+  zone: 'Zona',
+  sector: 'Sector',
+  municipality: 'Municipio',
+  colonia: 'Colonia',
+  calle: 'Calle',
+  numero: 'Número',
+  address: 'Dirección Completa',
+  portal: 'Portal',
+  escalera: 'Escalera',
+  piso: 'Piso',
+  puerta: 'Puerta',
+  client: 'Nombre Cliente (Final)',
+  poliza: 'Póliza',
+  caso: 'Caso (AT)',
+  tipoInspeccion: 'Tipo de Inspección',
+  tipoProgramacion: 'Tipo de Programación',
+  tipoMdd: 'Tipo MDD (Solicitud)',
+  mercado: 'Mercado',
+  oferta: 'Oferta/Campaña',
+  observaciones: 'Observaciones (Solicitud)',
+  collaboratorCompany: 'Empresa Colaboradora',
+  instalador: 'Instalador',
+  gestor: 'Gestor',
+  inspector: 'Inspector',
+  // Campos del Checklist
+  serieMdd: 'Serie MDD',
+  marcaMdd: 'Marca MDD',
+  tipoMddCampo: 'Tipo MDD (Campo)',
+  presion: 'Presión de Trabajo (kg/cm2)',
+  folioIt: 'Folio IT',
+  precinto: 'Precinto',
+  epp: 'EPP',
+  controlPrevio: 'Control Previo',
+  mtsInstalados: 'Mts Instalados',
+  materialTuberia: 'Material de Tubería',
+  folioChecklist: 'Folio Check List',
+  defectosCorregidos: 'Defectos Corregidos',
+  defectosNoCorregidos: 'Defectos No Corregidos',
+  horaEntrada: 'Hora Entrada',
+  horaSalida: 'Hora Salida',
+  ventilaPreexistente: 'Ventila Preexistente',
+  ventilacionEcc: 'Ventilación ECC',
+  aparatosConectados: 'Aparatos Conectados',
+  equipo_1: 'Equipo 1',
+  marca_eq1: 'Marca Eq1',
+  coCor_eq1: 'CO Corregido Eq1 (PPM)',
+  coAmb_eq1: 'CO Ambiente Eq1 (PPM)',
+  equipo_2: 'Equipo 2',
+  marca_eq2: 'Marca Eq2',
+  coCor_eq2: 'CO Corregido Eq2 (PPM)',
+  coAmb_eq2: 'CO Ambiente Eq2 (PPM)',
+  equipo_3: 'Equipo 3',
+  marca_eq3: 'Marca Eq3',
+  coCor_eq3: 'CO Corregido Eq3 (PPM)',
+  coAmb_eq3: 'CO Ambiente Eq3 (PPM)',
+  equipo_4: 'Equipo 4',
+  marca_eq4: 'Marca Eq4',
+  coCor_eq4: 'CO Corregido Eq4 (PPM)',
+  coAmb_eq4: 'CO Ambiente Eq4 (PPM)',
+  equipo_5: 'Equipo 5',
+  marca_eq5: 'Marca Eq5',
+  coCor_eq5: 'CO Corregido Eq5 (PPM)',
+  coAmb_eq5: 'CO Ambiente Eq5 (PPM)',
+  nombreCliente: 'Nombre Cliente (Reportado)',
+  telCliente: 'Tel. Cliente',
+  motivoCancelacion: 'Motivo Cancelación / No Aprobación',
+  comentariosOca: 'Comentarios OCA',
+  formaDePago: 'Forma de Pago',
+  equipoExtra: 'Equipo Extra',
+  capturista: 'Capturista Checklist',
+  hraDeAudio: 'Hora de Audio',
+  infFormasPago: 'Info Formas de Pago',
+  altaSms: 'Alta de SMS',
+  appNaturgy: 'App Naturgy',
+  entregaGuia: 'Entrega de Guía',
+  // Campos de Soporte
+  fechaConexion: 'Fecha Conexión',
+  datosConfirmados: 'Datos Confirmados (Soporte)',
+  observacionesSoporte: 'Observaciones (Soporte)',
+  tipoRechazo: 'Tipo Rechazo (Soporte)',
+  motivoRechazo: 'Motivo Rechazo (Soporte)',
+  // Campos de Reprogramación
+  reprogrammedFromId: 'ID Origen Reprogramación',
+  reprogrammedToId: 'ID Destino Reprogramación',
+  grupoMercado: 'Grupo de Mercado',
+  semana: 'Semana'
+};
 
 interface RecordsTableProps {
     statusColors: Record<string, string>;
@@ -202,8 +302,6 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
   };
 
   const handleExport = (allData: boolean) => {
-    // Note: The 'allData' logic will be handled by a server action in a real high-scale scenario.
-    // Here we simulate based on filteredRecords.
     const recordsToExport = allData ? records : filteredRecords;
 
     if (!recordsToExport || recordsToExport.length === 0) {
@@ -215,38 +313,23 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
       return;
     }
 
-    const dataForCsv = recordsToExport.map(record => ({
-      'Fecha de Creación del Registro': record.createdAt,
-      'ID': record.id,
-      'POLIZA': record.poliza,
-      'CASO (AT)': record.caso,
-      'ZONA': record.zone,
-      'SECTOR': record.sector,
-      'MUNICIPIO': record.municipality,
-      'COLONIA': record.colonia,
-      'CALLE': record.calle,
-      'NUMERO': record.numero,
-      'PORTAL': record.portal,
-      'ESCALERA': record.escalera,
-      'PISO': record.piso,
-      'PUERTA': record.puerta,
-      'TIPO DE INSPECCION': record.tipoInspeccion,
-      'TIPO DE PROGRAMACION': record.tipoProgramacion,
-      'TIPO MDD': record.tipoMdd,
-      'MERCADO': record.mercado,
-      'OFERTA/CAMPAÑA': record.oferta,
-      'EMPRESA COLABORADORA': record.collaboratorCompany,
-      'FECHA PROGRAMACION': record.requestDate,
-      'HORARIO PROGRAMACION': record.horarioProgramacion,
-      'INSTALADOR': record.instalador,
-      'GESTOR': record.gestor,
-      'INSPECTOR': record.inspector,
-      'STATUS': record.status,
-      'Observaciones': record.observaciones,
-      'Fecha de Ultima Modificación': record.lastModifiedAt,
-    }));
+    const headers = Object.values(fullExportHeaders);
+    const fields = Object.keys(fullExportHeaders) as (keyof InspectionRecord)[];
+    
+    const dataForCsv = recordsToExport.map(record => {
+      const row: Record<string, any> = {};
+      fields.forEach(field => {
+        const header = fullExportHeaders[field];
+        row[header] = record[field] ?? ''; // Use ?? to handle null/undefined and provide an empty string
+      });
+      return row;
+    });
 
-    const csv = Papa.unparse(dataForCsv);
+    const csv = Papa.unparse({
+      fields: headers,
+      data: dataForCsv,
+    });
+
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     if (link.download !== undefined) {
@@ -272,7 +355,9 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <h3 className='text-xl font-semibold'>Filtros</h3>
+        <div>
+          <h3 className='text-xl font-semibold'>Filtros</h3>
+        </div>
         {canExport && (
           <div className='flex items-center gap-2'>
             {canExportAll && 
@@ -312,7 +397,7 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
       </div>
 
       <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen} className='w-full'>
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end -mt-8">
               <CollapsibleTrigger asChild>
                   <Button variant="ghost" size="sm">
                   <Filter className="mr-2 h-4 w-4" />
