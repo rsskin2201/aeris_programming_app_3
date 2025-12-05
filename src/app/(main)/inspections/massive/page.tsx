@@ -125,7 +125,7 @@ export default function MassiveInspectionPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      zone: '',
+      zone: zone,
       sector: "",
       municipality: "",
       colonia: "",
@@ -137,12 +137,12 @@ export default function MassiveInspectionPage() {
       mercado: "",
       oferta: "",
       observaciones: "",
-      empresaColaboradora: "",
+      empresaColaboradora: isCollaborator ? collaboratorCompany : "",
       horarioProgramacion: "",
       instalador: "",
       inspector: "",
       gestor: "",
-      status: STATUS.REGISTRADA,
+      status: getInitialStatus(user?.role),
       inspections: [],
       fechaProgramacion: new Date(),
     }

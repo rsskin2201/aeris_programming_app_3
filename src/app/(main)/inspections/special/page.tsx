@@ -122,6 +122,33 @@ export default function SpecialInspectionPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
+    defaultValues: {
+      id: '',
+      zone: zone,
+      sector: '',
+      poliza: '',
+      caso: '',
+      municipality: '',
+      colonia: '',
+      calle: '',
+      numero: '',
+      portal: '',
+      escalera: '',
+      piso: '',
+      puerta: '',
+      tipoInspeccion: '',
+      tipoProgramacion: '',
+      tipoMdd: '',
+      mercado: '',
+      oferta: '',
+      observaciones: '',
+      empresaColaboradora: isCollaborator ? collaboratorCompany : "",
+      horarioProgramacion: '09:00',
+      instalador: '',
+      inspector: '',
+      gestor: '',
+      status: getInitialStatus(user?.role),
+    },
   });
 
   useEffect(() => {
@@ -151,7 +178,7 @@ export default function SpecialInspectionPage() {
               oferta: currentRecord.oferta || '',
               observaciones: currentRecord.observaciones || '',
               empresaColaboradora: currentRecord.collaboratorCompany || '',
-              fechaProgramacion: parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()),
+              fechaProgramacion: currentRecord.requestDate ? parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()) : new Date(),
               horarioProgramacion: currentRecord.horarioProgramacion || '',
               instalador: currentRecord.instalador || '',
               inspector: currentRecord.inspector || '',
@@ -180,7 +207,7 @@ export default function SpecialInspectionPage() {
             oferta: "",
             observaciones: "",
             empresaColaboradora: isCollaborator ? collaboratorCompany : "",
-            horarioProgramacion: timeParam || "",
+            horarioProgramacion: timeParam || "09:00",
             instalador: "",
             inspector: "",
             gestor: "",
@@ -189,7 +216,7 @@ export default function SpecialInspectionPage() {
             fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
         });
     }
-  }, [user?.role, zone, isCollaborator, collaboratorCompany, searchParams, form, recordId, currentRecord, getInitialStatus]);
+  }, [user?.role, zone, isCollaborator, collaboratorCompany, searchParams, form, recordId, currentRecord]);
   
   const formData = form.watch();
 
