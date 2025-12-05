@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, ListTodo, Server, Loader2, RefreshCw } from "lucide-react";
@@ -127,6 +128,8 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
     });
   }, [records, filters]);
   
+  const totalPages = Math.ceil(filteredRecords.length / rowsPerPage);
+
   const paginatedRecords = useMemo(() => {
     const startIndex = (page - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
@@ -182,8 +185,6 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
   const clearFilters = () => {
     setFilters(initialFilters);
   }
-
-  const totalPages = Math.ceil(filteredRecords.length / rowsPerPage);
 
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
