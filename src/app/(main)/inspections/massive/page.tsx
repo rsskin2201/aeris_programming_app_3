@@ -26,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA, mockMunicipalities } from "@/lib/form-options";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useCollection, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useDoc, useFirestore } from "@/firebase";
 import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -111,11 +111,11 @@ export default function MassiveInspectionPage() {
     return query(collection(firestore, collectionName), ...constraints);
   };
 
-  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]));
-  const { data: installers } = useCollection<any>(useMemoFirebase(() => buildQuery('instaladores'), [firestore, user, zone]));
-  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
-  const { data: sectors } = useCollection<Sector>(useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]));
-  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]));
+  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemo(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]));
+  const { data: installers } = useCollection<any>(useMemo(() => buildQuery('instaladores'), [firestore, user, zone]));
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemo(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
+  const { data: sectors } = useCollection<Sector>(useMemo(() => buildQuery('sectores'), [firestore, user, zone]));
+  const { data: inspectors } = useCollection<Inspector>(useMemo(() => buildQuery('inspectores'), [firestore, user, zone]));
 
   const fromParam = searchParams.get('from');
 

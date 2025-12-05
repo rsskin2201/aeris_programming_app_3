@@ -19,7 +19,7 @@ import { ExpansionManagerForm } from "@/components/entities/expansion-manager-fo
 import { SectorForm } from "@/components/entities/sector-form";
 import { MeterForm } from "@/components/entities/meter-form";
 import { useAppContext } from "@/hooks/use-app-context";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore } from "@/firebase";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { PERMISSIONS, ROLES } from "@/lib/types";
@@ -74,25 +74,25 @@ export default function EntitiesPage() {
     return query(collection(firestore, collectionName), ...constraints);
   };
   
-  const collaboratorsQuery = useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
+  const collaboratorsQuery = useMemo(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
   
-  const installersQuery = useMemoFirebase(() => buildQuery('instaladores'), [firestore, user, zone]);
+  const installersQuery = useMemo(() => buildQuery('instaladores'), [firestore, user, zone]);
   const { data: installers } = useCollection<Installer>(installersQuery);
 
-  const managersQuery = useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]);
+  const managersQuery = useMemo(() => buildQuery('gestores_expansion'), [firestore, user, zone]);
   const { data: expansionManagers } = useCollection<ExpansionManager>(managersQuery);
   
-  const qualityQuery = useMemoFirebase(() => buildQuery('empresas_control_calidad'), [firestore, user, zone]);
+  const qualityQuery = useMemo(() => buildQuery('empresas_control_calidad'), [firestore, user, zone]);
   const { data: qualityCompanies } = useCollection<QualityControlCompany>(qualityQuery);
   
-  const inspectorsQuery = useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]);
+  const inspectorsQuery = useMemo(() => buildQuery('inspectores'), [firestore, user, zone]);
   const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
   
-  const sectorsQuery = useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]);
+  const sectorsQuery = useMemo(() => buildQuery('sectores'), [firestore, user, zone]);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
   
-  const metersQuery = useMemoFirebase(() => buildQuery('medidores'), [firestore, user, zone]);
+  const metersQuery = useMemo(() => buildQuery('medidores'), [firestore, user, zone]);
   const { data: meters } = useCollection<Meter>(metersQuery);
 
 

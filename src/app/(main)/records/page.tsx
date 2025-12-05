@@ -25,7 +25,7 @@ import { TIPO_INSPECCION_ESPECIAL, TIPO_INSPECCION_MASIVA, MERCADO } from '@/lib
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, where, QueryConstraint } from 'firebase/firestore';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -95,7 +95,7 @@ export default function RecordsPage() {
     return query(collection(firestore, collectionName), ...constraints);
   };
 
-  const inspectionsQuery = useMemoFirebase(() => {
+  const inspectionsQuery = useMemo(() => {
     if (!firestore || !user) return null;
     const constraints: QueryConstraint[] = [];
     if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
@@ -105,10 +105,10 @@ export default function RecordsPage() {
   }, [firestore, user, zone]);
 
   
-  const expansionManagersQuery = useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]);
-  const collaboratorsQuery = useMemoFirebase(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
-  const sectorsQuery = useMemoFirebase(() => buildQuery('sectores'), [firestore, user, zone]);
-  const inspectorsQuery = useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]);
+  const expansionManagersQuery = useMemo(() => buildQuery('gestores_expansion'), [firestore, user, zone]);
+  const collaboratorsQuery = useMemo(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
+  const sectorsQuery = useMemo(() => buildQuery('sectores'), [firestore, user, zone]);
+  const inspectorsQuery = useMemo(() => buildQuery('inspectores'), [firestore, user, zone]);
   
   const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);

@@ -18,7 +18,7 @@ import { InspectionRecord, Meter } from "@/lib/mock-data";
 import { MARCA_MDD, TIPO_MDD, SI_NO, MATERIAL_TUBERIA, EQUIPO, FORMA_PAGO, MOTIVO_CANCELACION } from "@/lib/form-options";
 import { ScrollArea } from "../ui/scroll-area";
 import { ROLES, STATUS } from "@/lib/types";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore } from "@/firebase";
 import { collection } from "firebase/firestore";
 
 const formSchema = z.object({
@@ -93,7 +93,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
     const [newMeterBrand, setNewMeterBrand] = useState('');
     const [newMeterType, setNewMeterType] = useState('');
     
-    const metersQuery = useMemoFirebase(() => collection(firestore, 'medidores'), [firestore]);
+    const metersQuery = useMemo(() => collection(firestore, 'medidores'), [firestore]);
     const { data: meters } = useCollection<Meter>(metersQuery);
 
     const canRequestMeter = user?.role === ROLES.CALIDAD || user?.role === ROLES.ADMIN;

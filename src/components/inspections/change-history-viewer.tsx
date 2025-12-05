@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useMemo } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -19,7 +19,7 @@ interface ChangeHistoryViewerProps {
 export function ChangeHistoryViewer({ inspectionId }: ChangeHistoryViewerProps) {
   const firestore = useFirestore();
   
-  const historyQuery = useMemoFirebase(() => {
+  const historyQuery = useMemo(() => {
     if (!firestore || !inspectionId) return null;
     return query(collection(firestore, `inspections/${inspectionId}/history`), orderBy('timestamp', 'desc'));
   }, [firestore, inspectionId]);

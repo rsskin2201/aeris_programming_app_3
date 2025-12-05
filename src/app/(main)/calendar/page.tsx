@@ -73,7 +73,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Textarea } from '@/components/ui/textarea';
 import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, where, QueryConstraint } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 
@@ -225,13 +225,13 @@ export default function CalendarPage() {
     return query(collection(firestore, collectionName), ...constraints);
   };
   
-  const inspectionsQuery = useMemoFirebase(() => buildQuery('inspections'), [firestore, user, zone]);
+  const inspectionsQuery = useMemo(() => buildQuery('inspections'), [firestore, user, zone]);
 
   const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
   
-  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemoFirebase(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
-  const { data: installers } = useCollection<Installer>(useMemoFirebase(() => buildQuery('instaladores'), [firestore, user, zone]));
-  const { data: inspectors } = useCollection<Inspector>(useMemoFirebase(() => buildQuery('inspectores'), [firestore, user, zone]));
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemo(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
+  const { data: installers } = useCollection<Installer>(useMemo(() => buildQuery('instaladores'), [firestore, user, zone]));
+  const { data: inspectors } = useCollection<Inspector>(useMemo(() => buildQuery('inspectores'), [firestore, user, zone]));
 
 
   const filteredRecordsForView = useMemo(() => {
