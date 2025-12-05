@@ -158,10 +158,13 @@ export default function RecordsPage() {
     // This part might need adjustment depending on the inspection type
     const record = records?.find(r => r.id === recordId);
     let path = '/inspections/individual'; // Default path
-    if (record?.type === 'Masiva PES') {
+    if (record?.id.startsWith('INSP-IM')) {
       path = '/inspections/massive';
-    } else if (record?.type === 'Especial') {
+    } else if (record?.id.startsWith('INSP-ES')) {
       path = '/inspections/special';
+    } else if (record?.id.startsWith('SF-')) {
+       // Salesforce records likely use the individual view, but this could be another page
+      path = '/inspections/individual';
     }
     router.push(`${path}?id=${recordId}&mode=${mode}&from=records`);
   }
@@ -389,12 +392,9 @@ export default function RecordsPage() {
                 <TableRow>
                   <TableHead className="w-[150px]">ID</TableHead>
                   <TableHead>Estatus</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Dirección</TableHead>
-                  <TableHead>Fecha Sol.</TableHead>
-                  <TableHead>Fecha Alta</TableHead>
-                  <TableHead>Usuario Alta</TableHead>
-                  <TableHead>Zona</TableHead>
+                  <TableHead>Póliza</TableHead>
+                  <TableHead>Caso (AT)</TableHead>
+                  <TableHead>Municipio</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -405,12 +405,9 @@ export default function RecordsPage() {
                     <TableCell className="py-2 px-4">
                       <Badge className={cn('whitespace-nowrap', statusColors[record.status] || 'bg-gray-400')}>{record.status}</Badge>
                     </TableCell>
-                    <TableCell className="py-2 px-4">{record.type}</TableCell>
-                    <TableCell className="py-2 px-4">{record.address}</TableCell>
-                    <TableCell className="py-2 px-4">{record.requestDate}</TableCell>
-                    <TableCell className="py-2 px-4">{record.createdAt}</TableCell>
-                    <TableCell className="py-2 px-4">{record.createdBy}</TableCell>
-                    <TableCell className="py-2 px-4">{record.zone}</TableCell>
+                    <TableCell className="py-2 px-4 text-xs">{record.poliza || '-'}</TableCell>
+                    <TableCell className="py-2 px-4 text-xs">{record.caso || '-'}</TableCell>
+                    <TableCell className="py-2 px-4 text-xs">{record.municipality || '-'}</TableCell>
                     <TableCell className="py-2 px-4 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
