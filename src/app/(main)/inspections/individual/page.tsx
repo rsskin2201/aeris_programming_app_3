@@ -153,16 +153,44 @@ export default function IndividualInspectionPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    mode: 'onChange'
+    mode: 'onChange',
+    defaultValues: {
+      id: '',
+      zone: '',
+      sector: '',
+      poliza: '',
+      caso: '',
+      municipality: '',
+      colonia: '',
+      calle: '',
+      numero: '',
+      portal: '',
+      escalera: '',
+      piso: '',
+      puerta: '',
+      tipoInspeccion: '',
+      tipoProgramacion: '',
+      tipoMdd: '',
+      mercado: '',
+      oferta: '',
+      observaciones: '',
+      empresaColaboradora: '',
+      horarioProgramacion: '',
+      instalador: '',
+      inspector: '',
+      gestor: '',
+      status: '',
+      motivoRechazo: '',
+    }
   });
   
-  useEffect(() => {
+useEffect(() => {
     const dateParam = searchParams.get('date');
     const timeParam = searchParams.get('time');
     
     if (recordId) {
         setPageMode(mode === 'view' ? 'view' : 'edit');
-        if (currentRecord) {
+        if (currentRecord) { // Ensure currentRecord is loaded
             form.reset({
                 id: currentRecord.id || '',
                 zone: currentRecord.zone || '',
@@ -189,7 +217,7 @@ export default function IndividualInspectionPage() {
                 instalador: currentRecord.instalador || '',
                 inspector: currentRecord.inspector || '',
                 gestor: currentRecord.gestor || '',
-                status: currentRecord.status,
+                status: currentRecord.status || '',
                 motivoRechazo: currentRecord.motivoRechazo || '',
             });
         }

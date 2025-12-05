@@ -124,7 +124,28 @@ export default function MassiveInspectionPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    mode: 'onChange'
+    mode: 'onChange',
+    defaultValues: {
+      zone: '',
+      sector: "",
+      municipality: "",
+      colonia: "",
+      calle: "",
+      numero: "",
+      tipoInspeccion: "",
+      tipoProgramacion: "",
+      tipoMdd: "",
+      mercado: "",
+      oferta: "",
+      observaciones: "",
+      empresaColaboradora: "",
+      horarioProgramacion: "",
+      instalador: "",
+      inspector: "",
+      gestor: "",
+      status: "",
+      inspections: [],
+    }
   });
 
   useEffect(() => {
