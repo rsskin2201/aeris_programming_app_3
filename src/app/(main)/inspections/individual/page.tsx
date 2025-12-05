@@ -90,6 +90,7 @@ const editableStatuses = [STATUS.EN_PROCESO, STATUS.PROGRAMADA, STATUS.CONFIRMAD
 const checklistRoles = [ROLES.CALIDAD, ROLES.SOPORTE, ROLES.ADMIN];
 const supportRoles = [ROLES.SOPORTE, ROLES.ADMIN];
 const canViewChecklistStatuses = [STATUS.PROGRAMADA, STATUS.EN_PROCESO, STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CONECTADA, STATUS.FALTA_INFORMACION];
+const redirectBypassStatuses: Status[] = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.CANCELADA];
 
 export default function IndividualInspectionPage() {
   const { toast } = useToast();
@@ -185,10 +186,7 @@ export default function IndividualInspectionPage() {
   });
   
   useEffect(() => {
-    const dateParam = searchParams.get('date');
-    const timeParam = searchParams.get('time');
-  
-    if (recordId) {
+    if (recordId) { // Edit or View mode
       setPageMode(mode === 'view' ? 'view' : 'edit');
       if (currentRecord) {
         form.reset({
@@ -217,12 +215,14 @@ export default function IndividualInspectionPage() {
           instalador: currentRecord.instalador || '',
           inspector: currentRecord.inspector || '',
           gestor: currentRecord.gestor || '',
-          status: currentRecord.status || '',
+          status: currentRecord.status || '', // Ensure status is always set from record
           motivoRechazo: currentRecord.motivoRechazo || '',
         });
       }
-    } else {
+    } else { // New mode
       setPageMode('new');
+      const dateParam = searchParams.get('date');
+      const timeParam = searchParams.get('time');
       form.reset({
         id: generateId(),
         zone: zone,
@@ -253,7 +253,7 @@ export default function IndividualInspectionPage() {
         motivoRechazo: '',
       });
     }
-  }, [recordId, mode, currentRecord, form, user, zone, isCollaborator, searchParams, pageMode]);
+  }, [recordId, mode, currentRecord, form, user, zone, isCollaborator, searchParams]);
 
 
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
@@ -490,19 +490,26 @@ export default function IndividualInspectionPage() {
 
     const docRef = doc(firestore, 'inspections', recordToSave.id);
     setDocumentNonBlocking(docRef, recordToSave, { merge: true });
-
-    if (pageMode === 'new') {
-        addNotification({
-          recipientUsername: 'coordinador',
-          message: `Nueva inspección individual ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
-          link: `/inspections/individual?id=${recordToSave.id}&mode=view`
-        });
-    }
-    
-    setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
-    setIsSuccessDialogOpen(true);
     setIsSubmitting(false);
     setIsConfirming(false);
+
+    if (redirectBypassStatuses.includes(values.status as Status)) {
+        toast({
+            title: "Registro Guardado",
+            description: "El registro ha sido actualizado. Ahora puedes rellenar el Checklist.",
+        });
+        // Stay on the page
+    } else {
+         if (pageMode === 'new') {
+            addNotification({
+              recipientUsername: 'coordinador',
+              message: `Nueva inspección individual ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
+              link: `/inspections/individual?id=${recordToSave.id}&mode=view`
+            });
+        }
+        setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
+        setIsSuccessDialogOpen(true);
+    }
   }
 
   const handleReset = () => {
