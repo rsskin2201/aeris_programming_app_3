@@ -117,34 +117,7 @@ export default function SpecialInspectionPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    mode: 'onChange',
-    defaultValues: {
-      id: '',
-      zone: zone,
-      sector: '',
-      poliza: '',
-      caso: '',
-      municipality: '',
-      colonia: '',
-      calle: '',
-      numero: '',
-      portal: '',
-      escalera: '',
-      piso: '',
-      puerta: '',
-      tipoInspeccion: '',
-      tipoProgramacion: '',
-      tipoMdd: '',
-      mercado: '',
-      oferta: '',
-      observaciones: '',
-      empresaColaboradora: isCollaborator ? collaboratorCompany : '',
-      horarioProgramacion: '',
-      instalador: '',
-      inspector: '',
-      gestor: '',
-      status: getInitialStatus(user?.role),
-    },
+    mode: 'onChange'
   });
 
   useEffect(() => {

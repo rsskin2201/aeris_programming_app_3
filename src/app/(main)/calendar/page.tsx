@@ -151,9 +151,9 @@ const SlotInspectionsDialog = ({ inspections, date, hour, onOpenChange }: { insp
             <div className="max-h-[60vh] overflow-y-auto">
                 <div className="space-y-3 p-1">
                     {inspections.map(inspection => (
-                        <div key={inspection.id} className={cn("p-4 rounded-lg border-l-4 cursor-pointer hover:bg-muted/50", statusColors[inspection.status])} onClick={() => handleViewRecord(inspection)}>
+                        <div key={inspection.id} className={cn("p-4 rounded-lg border-l-4 cursor-pointer transition-all duration-200 hover:border-primary hover:scale-[1.02]", statusColors[inspection.status])} onClick={() => handleViewRecord(inspection)}>
                             <div className="flex items-center justify-between">
-                                <p className="font-bold text-lg">{inspection.client}</p>
+                                <p className="font-bold text-lg">{inspection.tipoInspeccion}</p>
                                 <Badge variant="secondary" className="font-mono">{inspection.id}</Badge>
                             </div>
                             <p className="text-sm mt-1">{inspection.address}</p>
@@ -581,14 +581,14 @@ const renderInspectionsForSlot = (day: Date, hour: string) => {
                             isFaded && "opacity-70",
                         )}
                         >
-                        <p className="truncate font-medium">{inspection.client}</p>
+                        <p className="truncate font-medium">{inspection.tipoInspeccion}</p>
                         <p className="truncate text-xs">{inspection.address}</p>
                          {inspection.id.includes("INSP-IM") && <p className="text-xs font-bold">(Masiva)</p>}
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
                     <div className="p-1 text-sm">
-                        <p className="font-bold">{inspection.client}</p>
+                        <p className="font-bold">{inspection.tipoInspeccion}</p>
                         <p><strong>ID:</strong> {inspection.id}</p>
                         <p><strong>Dirección:</strong> {inspection.address}</p>
                         <p><strong>Inspector:</strong> {inspection.inspector}</p>
