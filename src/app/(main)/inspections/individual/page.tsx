@@ -154,6 +154,34 @@ export default function IndividualInspectionPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
+    defaultValues: {
+      id: '',
+      zone: zone,
+      sector: '',
+      poliza: '',
+      caso: '',
+      municipality: '',
+      colonia: '',
+      calle: '',
+      numero: '',
+      portal: '',
+      escalera: '',
+      piso: '',
+      puerta: '',
+      tipoInspeccion: 'Programacion PES',
+      tipoProgramacion: '',
+      tipoMdd: '',
+      mercado: '',
+      oferta: '',
+      observaciones: '',
+      empresaColaboradora: isCollaborator ? (user?.name || '') : '',
+      horarioProgramacion: '',
+      instalador: '',
+      inspector: '',
+      gestor: '',
+      status: getInitialStatus(user?.role),
+      motivoRechazo: '',
+    },
   });
   
   useEffect(() => {
@@ -164,8 +192,7 @@ export default function IndividualInspectionPage() {
         setPageMode(mode === 'view' ? 'view' : 'edit');
         if (currentRecord) {
             form.reset({
-                ...currentRecord,
-                id: currentRecord.id,
+                id: currentRecord.id || '',
                 zone: currentRecord.zone || '',
                 sector: currentRecord.sector || '',
                 poliza: currentRecord.poliza || '',
