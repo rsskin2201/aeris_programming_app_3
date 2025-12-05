@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -82,6 +82,38 @@ export default function RecordsPage() {
   
   const canModify = user && canModifyRoles.includes(user.role);
   const canExport = user && canExportRoles.includes(user.role);
+  
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const bottomScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const topScroll = topScrollRef.current;
+    const bottomScroll = bottomScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+
+    if (!topScroll || !bottomScroll) return;
+
+    const syncScroll = (source: 'top' | 'bottom') => (event: Event) => {
+      if (source === 'top') {
+        bottomScroll.scrollLeft = (event.target as HTMLDivElement).scrollLeft;
+      } else {
+        topScroll.scrollLeft = (event.target as HTMLDivElement).scrollLeft;
+      }
+    };
+    
+    const handleTopScroll = syncScroll('top');
+    const handleBottomScroll = syncScroll('bottom');
+
+    topScroll.addEventListener('scroll', handleTopScroll);
+    bottomScroll.addEventListener('scroll', handleBottomScroll);
+    
+    // Initial sync
+    bottomScroll.scrollLeft = topScroll.scrollLeft;
+
+    return () => {
+      topScroll.removeEventListener('scroll', handleTopScroll);
+      bottomScroll.removeEventListener('scroll', handleBottomScroll);
+    };
+  }, [paginatedRecords]); // Re-sync if data changes which might affect scroll width
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value || (Array.isArray(prev[key]) ? [] : '') }));
@@ -414,100 +446,105 @@ export default function RecordsPage() {
           <CardDescription>Muestra todos los registros de inspecciones, tanto de formulario como de carga masiva.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Estatus</TableHead>
-                    <TableHead>Fecha Alta</TableHead>
-                    <TableHead>Fecha Prog.</TableHead>
-                    <TableHead>Sector</TableHead>
-                    <TableHead>Póliza</TableHead>
-                    <TableHead>Caso (AT)</TableHead>
-                    <TableHead>Municipio</TableHead>
-                    <TableHead>Colonia</TableHead>
-                    <TableHead>Calle</TableHead>
-                    <TableHead>Número</TableHead>
-                    <TableHead>Portal</TableHead>
-                    <TableHead>Puerta</TableHead>
-                    <TableHead>Tipo Inspección</TableHead>
-                    <TableHead>Tipo Prog.</TableHead>
-                    <TableHead>Mercado</TableHead>
-                    <TableHead>Empresa Colab.</TableHead>
-                    <TableHead>Gestor</TableHead>
-                    <TableHead>Inspector</TableHead>
-                    <TableHead>Últ. Mod.</TableHead>
-                    <TableHead className="sticky right-0 bg-card">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedRecords.map((record) => (
-                    <TableRow key={record.id} className="transition-colors hover:bg-muted/60">
-                      <TableCell className="py-2 px-4 text-xs">
-                        <Badge className={cn('whitespace-nowrap', statusColors[record.status] || 'bg-gray-400')}>{record.status}</Badge>
-                      </TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.createdAt}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.requestDate}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.sector || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.poliza || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.caso || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.municipality || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.colonia || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.calle || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.numero || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.portal || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.puerta || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.tipoInspeccion || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.tipoProgramacion || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.mercado || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.collaboratorCompany || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.gestor || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.inspector || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 text-xs">{record.lastModifiedAt || '-'}</TableCell>
-                      <TableCell className="py-2 px-4 sticky right-0 bg-card/95">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleAction(record.id, 'view')}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                Visualizar
-                            </DropdownMenuItem>
-                            {canModify && (
-                                <DropdownMenuItem onClick={() => handleAction(record.id, 'edit')}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Modificar
-                                </DropdownMenuItem>
-                            )}
-                            {canModify && reprogrammableStatuses.includes(record.status) && !record.id.startsWith('SF-') && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleReprogram(record)}>
-                                  <RefreshCw className="mr-2 h-4 w-4" />
-                                  Reprogramar
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+          <div className="w-full">
+            <div ref={topScrollRef} className="overflow-x-auto overflow-y-hidden">
+                <div className="h-px" style={{ width: paginatedRecords.length > 0 ? '2500px' : '100%' }} />
+            </div>
+            <ScrollArea ref={bottomScrollRef} className="w-full whitespace-nowrap rounded-md border">
+                {isLoading ? (
+                <div className="flex justify-center items-center h-64">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+                ) : (
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead className="h-10 px-2">Estatus</TableHead>
+                        <TableHead className="h-10 px-2">Fecha Alta</TableHead>
+                        <TableHead className="h-10 px-2">Fecha Prog.</TableHead>
+                        <TableHead className="h-10 px-2">Sector</TableHead>
+                        <TableHead className="h-10 px-2">Póliza</TableHead>
+                        <TableHead className="h-10 px-2">Caso (AT)</TableHead>
+                        <TableHead className="h-10 px-2">Municipio</TableHead>
+                        <TableHead className="h-10 px-2">Colonia</TableHead>
+                        <TableHead className="h-10 px-2">Calle</TableHead>
+                        <TableHead className="h-10 px-2">Número</TableHead>
+                        <TableHead className="h-10 px-2">Portal</TableHead>
+                        <TableHead className="h-10 px-2">Puerta</TableHead>
+                        <TableHead className="h-10 px-2">Tipo Inspección</TableHead>
+                        <TableHead className="h-10 px-2">Tipo Prog.</TableHead>
+                        <TableHead className="h-10 px-2">Mercado</TableHead>
+                        <TableHead className="h-10 px-2">Empresa Colab.</TableHead>
+                        <TableHead className="h-10 px-2">Gestor</TableHead>
+                        <TableHead className="h-10 px-2">Inspector</TableHead>
+                        <TableHead className="h-10 px-2">Últ. Mod.</TableHead>
+                        <TableHead className="sticky right-0 bg-card h-10 px-2">Acciones</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+                    </TableHeader>
+                    <TableBody>
+                    {paginatedRecords.map((record) => (
+                        <TableRow key={record.id} className="transition-colors hover:bg-muted/60">
+                        <TableCell className="py-2 px-2 text-xs">
+                            <Badge className={cn('whitespace-nowrap', statusColors[record.status] || 'bg-gray-400')}>{record.status}</Badge>
+                        </TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.createdAt}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.requestDate}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.sector || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.poliza || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.caso || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.municipality || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.colonia || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.calle || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.numero || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.portal || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.puerta || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.tipoInspeccion || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.tipoProgramacion || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.mercado || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.collaboratorCompany || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.gestor || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.inspector || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 text-xs">{record.lastModifiedAt || '-'}</TableCell>
+                        <TableCell className="py-2 px-2 sticky right-0 bg-card/95">
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleAction(record.id, 'view')}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    Visualizar
+                                </DropdownMenuItem>
+                                {canModify && (
+                                    <DropdownMenuItem onClick={() => handleAction(record.id, 'edit')}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Modificar
+                                    </DropdownMenuItem>
+                                )}
+                                {canModify && reprogrammableStatuses.includes(record.status) && !record.id.startsWith('SF-') && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => handleReprogram(record)}>
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    Reprogramar
+                                    </DropdownMenuItem>
+                                </>
+                                )}
+                            </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                        </TableRow>
+                    ))}
+                    </TableBody>
+                </Table>
+                )}
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+           </div>
         </CardContent>
         <CardFooter className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -539,3 +576,5 @@ export default function RecordsPage() {
     </div>
   );
 }
+
+    
