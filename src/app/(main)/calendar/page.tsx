@@ -27,6 +27,7 @@ import {
   File,
   Files,
   FileCheck2,
+  Users,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
@@ -74,6 +75,7 @@ import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, QueryConstraint } from 'firebase/firestore';
+import { Badge } from '@/components/ui/badge';
 
 const canToggleFormsRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
 const canEnableWeekendsRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
@@ -85,7 +87,6 @@ const daysOfWeek = [
   'Martes',
   'Miércoles',
   'Jueves',
-
   'Viernes',
   'Sábado',
   'Domingo',
@@ -95,15 +96,15 @@ const hoursOfDay = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2,
 const statusColors: Record<Status, string> = {
     [STATUS.REGISTRADA]: 'bg-gray-500/80 border-gray-600 text-white',
     [STATUS.CONFIRMADA_POR_GE]: 'bg-cyan-600/80 border-cyan-700 text-white',
-    [STATUS.PROGRAMADA]: 'bg-blue-600 border-blue-700 text-white',
-    [STATUS.EN_PROCESO]: 'bg-orange-500 border-orange-600 text-white',
+    [STATUS.PROGRAMADA]: 'bg-blue-600/80 border-blue-700 text-white',
+    [STATUS.EN_PROCESO]: 'bg-orange-500/80 border-orange-600 text-white',
     [STATUS.PENDIENTE_INFORMAR_DATOS]: 'bg-yellow-500/80 border-yellow-600 text-white',
-    [STATUS.APROBADA]: 'bg-green-600 border-green-700 text-white',
+    [STATUS.APROBADA]: 'bg-green-600/80 border-green-700 text-white',
     [STATUS.NO_APROBADA]: 'bg-pink-600/80 border-pink-700 text-white',
     [STATUS.FALTA_INFORMACION]: 'bg-amber-600/80 border-amber-700 text-white',
-    [STATUS.RECHAZADA]: 'bg-red-700 border-red-800 text-white',
-    [STATUS.CANCELADA]: 'bg-red-800 border-red-900 text-white',
-    [STATUS.CONECTADA]: 'bg-purple-600 border-purple-700 text-white',
+    [STATUS.RECHAZADA]: 'bg-red-700/80 border-red-800 text-white',
+    [STATUS.CANCELADA]: 'bg-red-800/80 border-red-900 text-white',
+    [STATUS.CONECTADA]: 'bg-purple-600/80 border-purple-700 text-white',
 };
 
 const fadedStatuses: Status[] = [STATUS.REGISTRADA, STATUS.CONFIRMADA_POR_GE];
@@ -128,6 +129,52 @@ const getInspectionDurationInHours = (record: InspectionRecord): number => {
     return 1;
 };
 
+const SlotInspectionsDialog = ({ inspections, date, hour, onOpenChange }: { inspections: InspectionRecord[], date: Date, hour: string, onOpenChange: (isOpen: boolean) => void }) => {
+    const router = useRouter();
+    
+    const handleViewRecord = (record: InspectionRecord) => {
+        let path = '/inspections/individual'; // Default
+        if (record.id.startsWith("INSP-IM")) path = '/inspections/massive';
+        else if (record.id.startsWith("INSP-ES")) path = '/inspections/special';
+        router.push(`${path}?id=${record.id}&mode=view&from=calendar`);
+        onOpenChange(false);
+    }
+    
+    return (
+        <DialogContent className="max-w-2xl">
+            <DialogHeader>
+                <DialogTitle>Inspecciones Programadas</DialogTitle>
+                <DialogDescription>
+                    Listado de inspecciones para el {format(date, "dd 'de' MMMM", { locale: es })} a las {hour}.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[60vh] overflow-y-auto">
+                <div className="space-y-3 p-1">
+                    {inspections.map(inspection => (
+                        <div key={inspection.id} className={cn("p-4 rounded-lg border-l-4 cursor-pointer hover:bg-muted/50", statusColors[inspection.status])} onClick={() => handleViewRecord(inspection)}>
+                            <div className="flex items-center justify-between">
+                                <p className="font-bold text-lg">{inspection.client}</p>
+                                <Badge variant="secondary" className="font-mono">{inspection.id}</Badge>
+                            </div>
+                            <p className="text-sm mt-1">{inspection.address}</p>
+                            <div className="flex items-center justify-between text-xs mt-2">
+                                <span>Inspector: {inspection.inspector || 'No asignado'}</span>
+                                <span className='font-semibold'>{inspection.status}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="outline">Cerrar</Button>
+                </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+    );
+};
+
+
 export default function CalendarPage() {
   const {
     user,
@@ -148,6 +195,8 @@ export default function CalendarPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [isSchedulingTypeDialogOpen, setIsSchedulingTypeDialogOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: Date, hour: string} | null>(null);
+  const [slotInspections, setSlotInspections] = useState<InspectionRecord[]>([]);
+  const [isSlotDetailOpen, setIsSlotDetailOpen] = useState(false);
   const [blockReason, setBlockReason] = useState('');
   const router = useRouter();
   const { toast } = useToast();
@@ -188,7 +237,7 @@ export default function CalendarPage() {
   const filteredRecordsForView = useMemo(() => {
     if (!records) return [];
     
-    let filtered = records.filter(r => !hiddenStatuses.includes(r.status));
+    let filtered = records.filter(r => !hiddenStatuses.includes(r.status) && !r.status.endsWith('- REPROGRAMADA'));
 
     // Role-based pre-filtering
     if (isCollaborator && user?.name) {
@@ -283,6 +332,14 @@ export default function CalendarPage() {
     setCurrentDate(date);
     setView('day');
   }
+  
+  const handleTimeSlotClick = (date: Date, hour: string, inspections: InspectionRecord[]) => {
+      if (inspections.length > 0) {
+          setSelectedSlot({ date, hour });
+          setSlotInspections(inspections);
+          setIsSlotDetailOpen(true);
+      }
+  };
   
   const handleTimeSlotDoubleClick = (date: Date, hour: string) => {
     const dateKey = format(date, 'yyyy-MM-dd');
@@ -469,13 +526,16 @@ export default function CalendarPage() {
     </>
   );
   
-  const renderInspectionsForSlot = (day: Date, hour: string) => {
+const renderInspectionsForSlot = (day: Date, hour: string) => {
     const hourNumber = parseInt(hour.split(':')[0]);
     const dateKey = format(day, 'yyyy-MM-dd');
     const slotKey = `${dateKey}-${String(hourNumber).padStart(2, '0')}`;
     const slotInspections = inspectionsByTime[slotKey] || [];
 
-    return slotInspections.map((inspection) => {
+    if (slotInspections.length === 0) return null;
+
+    if (slotInspections.length === 1) {
+        const inspection = slotInspections[0];
         const duration = getInspectionDurationInHours(inspection);
         const isFaded = fadedStatuses.includes(inspection.status);
         const height = `calc(${duration * 4}rem - 2px)`; // 4rem per hour (h-16), minus borders
@@ -510,7 +570,26 @@ export default function CalendarPage() {
                 </Tooltip>
             </TooltipProvider>
         );
-    });
+    }
+
+    // Multiple inspections
+    const mostUrgentStatus = slotInspections.reduce((acc, curr) => {
+        // A simple priority, can be improved. Programada > Confirmada > Registrada
+        const priority = { [STATUS.PROGRAMADA]: 3, [STATUS.CONFIRMADA_POR_GE]: 2, [STATUS.REGISTRADA]: 1 };
+        return priority[curr.status as keyof typeof priority] > priority[acc.status as keyof typeof priority] ? curr : acc;
+    }).status;
+
+    return (
+         <div
+            className={cn(
+                "absolute flex items-center justify-center gap-2 w-[calc(100%-8px)] h-[calc(100%-2px)] left-1 z-20 rounded-md p-1 text-xs shadow-sm border-l-4", 
+                statusColors[mostUrgentStatus],
+            )}
+        >
+            <Users className="h-4 w-4" />
+            <span className="font-bold">{slotInspections.length} Inspecciones</span>
+        </div>
+    );
 };
 
 
@@ -541,21 +620,27 @@ export default function CalendarPage() {
                 isBlocked && 'bg-muted-foreground/30'
               )}
             >
-              {hoursOfDay.map((hour) => (
-                <div
-                  key={`${day}-${hour}`}
-                  onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
-                  className={cn(
-                    'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer',
-                    isSunday(day) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
-                    isSunday(day) && weekendsEnabled && 'bg-green-100/50',
-                    isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
-                    (parseInt(hour) < 9 || parseInt(hour) >= 20) && 'bg-muted/40 hover:bg-muted/60'
-                  )}
-                >
-                  {!isBlocked && renderInspectionsForSlot(day, hour)}
-                </div>
-              ))}
+              {hoursOfDay.map((hour) => {
+                 const hourNumber = parseInt(hour.split(':')[0]);
+                 const slotKey = `${dateKey}-${String(hourNumber).padStart(2, '0')}`;
+                 const slotInspections = inspectionsByTime[slotKey] || [];
+                return (
+                    <div
+                    key={`${day}-${hour}`}
+                    onClick={() => handleTimeSlotClick(day, hour, slotInspections)}
+                    onDoubleClick={() => handleTimeSlotDoubleClick(day, hour)}
+                    className={cn(
+                        'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer relative',
+                        isSunday(day) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
+                        isSunday(day) && weekendsEnabled && 'bg-green-100/50',
+                        isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
+                        (parseInt(hour) < 9 || parseInt(hour) >= 20) && 'bg-muted/40 hover:bg-muted/60'
+                    )}
+                    >
+                    {!isBlocked && renderInspectionsForSlot(day, hour)}
+                    </div>
+                )
+                })}
             </div>
           )
         })}
@@ -589,21 +674,27 @@ export default function CalendarPage() {
             isBlocked && 'bg-muted-foreground/30'
           )}
         >
-          {hoursOfDay.map((hour) => (
-            <div
-              key={`${currentDate}-${hour}`}
-              onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
-              className={cn(
-                'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer',
-                isSunday(currentDate) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
-                isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50',
-                isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
-                (parseInt(hour) < 9 || parseInt(hour) >= 20) && 'bg-muted/40 hover:bg-muted/60'
-              )}
-            >
-              {!isBlocked && renderInspectionsForSlot(currentDate, hour)}
-            </div>
-          ))}
+          {hoursOfDay.map((hour) => {
+            const hourNumber = parseInt(hour.split(':')[0]);
+            const slotKey = `${dateKey}-${String(hourNumber).padStart(2, '0')}`;
+            const slotInspections = inspectionsByTime[slotKey] || [];
+            return (
+                 <div
+                    key={`${currentDate}-${hour}`}
+                    onClick={() => handleTimeSlotClick(currentDate, hour, slotInspections)}
+                    onDoubleClick={() => handleTimeSlotDoubleClick(currentDate, hour)}
+                    className={cn(
+                        'h-16 border-b p-1 transition-colors hover:bg-primary/20 hover:border-l-2 hover:border-primary cursor-pointer relative',
+                        isSunday(currentDate) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
+                        isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50',
+                        isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
+                        (parseInt(hour) < 9 || parseInt(hour) >= 20) && 'bg-muted/40 hover:bg-muted/60'
+                    )}
+                    >
+                    {!isBlocked && renderInspectionsForSlot(currentDate, hour)}
+                </div>
+            )
+            })}
         </div>
       </div>
     </div>
@@ -827,6 +918,10 @@ export default function CalendarPage() {
                   </DialogClose>
               </DialogFooter>
           </DialogContent>
+      </Dialog>
+      
+       <Dialog open={isSlotDetailOpen} onOpenChange={setIsSlotDetailOpen}>
+          {selectedSlot && <SlotInspectionsDialog inspections={slotInspections} date={selectedSlot.date} hour={selectedSlot.hour} onOpenChange={setIsSlotDetailOpen} />}
       </Dialog>
 
       <Card>
