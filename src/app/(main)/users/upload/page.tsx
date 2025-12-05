@@ -87,7 +87,7 @@ export default function UserUploadPage() {
   const downloadTemplate = () => {
     const headers = userFields.map(f => f.label);
     const csv = Papa.unparse([headers]);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.setAttribute("download", "plantilla_usuarios.csv");

@@ -160,7 +160,7 @@ export default function UsersPage() {
 
     const handleExport = () => {
       const csv = Papa.unparse(filteredUsers);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
