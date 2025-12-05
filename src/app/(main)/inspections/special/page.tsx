@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse } from "date-fns";
 import { es } from 'date-fns/locale';
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -115,11 +115,16 @@ export default function SpecialInspectionPage() {
 
   const generateId = () => `INSP-ES-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-  const defaultValues: FormValues = useMemo(() => {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    mode: 'onChange',
+  });
+
+  useEffect(() => {
     const dateParam = searchParams.get('date');
     const timeParam = searchParams.get('time');
 
-    return {
+    form.reset({
       id: generateId(),
       zone: zone,
       poliza: "",
@@ -145,16 +150,9 @@ export default function SpecialInspectionPage() {
       gestor: "",
       sector: "",
       status: getInitialStatus(user?.role),
-      fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : undefined,
-    }
-  }, [user?.role, zone, isCollaborator, collaboratorCompany, searchParams]);
-
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues,
-    mode: 'onChange',
-  });
+      fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
+    });
+  }, [user?.role, zone, isCollaborator, collaboratorCompany, searchParams, form]);
   
   const formData = form.watch();
 
@@ -274,13 +272,7 @@ export default function SpecialInspectionPage() {
   }
 
   const handleReset = () => {
-    const newId = generateId();
-    form.reset({
-        ...defaultValues,
-        id: newId,
-        status: getInitialStatus(user?.role),
-        empresaColaboradora: isCollaborator ? user?.name : '',
-    });
+    // This logic is now handled by the useEffect
   }
   
   const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: any) => {

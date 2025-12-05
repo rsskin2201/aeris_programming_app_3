@@ -138,7 +138,7 @@ export default function IndividualInspectionPage() {
   const fromParam = searchParams.get('from');
   
   const isCollaborator = user?.role === ROLES.COLABORADOR;
-  const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption: user.name is company name for collaborator
+  const collaboratorCompany = isCollaborator ? user?.name : ''; // Assumption: user.name is company name for collaborator
 
   const getInitialStatus = (role: Role | undefined) => {
     if (pageMode !== 'new') return currentRecord?.status || '';
@@ -151,52 +151,19 @@ export default function IndividualInspectionPage() {
 
   const generateId = () => `INSP-PS-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-  const defaultValues = useMemo(() => {
-    const dateParam = searchParams.get('date');
-    const timeParam = searchParams.get('time');
-
-    return {
-      id: generateId(),
-      zone: zone,
-      poliza: "",
-      caso: "",
-      municipality: "",
-      colonia: "",
-      calle: "",
-      numero: "",
-      portal: "",
-      escalera: "",
-      piso: "",
-      puerta: "",
-      tipoInspeccion: "Programacion PES",
-      tipoProgramacion: "",
-      tipoMdd: "",
-      mercado: "",
-      oferta: "",
-      observaciones: "",
-      empresaColaboradora: isCollaborator ? collaboratorCompany : "",
-      fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : undefined,
-      horarioProgramacion: timeParam || "",
-      instalador: "",
-      inspector: "",
-      gestor: "",
-      sector: "",
-      status: getInitialStatus(user?.role),
-      motivoRechazo: "",
-    }
-  }, [zone, user?.role, searchParams, isCollaborator, collaboratorCompany]);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
     mode: 'onChange',
   });
   
   useEffect(() => {
+    const dateParam = searchParams.get('date');
+    const timeParam = searchParams.get('time');
+    
     if (recordId) {
         setPageMode(mode === 'view' ? 'view' : 'edit');
         if (currentRecord) {
-             form.reset({
+            form.reset({
                 ...currentRecord,
                 id: currentRecord.id,
                 zone: currentRecord.zone || '',
@@ -230,21 +197,43 @@ export default function IndividualInspectionPage() {
     } else {
         setPageMode('new');
         form.reset({
-            ...defaultValues,
             id: generateId(),
-            status: getInitialStatus(user?.role),
             zone: zone,
-            empresaColaboradora: isCollaborator ? user.name : '', // Assuming user.name is the company name
+            poliza: "",
+            caso: "",
+            municipality: "",
+            colonia: "",
+            calle: "",
+            numero: "",
+            portal: "",
+            escalera: "",
+            piso: "",
+            puerta: "",
+            tipoInspeccion: "Programacion PES",
+            tipoProgramacion: "",
+            tipoMdd: "",
+            mercado: "",
+            oferta: "",
+            observaciones: "",
+            empresaColaboradora: isCollaborator ? (user?.name || '') : "",
+            fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
+            horarioProgramacion: timeParam || "",
+            instalador: "",
+            inspector: "",
+            gestor: "",
+            sector: "",
+            status: getInitialStatus(user?.role),
+            motivoRechazo: "",
         });
     }
-}, [recordId, mode, currentRecord, form, user, defaultValues, zone, isCollaborator]);
+}, [recordId, mode, currentRecord, form, user, zone, isCollaborator, searchParams]);
 
 
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
     if (pageMode === 'view') return true;
 
     if (pageMode === 'edit' && currentRecord) {
-      if (currentRecord.status.endsWith('- REPROGRAMADA') && user?.role !== ROLES.ADMIN) {
+      if (currentRecord.status && currentRecord.status.endsWith('- REPROGRAMADA') && user?.role !== ROLES.ADMIN) {
         return true;
       }
 
@@ -488,21 +477,7 @@ export default function IndividualInspectionPage() {
   }
 
   const handleReset = () => {
-    if (pageMode === 'new') {
-        const newId = generateId();
-        form.reset({
-            ...defaultValues,
-            id: newId,
-            status: getInitialStatus(user?.role),
-            empresaColaboradora: isCollaborator ? user?.name : '',
-        });
-    } else if (currentRecord) {
-        form.reset({
-            ...currentRecord,
-            empresaColaboradora: currentRecord.collaboratorCompany,
-            fechaProgramacion: parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()),
-        });
-    }
+    // This function logic is handled by the main useEffect now
   }
   
   const handleUpperCase = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: any) => {
