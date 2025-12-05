@@ -22,7 +22,7 @@ import Papa from "papaparse";
 import { format } from 'date-fns';
 import Link from "next/link";
 import { collection, doc } from "firebase/firestore";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore } from "@/firebase";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const initialFilters = {
@@ -44,7 +44,7 @@ export default function UsersPage() {
     const { toast } = useToast();
     const firestore = useFirestore();
 
-    const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+    const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
     const { data: users, isLoading } = useCollection<User>(usersQuery);
 
     const [dialogState, setDialogState] = useState({
@@ -174,7 +174,7 @@ export default function UsersPage() {
       setIsExporting(false);
       toast({
           title: "Exportación Completa",
-          description: "La lista de usuarios ha sido exportada a CSV."
+          description: "La lista de usuarios ha sido exportada a un archivo CSV."
       });
     };
 

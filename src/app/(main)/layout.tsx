@@ -20,7 +20,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: 'Copiado', description: 'El correo electrónico se ha copiado al portapapeles.' });
+    toast({ title: 'Copiado', description: 'El correo se ha copiado al portapapeles.' });
   }
 
   useEffect(() => {

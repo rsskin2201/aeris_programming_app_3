@@ -44,8 +44,8 @@ export function LoginForm() {
       const userProfile = await login(values.username, values.password);
       if (userProfile) {
         toast({
-          title: 'Inicio de sesión exitoso',
-          description: `Bienvenido(a), ${userProfile.name}`,
+          title: 'Inicio de Sesión Exitoso',
+          description: `Bienvenido(a) de nuevo, ${userProfile.name}.`,
           duration: 2000,
         });
         router.push('/');
@@ -53,8 +53,8 @@ export function LoginForm() {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error de autenticación',
-        description: error.message || 'Ocurrió un error inesperado.',
+        title: 'Error de Autenticación',
+        description: error.message || 'Ocurrió un error inesperado al intentar iniciar sesión.',
       });
     } finally {
       setIsLoading(false);
@@ -65,8 +65,8 @@ export function LoginForm() {
     if (!forgotUsername || !forgotEmail) {
         toast({
             variant: 'destructive',
-            title: 'Campos incompletos',
-            description: 'Por favor, ingresa tu usuario y correo electrónico.'
+            title: 'Campos Incompletos',
+            description: 'Por favor, ingresa tu usuario y correo electrónico para continuar.'
         });
         return;
     }

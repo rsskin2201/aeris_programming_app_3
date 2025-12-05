@@ -11,6 +11,7 @@ import Papa from 'papaparse';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '../ui/dialog';
 import { ScrollArea, ScrollBar } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export interface FieldDefinition<T> {
     key: keyof T;
@@ -33,6 +34,7 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
     const [errors, setErrors] = useState<Record<string, string | null>[]>([]);
     const [globalError, setGlobalError] = useState<string | null>(null);
     const [isConfirming, setIsConfirming] = useState(false);
+    const { toast } = useToast();
 
     useEffect(() => {
         Papa.parse(file, {
@@ -127,6 +129,11 @@ export const CsvEditor = <T extends object>({ file, onUpload, isUploading, field
             setIsConfirming(true);
        } else {
            setGlobalError('Hay errores en los datos. Por favor, corríjalos antes de continuar.');
+           toast({
+               variant: 'destructive',
+               title: 'Errores de Validación',
+               description: 'No se puede cargar el archivo porque contiene errores. Por favor, corríjalos.',
+           });
        }
     };
 

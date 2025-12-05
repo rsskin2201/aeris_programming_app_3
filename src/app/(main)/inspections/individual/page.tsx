@@ -495,7 +495,7 @@ export default function IndividualInspectionPage() {
 
     if (redirectBypassStatuses.includes(values.status as Status)) {
         toast({
-            title: "Registro Guardado",
+            title: "Registro Actualizado",
             description: "El registro ha sido actualizado. Ahora puedes rellenar el Checklist.",
         });
         // Stay on the page
@@ -563,7 +563,7 @@ export default function IndividualInspectionPage() {
   const handleCopyIds = () => {
     if (createdRecordInfo) {
       navigator.clipboard.writeText(createdRecordInfo.ids.join(', '));
-      toast({ title: 'ID Copiado', description: 'El ID de la inspección se ha copiado.' });
+      toast({ title: 'ID Copiado', description: 'El ID de la inspección se ha copiado al portapapeles.' });
     }
   };
 

@@ -83,8 +83,8 @@ export function SupportValidationForm({ record, user, onClose, onSave }: Support
             // This case should be prevented by the zod refine validation
             toast({
                 variant: 'destructive',
-                title: 'Error de validación',
-                description: 'Debe completar los campos para conectar o para rechazar.',
+                title: 'Error de Validación',
+                description: 'Debes completar los campos para conectar o para rechazar.',
             });
             return;
         }
