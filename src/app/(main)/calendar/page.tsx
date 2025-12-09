@@ -141,7 +141,7 @@ const nonAdminRolesWithZoneFilter = [
 
 const getInspectionDurationInHours = (record: InspectionRecord): number => {
     // Individual PES and Reprogrammed PES are 2 hours
-    if ((record.id.startsWith("INSP-PS") || record.id.startsWith("INSP-RP")) && record.tipoInspeccion === 'Programacion PES') {
+    if (record.id.startsWith("INSP-PS") && record.tipoInspeccion === 'Programacion PES') {
         return 2;
     }
     // Massive PES is 2 hours for the whole block
@@ -250,10 +250,10 @@ export default function CalendarPage() {
   
   const isCollaborator = user?.role === ROLES.COLABORADOR;
 
-  const inspectionsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspections'), ...(buildQuery('inspections') || [])) : null, [firestore, buildQuery]);
-  const expansionManagersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...(buildQuery('gestores_expansion') || [])) : null, [firestore, buildQuery]);
-  const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...(buildQuery('instaladores') || [])) : null, [firestore, buildQuery]);
-  const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...(buildQuery('inspectores') || [])) : null, [firestore, buildQuery]);
+  const inspectionsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspections'), ...(buildQuery('inspections') ?? [])) : null, [firestore, buildQuery]);
+  const expansionManagersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...(buildQuery('gestores_expansion') ?? [])) : null, [firestore, buildQuery]);
+  const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...(buildQuery('instaladores') ?? [])) : null, [firestore, buildQuery]);
+  const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...(buildQuery('inspectores') ?? [])) : null, [firestore, buildQuery]);
 
   const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
   const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);

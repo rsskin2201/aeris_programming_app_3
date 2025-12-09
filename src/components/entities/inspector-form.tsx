@@ -47,7 +47,7 @@ export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
   const { user, buildQuery } = useAppContext();
   const firestore = useFirestore();
 
-  const qualityCompaniesQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_control_calidad'), ...(buildQuery('empresas_control_calidad') || [])) : null, [firestore, buildQuery]);
+  const qualityCompaniesQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_control_calidad'), ...(buildQuery('empresas_control_calidad') ?? [])) : null, [firestore, buildQuery]);
   const { data: qualityCompanies } = useCollection<QualityControlCompany>(qualityCompaniesQuery);
 
   const isEditMode = !!inspector;
