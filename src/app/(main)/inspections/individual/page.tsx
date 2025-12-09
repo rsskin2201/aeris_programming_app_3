@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle, CalendarIcon as CalendarIconLucide, ListChecks, File as FileIcon, BadgeCheck, Copy, Clock } from "lucide-react";
+import { ChevronLeft, FileUp, Loader2, CheckCircle, AlertCircle, CalendarIcon as CalendarIconLucide, ListChecks, File as FileIcon, BadgeCheck, Copy, Clock, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse, isBefore, set, endOfDay, parseISO } from "date-fns";
@@ -28,10 +28,10 @@ import { ChecklistForm } from "@/components/inspections/checklist-form";
 import { SupportValidationForm } from "@/components/inspections/support-validation-form";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useCollection, useDoc, useFirestore } from "@/firebase";
+import { useCollection, useDoc, useFirestore, FirestorePermissionError, errorEmitter } from "@/firebase";
 import { addDoc, collection, doc, query, where } from "firebase/firestore";
 import { ChangeHistoryViewer } from "@/components/inspections/change-history-viewer";
-import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -141,9 +141,9 @@ export default function IndividualInspectionPage() {
   const collaboratorCompany = isCollaborator ? user?.name : ''; // Assumption: user.name is company name for collaborator
 
   const getInitialStatus = (role: Role | undefined) => {
+    if (pageMode === 'edit' && currentRecord) return currentRecord.status;
     if (isCollaborator) return STATUS.REGISTRADA;
-    if (pageMode === 'new' && role === ROLES.GESTOR) return STATUS.CONFIRMADA_POR_GE;
-    if (currentRecord) return currentRecord.status;
+    if (role === ROLES.GESTOR) return STATUS.CONFIRMADA_POR_GE;
     return STATUS.REGISTRADA;
   };
   
@@ -296,7 +296,7 @@ export default function IndividualInspectionPage() {
 
         switch (fieldName) {
             case 'status':
-                return ![ROLES.ADMIN, ROLES.SOPORTE, ROLES.CALIDAD, ROLES.GESTOR].includes(user!.role);
+                return ![ROLES.ADMIN, ROLES.SOPORTE, ROLES.CALIDAD, ROLES.GESTOR, ROLES.COORDINADOR_SSPP].includes(user!.role);
             case 'inspector':
                 return ![ROLES.ADMIN, ROLES.CALIDAD].includes(user!.role);
             case 'gestor':
@@ -439,12 +439,18 @@ export default function IndividualInspectionPage() {
       };
 
       const historyCollectionRef = collection(firestore, `inspections/${currentRecord.id}/history`);
-      addDoc(historyCollectionRef, historyRecord);
+      addDoc(historyCollectionRef, historyRecord).catch(error => {
+          const contextualError = new FirestorePermissionError({
+              path: `inspections/${currentRecord.id}/history`,
+              operation: 'create',
+              requestResourceData: historyRecord,
+          });
+          errorEmitter.emit('permission-error', contextualError);
+      });
     }
   };
 
   async function onFinalSubmit(values: FormValues) {
-    if (!firestore) return;
     setIsSubmitting(true);
 
     if (pageMode === 'edit') {
@@ -488,28 +494,37 @@ export default function IndividualInspectionPage() {
         createdBy: currentRecord?.createdBy || user?.username || 'desconocido',
     };
 
+    if (!firestore) return;
     const docRef = doc(firestore, 'inspections', recordToSave.id);
-    setDocumentNonBlocking(docRef, recordToSave, { merge: true });
-    setIsSubmitting(false);
-    setIsConfirming(false);
-
-    if (redirectBypassStatuses.includes(values.status as Status)) {
-        toast({
-            title: "Registro Actualizado",
-            description: "El registro ha sido actualizado. Ahora puedes rellenar el Checklist.",
+    
+    setDoc(docRef, recordToSave, { merge: true }).catch(error => {
+        const contextualError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: pageMode === 'new' ? 'create' : 'update',
+          requestResourceData: recordToSave,
         });
-        // Stay on the page
-    } else {
-         if (pageMode === 'new') {
-            addNotification({
-              recipientUsername: 'coordinador',
-              message: `Nueva inspección individual ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
-              link: `/inspections/individual?id=${recordToSave.id}&mode=view`
+        errorEmitter.emit('permission-error', contextualError);
+    }).finally(() => {
+        setIsSubmitting(false);
+        setIsConfirming(false);
+
+        if (redirectBypassStatuses.includes(values.status as Status)) {
+            toast({
+                title: "Registro Actualizado",
+                description: "El registro ha sido actualizado. Ahora puedes rellenar el Checklist.",
             });
+        } else {
+             if (pageMode === 'new') {
+                addNotification({
+                  recipientUsername: 'coordinador',
+                  message: `Nueva inspección individual ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
+                  link: `/inspections/individual?id=${recordToSave.id}&mode=view`
+                });
+            }
+            setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
+            setIsSuccessDialogOpen(true);
         }
-        setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
-        setIsSuccessDialogOpen(true);
-    }
+    });
   }
 
   const handleReset = () => {
@@ -550,7 +565,7 @@ export default function IndividualInspectionPage() {
             lastModifiedAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
         };
         const docRef = doc(firestore, 'inspections', newRecord.id);
-        setDocumentNonBlocking(docRef, newRecord, { merge: true });
+        updateDocumentNonBlocking(docRef, newRecord);
         
         form.reset({ // Re-sync main form if needed
             ...newRecord,

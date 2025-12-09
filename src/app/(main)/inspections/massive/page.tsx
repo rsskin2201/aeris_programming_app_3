@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon as CalendarIconLucide, ChevronLeft, Loader2, PlusCircle, Trash2, CheckCircle, AlertCircle, Files, Copy } from "lucide-react";
+import { CalendarIcon as CalendarIconLucide, ChevronLeft, Loader2, PlusCircle, Trash2, CheckCircle, AlertCircle, Files, Copy, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse } from "date-fns";
@@ -26,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA, mockMunicipalities } from "@/lib/form-options";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useCollection, useDoc, useFirestore } from "@/firebase";
+import { useCollection, useDoc, useFirestore, FirestorePermissionError, errorEmitter } from "@/firebase";
 import { collection, doc, query, where } from "firebase/firestore";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -250,7 +250,7 @@ export default function MassiveInspectionPage() {
     
     const createdIds: string[] = [];
     
-    values.inspections.forEach(detail => {
+    const savePromises = values.inspections.map(detail => {
         const recordToSave: InspectionRecord = {
             // Common data
             zone: values.zone,
@@ -291,20 +291,36 @@ export default function MassiveInspectionPage() {
         };
         createdIds.push(detail.id);
         const docRef = doc(firestore, 'inspections', detail.id);
-        setDocumentNonBlocking(docRef, recordToSave, { merge: true });
+        return setDoc(docRef, recordToSave, { merge: true }).catch(error => {
+            const contextualError = new FirestorePermissionError({
+                path: docRef.path,
+                operation: 'create',
+                requestResourceData: recordToSave,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+            throw error; // Propagate error to stop Promise.all
+        });
     });
 
-    addNotification({
-        recipientUsername: 'coordinador',
-        message: `Nueva inspección masiva con ${createdIds.length} registros creada por ${user?.username}.`,
-        link: `/records` // General link as there are multiple records
-    });
-    
-    setCreatedRecordInfo({ ids: createdIds, status: values.status });
-    setIsSuccessDialogOpen(true);
+    try {
+        await Promise.all(savePromises);
 
-    setIsSubmitting(false);
-    setIsConfirming(false);
+        addNotification({
+            recipientUsername: 'coordinador',
+            message: `Nueva inspección masiva con ${createdIds.length} registros creada por ${user?.username}.`,
+            link: `/records` // General link as there are multiple records
+        });
+        
+        setCreatedRecordInfo({ ids: createdIds, status: values.status });
+        setIsSuccessDialogOpen(true);
+
+    } catch (error) {
+        // Errors are already emitted by the individual catch blocks.
+        // No need to show a generic toast, the error overlay will appear.
+    } finally {
+        setIsSubmitting(false);
+        setIsConfirming(false);
+    }
   }
 
   const handleReset = () => {

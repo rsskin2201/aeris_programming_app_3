@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon as CalendarIconLucide, ChevronLeft, Loader2, CheckCircle, AlertCircle, FileCheck2, Copy } from "lucide-react";
+import { CalendarIcon as CalendarIconLucide, ChevronLeft, Loader2, CheckCircle, AlertCircle, FileCheck2, Copy, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, isSunday, parse, parseISO } from "date-fns";
@@ -26,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO, mockMunicipalities } from "@/lib/form-options";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useCollection, useDoc, useFirestore } from "@/firebase";
+import { useCollection, useDoc, useFirestore, FirestorePermissionError, errorEmitter } from "@/firebase";
 import { collection, doc, query, where } from "firebase/firestore";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -282,7 +282,6 @@ export default function SpecialInspectionPage() {
 
   async function onFinalSubmit(values: FormValues) {
     if (!firestore) return;
-
     setIsSubmitting(true);
     
     const recordToSave: InspectionRecord = {
@@ -321,19 +320,27 @@ export default function SpecialInspectionPage() {
     };
     
     const docRef = doc(firestore, 'inspections', recordToSave.id);
-    setDocumentNonBlocking(docRef, recordToSave, { merge: true });
-
-    addNotification({
-        recipientUsername: 'coordinador',
-        message: `Nueva inspección especial ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
-        link: `/inspections/special?id=${recordToSave.id}&mode=view`
-    });
     
-    setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
-    setIsSuccessDialogOpen(true);
+    setDoc(docRef, recordToSave, { merge: true }).catch(error => {
+        const contextualError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'create',
+          requestResourceData: recordToSave,
+        });
+        errorEmitter.emit('permission-error', contextualError);
+    }).finally(() => {
+        setIsSubmitting(false);
+        setIsConfirming(false);
 
-    setIsSubmitting(false);
-    setIsConfirming(false);
+        addNotification({
+            recipientUsername: 'coordinador',
+            message: `Nueva inspección especial ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
+            link: `/inspections/special?id=${recordToSave.id}&mode=view`
+        });
+        
+        setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
+        setIsSuccessDialogOpen(true);
+    });
   }
 
   const handleReset = () => {
