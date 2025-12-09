@@ -101,6 +101,8 @@ export default function MassiveInspectionPage() {
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
 
+  const isCollaborator = user?.role === ROLES.COLABORADOR;
+
   const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...buildQuery('empresas_colaboradoras')) : null, [firestore, buildQuery]);
   const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...buildQuery('instaladores')) : null, [firestore, buildQuery]);
   const managersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...buildQuery('gestores_expansion')) : null, [firestore, buildQuery]);
@@ -115,7 +117,6 @@ export default function MassiveInspectionPage() {
 
   const fromParam = searchParams.get('from');
 
-  const isCollaborator = user?.role === ROLES.COLABORADOR;
   const collaboratorCompany = isCollaborator ? user?.name || '' : '';
 
   const form = useForm<FormValues>({
@@ -211,7 +212,7 @@ export default function MassiveInspectionPage() {
 
     const availableStatusOptions = useMemo(() => {
         if (isCollaborator) {
-            return [STATUS.REGISTRADA, STATUS.CANCELADA];
+            return [STATUS.REGISTRADA];
         }
         return Object.values(STATUS);
     }, [isCollaborator]);

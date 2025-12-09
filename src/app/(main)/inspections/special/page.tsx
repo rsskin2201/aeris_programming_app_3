@@ -87,6 +87,8 @@ export default function SpecialInspectionPage() {
 
   const fromParam = searchParams.get('from');
 
+  const isCollaborator = user?.role === ROLES.COLABORADOR;
+
   const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...buildQuery('empresas_colaboradoras')) : null, [firestore, buildQuery]);
   const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...buildQuery('instaladores')) : null, [firestore, buildQuery]);
   const managersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...buildQuery('gestores_expansion')) : null, [firestore, buildQuery]);
@@ -103,11 +105,10 @@ export default function SpecialInspectionPage() {
   const docRef = useMemo(() => recordId ? doc(firestore, 'inspections', recordId) : null, [firestore, recordId]);
   const { data: currentRecord, isLoading: isRecordLoading } = useDoc<InspectionRecord>(docRef);
 
-  const isCollaborator = user?.role === ROLES.COLABORADOR;
   const collaboratorCompany = isCollaborator ? user.name : ''; // Assumption
 
   const getInitialStatus = (role: Role | undefined) => {
-    if (role === ROLES.COLABORADOR) return STATUS.REGISTRADA;
+    if (isCollaborator) return STATUS.REGISTRADA;
     if (role === ROLES.GESTOR) return STATUS.CONFIRMADA_POR_GE;
     return STATUS.REGISTRADA;
   };
@@ -248,7 +249,7 @@ export default function SpecialInspectionPage() {
 
     const availableStatusOptions = useMemo(() => {
         if (isCollaborator) {
-            return [STATUS.REGISTRADA, STATUS.CANCELADA];
+            return [STATUS.REGISTRADA];
         }
         return Object.values(STATUS);
     }, [isCollaborator]);

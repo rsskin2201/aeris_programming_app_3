@@ -119,6 +119,8 @@ export default function IndividualInspectionPage() {
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
 
+  const isCollaborator = user?.role === ROLES.COLABORADOR;
+
   const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...buildQuery('empresas_colaboradoras')) : null, [firestore, buildQuery]);
   const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...buildQuery('instaladores')) : null, [firestore, buildQuery]);
   const expansionManagersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...buildQuery('gestores_expansion')) : null, [firestore, buildQuery]);
@@ -136,11 +138,10 @@ export default function IndividualInspectionPage() {
   
   const fromParam = searchParams.get('from');
   
-  const isCollaborator = user?.role === ROLES.COLABORADOR;
   const collaboratorCompany = isCollaborator ? user?.name : ''; // Assumption: user.name is company name for collaborator
 
   const getInitialStatus = (role: Role | undefined) => {
-    if (pageMode === 'new' && role === ROLES.COLABORADOR) return STATUS.REGISTRADA;
+    if (isCollaborator) return STATUS.REGISTRADA;
     if (pageMode === 'new' && role === ROLES.GESTOR) return STATUS.CONFIRMADA_POR_GE;
     if (currentRecord) return currentRecord.status;
     return STATUS.REGISTRADA;
@@ -176,7 +177,7 @@ export default function IndividualInspectionPage() {
       instalador: '',
       inspector: '',
       gestor: '',
-      status: '',
+      status: getInitialStatus(user?.role),
       motivoRechazo: '',
     },
   });
@@ -211,7 +212,7 @@ export default function IndividualInspectionPage() {
           instalador: currentRecord.instalador || '',
           inspector: currentRecord.inspector || '',
           gestor: currentRecord.gestor || '',
-          status: currentRecord.status || '', // Ensure status is always set from record
+          status: getInitialStatus(user?.role),
           motivoRechazo: currentRecord.motivoRechazo || '',
         });
       }
@@ -249,7 +250,7 @@ export default function IndividualInspectionPage() {
         motivoRechazo: '',
       });
     }
-  }, [recordId, mode, currentRecord, form, user, zone, isCollaborator, searchParams, pageMode]);
+  }, [recordId, mode, currentRecord, form, user, zone, isCollaborator, searchParams]);
 
 
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
@@ -368,7 +369,10 @@ export default function IndividualInspectionPage() {
     }, [inspectors]);
 
     const availableStatusOptions = useMemo(() => {
-        if (isCollaborator && pageMode === 'edit') {
+        if (isCollaborator) {
+          return [STATUS.REGISTRADA];
+        }
+        if (pageMode === 'edit') {
             return [currentRecord?.status, STATUS.CANCELADA].filter(Boolean) as string[];
         }
         return Object.values(STATUS);
