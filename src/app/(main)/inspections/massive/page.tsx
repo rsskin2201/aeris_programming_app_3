@@ -169,8 +169,7 @@ export default function MassiveInspectionPage() {
       inspections: [{ id: generateId(), poliza: "", caso: "", portal: "", escalera: "", piso: "", puerta: "", observaciones: "" }],
       fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user, zone, isCollaborator, collaboratorCompany, searchParams, form]);
   
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -179,9 +178,12 @@ export default function MassiveInspectionPage() {
 
   const formData = form.watch();
 
-  const isInspectorFieldDisabled = useMemo(() => {
-    return !(user && [ROLES.ADMIN, ROLES.CALIDAD].includes(user.role));
-  }, [user]);
+  const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
+    if (isCollaborator && (fieldName === 'status' || fieldName === 'inspector' || fieldName === 'collaboratorCompany')) {
+      return true;
+    }
+    return false;
+  };
 
   const availableSectors = useMemo(() => {
     if (!sectors) return [];
@@ -613,7 +615,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="collaboratorCompany" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Empresa Colaboradora</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isCollaborator}>
+                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('collaboratorCompany')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
@@ -649,7 +651,7 @@ export default function MassiveInspectionPage() {
                     <FormField control={form.control} name="inspector" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Inspector</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ''} disabled={isInspectorFieldDisabled}>
+                            <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('inspector')}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un inspector" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {availableInspectors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
@@ -705,7 +707,7 @@ export default function MassiveInspectionPage() {
                 <FormField control={form.control} name="status" render={({ field }) => (
                    <FormItem>
                     <FormLabel>Status</FormLabel>
-                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={isCollaborator}>
+                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('status')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
                         <SelectContent>
                            {availableStatusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}

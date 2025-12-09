@@ -140,12 +140,12 @@ export default function IndividualInspectionPage() {
   const collaboratorCompany = isCollaborator ? user?.name : ''; // Assumption: user.name is company name for collaborator
 
   const getInitialStatus = (role: Role | undefined) => {
-    if (pageMode !== 'new') return currentRecord?.status || '';
-    if (role === ROLES.COLABORADOR) return STATUS.REGISTRADA;
-    if (role === ROLES.GESTOR) return STATUS.CONFIRMADA_POR_GE;
+    if (pageMode === 'new' && role === ROLES.COLABORADOR) return STATUS.REGISTRADA;
+    if (pageMode === 'new' && role === ROLES.GESTOR) return STATUS.CONFIRMADA_POR_GE;
+    if (currentRecord) return currentRecord.status;
     return STATUS.REGISTRADA;
   };
-
+  
   const generateId = () => `INSP-PS-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
   const form = useForm<FormValues>({
@@ -249,7 +249,7 @@ export default function IndividualInspectionPage() {
         motivoRechazo: '',
       });
     }
-  }, [recordId, mode, currentRecord, form, user, zone, isCollaborator, searchParams]);
+  }, [recordId, mode, currentRecord, form, user, zone, isCollaborator, searchParams, pageMode]);
 
 
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
