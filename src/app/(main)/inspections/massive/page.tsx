@@ -40,6 +40,7 @@ const inspectionDetailSchema = z.object({
   escalera: z.string().optional(),
   piso: z.string().optional(),
   puerta: z.string().optional(),
+  observaciones: z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -170,7 +171,7 @@ export default function MassiveInspectionPage() {
       inspector: "",
       gestor: "",
       status: getInitialStatus(user?.role),
-      inspections: [{ id: generateId(), poliza: "", caso: "", portal: "", escalera: "", piso: "", puerta: "" }],
+      inspections: [{ id: generateId(), poliza: "", caso: "", portal: "", escalera: "", piso: "", puerta: "", observaciones: "" }],
       fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -265,7 +266,7 @@ export default function MassiveInspectionPage() {
             tipoMdd: values.tipoMdd,
             mercado: values.mercado,
             oferta: values.oferta || '',
-            observaciones: values.observaciones || '',
+            observaciones: detail.observaciones || values.observaciones || '', // Prioritize individual observations
             collaboratorCompany: values.collaboratorCompany,
             horarioProgramacion: values.horarioProgramacion,
             instalador: values.instalador,
@@ -318,7 +319,7 @@ export default function MassiveInspectionPage() {
   
   const addInspection = () => {
     if (fields.length < 4) {
-      append({ id: generateId(), poliza: "", caso: "", portal: "", escalera: "", piso: "", puerta: "" });
+      append({ id: generateId(), poliza: "", caso: "", portal: "", escalera: "", piso: "", puerta: "", observaciones: "" });
     }
   }
 
@@ -506,6 +507,18 @@ export default function MassiveInspectionPage() {
                                     </FormItem>
                                 )} />
                             </div>
+                            <FormField control={form.control} name={`inspections.${index}.observaciones`} render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Observaciones (Opcional)</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder="Añadir notas específicas para esta inspección..."
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
                              {index > 0 && (
                                 <Button type="button" variant="destructive" size="icon" className="absolute top-4 right-4" onClick={() => remove(index)}>
                                     <Trash2 className="h-4 w-4" />
@@ -519,8 +532,8 @@ export default function MassiveInspectionPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Detalles de la Programación</CardTitle>
-                <CardDescription>Información técnica y de clasificación del servicio.</CardDescription>
+                <CardTitle>Detalles Comunes de la Programación</CardTitle>
+                <CardDescription>Información técnica y de clasificación para todas las inspecciones de este grupo.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-6">
                 <div className="grid md:grid-cols-2 gap-6">
@@ -582,10 +595,10 @@ export default function MassiveInspectionPage() {
                 </div>
                 <FormField control={form.control} name="observaciones" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Observaciones (Opcional)</FormLabel>
+                        <FormLabel>Observaciones Generales (Opcional)</FormLabel>
                         <FormControl>
                             <Textarea 
-                                placeholder="Añadir comentarios o notas relevantes para la inspección..."
+                                placeholder="Notas que aplican a TODAS las inspecciones de este grupo..."
                                 {...field}
                             />
                         </FormControl>
@@ -597,8 +610,8 @@ export default function MassiveInspectionPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Asignación y Estatus</CardTitle>
-                <CardDescription>Asignación de responsables y fecha de ejecución.</CardDescription>
+                <CardTitle>Asignación y Estatus Común</CardTitle>
+                <CardDescription>Responsables y fecha de ejecución para todo el grupo.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-6">
                  <div className="grid md:grid-cols-2 gap-6">
@@ -735,15 +748,15 @@ export default function MassiveInspectionPage() {
                                 {renderFieldWithFeedback('calle', 'Calle', formData.calle)}
                                 {renderFieldWithFeedback('numero', 'Número', formData.numero)}
                                 
-                                <h3 className="font-semibold text-lg mb-2 mt-4">Detalles de la Programación</h3>
+                                <h3 className="font-semibold text-lg mb-2 mt-4">Detalles Comunes de la Programación</h3>
                                 {renderFieldWithFeedback('tipoInspeccion', 'Tipo de Inspección', formData.tipoInspeccion)}
                                 {renderFieldWithFeedback('tipoProgramacion', 'Tipo de Programación', formData.tipoProgramacion)}
                                 {renderFieldWithFeedback('tipoMdd', 'Tipo MDD', formData.tipoMdd)}
                                 {renderFieldWithFeedback('mercado', 'Mercado', formData.mercado)}
                                 {renderFieldWithFeedback('oferta', 'Oferta/Campaña', formData.oferta)}
-                                {renderFieldWithFeedback('observaciones', 'Observaciones', formData.observaciones)}
+                                {renderFieldWithFeedback('observaciones', 'Observaciones Generales', formData.observaciones)}
 
-                                <h3 className="font-semibold text-lg mb-2 mt-4">Asignación y Estatus</h3>
+                                <h3 className="font-semibold text-lg mb-2 mt-4">Asignación y Estatus Común</h3>
                                 {renderFieldWithFeedback('collaboratorCompany', 'Empresa Colaboradora', formData.collaboratorCompany)}
                                 {renderFieldWithFeedback('instalador', 'Instalador', formData.instalador)}
                                 {renderFieldWithFeedback('inspector', 'Inspector', formData.inspector)}
@@ -764,6 +777,7 @@ export default function MassiveInspectionPage() {
                                         <p className="text-sm"><span className="font-medium text-muted-foreground">Escalera:</span> {inspection.escalera || 'N/A'}</p>
                                         <p className="text-sm"><span className="font-medium text-muted-foreground">Piso:</span> {inspection.piso || 'N/A'}</p>
                                         <p className="text-sm"><span className="font-medium text-muted-foreground">Puerta:</span> {inspection.puerta || 'N/A'}</p>
+                                        <p className="text-sm"><span className="font-medium text-muted-foreground">Observaciones:</span> {inspection.observaciones || 'N/A'}</p>
                                     </div>
                                 ))}
                            </div>
@@ -826,3 +840,5 @@ export default function MassiveInspectionPage() {
     </div>
   );
 }
+
+    
