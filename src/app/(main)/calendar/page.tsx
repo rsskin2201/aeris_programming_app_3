@@ -302,7 +302,8 @@ export default function CalendarPage() {
     if (!filteredRecordsForView) return inspections;
     filteredRecordsForView.forEach((record) => {
       if (!record.requestDate) return;
-      const recordDate = parse(record.requestDate, 'yyyy-MM-dd', new Date());
+      // Use parseISO to handle the string date correctly, assuming it's local time.
+      const recordDate = parseISO(`${record.requestDate}T00:00:00`);
       const dateKey = format(recordDate, 'yyyy-MM-dd');
       if (!inspections[dateKey]) {
         inspections[dateKey] = [];
@@ -317,9 +318,11 @@ export default function CalendarPage() {
     if (!filteredRecordsForView) return inspections;
     filteredRecordsForView.forEach((record) => {
       if (!record.requestDate || !record.horarioProgramacion) return;
-      const recordDate = parse(record.requestDate, 'yyyy-MM-dd', new Date());
       const [hour] = record.horarioProgramacion.split(':');
-      const dateKey = format(recordDate, 'yyyy-MM-dd');
+      // Combine date and time into a single ISO-like string for correct local time parsing.
+      const dateTimeString = `${record.requestDate}T${record.horarioProgramacion}:00`;
+      const recordDateTime = parseISO(dateTimeString);
+      const dateKey = format(recordDateTime, 'yyyy-MM-dd');
       const dateTimeKey = `${dateKey}-${hour.padStart(2, '0')}`;
       if (!inspections[dateTimeKey]) {
         inspections[dateTimeKey] = [];
