@@ -76,7 +76,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function SpecialInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, zone, addNotification, devModeEnabled } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, zone, addNotification, devModeEnabled, buildQuery } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const firestore = useFirestore();
@@ -87,20 +87,11 @@ export default function SpecialInspectionPage() {
 
   const fromParam = searchParams.get('from');
 
-  const buildQuery = (collectionName: string) => {
-    if (!firestore || !user) return null;
-    const constraints: QueryConstraint[] = [];
-    if (zone !== 'Todas las zonas') {
-        constraints.push(where('zone', '==', zone));
-    }
-    return query(collection(firestore, collectionName), ...constraints);
-  };
-  
-  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemo(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]));
-  const { data: installers } = useCollection<any>(useMemo(() => buildQuery('instaladores'), [firestore, user, zone]));
-  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemo(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
-  const { data: sectors } = useCollection<Sector>(useMemo(() => buildQuery('sectores'), [firestore, user, zone]));
-  const { data: inspectors } = useCollection<Inspector>(useMemo(() => buildQuery('inspectores'), [firestore, user, zone]));
+  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemo(() => buildQuery('empresas_colaboradoras'), [firestore, buildQuery]));
+  const { data: installers } = useCollection<any>(useMemo(() => buildQuery('instaladores'), [firestore, buildQuery]));
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemo(() => buildQuery('gestores_expansion'), [firestore, buildQuery]));
+  const { data: sectors } = useCollection<Sector>(useMemo(() => buildQuery('sectores'), [firestore, buildQuery]));
+  const { data: inspectors } = useCollection<Inspector>(useMemo(() => buildQuery('inspectores'), [firestore, buildQuery]));
 
   const recordId = searchParams.get('id');
   const docRef = useMemo(() => recordId ? doc(firestore, 'inspections', recordId) : null, [firestore, recordId]);
@@ -686,7 +677,7 @@ export default function SpecialInspectionPage() {
                     </FormItem>
                     )} />
                     <FormField control={form.control} name="horarioProgramacion" render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col">
                             <FormLabel>Horario Programación</FormLabel>
                             <FormControl>
                                 <Input type="time" {...field} />

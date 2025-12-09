@@ -93,7 +93,7 @@ const generateId = () => `INSP-IM-${Date.now()}-${Math.random().toString(36).sub
 
 export default function MassiveInspectionPage() {
   const { toast } = useToast();
-  const { user, weekendsEnabled, blockedDays, zone, addNotification } = useAppContext();
+  const { user, weekendsEnabled, blockedDays, zone, addNotification, buildQuery } = useAppContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const firestore = useFirestore();
@@ -103,20 +103,11 @@ export default function MassiveInspectionPage() {
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [createdRecordInfo, setCreatedRecordInfo] = useState<{ids: string[], status: string} | null>(null);
 
-  const buildQuery = (collectionName: string) => {
-    if (!firestore || !user) return null;
-    const constraints: QueryConstraint[] = [];
-    if (zone !== 'Todas las zonas') {
-        constraints.push(where('zone', '==', zone));
-    }
-    return query(collection(firestore, collectionName), ...constraints);
-  };
-
-  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemo(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]));
-  const { data: installers } = useCollection<any>(useMemo(() => buildQuery('instaladores'), [firestore, user, zone]));
-  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemo(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
-  const { data: sectors } = useCollection<Sector>(useMemo(() => buildQuery('sectores'), [firestore, user, zone]));
-  const { data: inspectors } = useCollection<Inspector>(useMemo(() => buildQuery('inspectores'), [firestore, user, zone]));
+  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemo(() => buildQuery('empresas_colaboradoras'), [firestore, buildQuery]));
+  const { data: installers } = useCollection<any>(useMemo(() => buildQuery('instaladores'), [firestore, buildQuery]));
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemo(() => buildQuery('gestores_expansion'), [firestore, buildQuery]));
+  const { data: sectors } = useCollection<Sector>(useMemo(() => buildQuery('sectores'), [firestore, buildQuery]));
+  const { data: inspectors } = useCollection<Inspector>(useMemo(() => buildQuery('inspectores'), [firestore, buildQuery]));
 
   const fromParam = searchParams.get('from');
 
@@ -698,7 +689,7 @@ export default function MassiveInspectionPage() {
                     </FormItem>
                     )} />
                     <FormField control={form.control} name="horarioProgramacion" render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col">
                             <FormLabel>Horario Programación</FormLabel>
                             <FormControl>
                                 <Input type="time" {...field} />
