@@ -23,7 +23,7 @@ interface AppContextType {
   requestPasswordReset: (username: string, email: string) => void;
   requestNewMeter: (request: Omit<NewMeterRequest, 'id' | 'date'>) => void;
   reprogramInspection: (record: InspectionRecord) => void;
-  buildQuery: (collectionName: string) => QueryConstraint[] | null;
+  buildQuery: (collectionName: string) => QueryConstraint[];
 
 
   operatorName: string | null;
@@ -327,12 +327,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addMultipleSectors = addMultipleEntities('sectores');
   const addMultipleMeters = addMultipleEntities('medidores');
   
-  const buildQuery = useCallback((collectionName: string): QueryConstraint[] | null => {
-    if (!user) return null;
+  const buildQuery = useCallback((collectionName: string): QueryConstraint[] => {
+    if (!user) return [];
     
     const constraints: QueryConstraint[] = [];
     
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+    // Non-admins (except specific roles) are filtered by zone
+    if (user.role !== ROLES.ADMIN && user.role !== ROLES.COORDINADOR_SSPP && zone !== 'Todas las zonas') {
       if (zone === 'Bajios') {
         constraints.push(where('zone', 'in', ['Bajio Norte', 'Bajio Sur']));
       } else {
