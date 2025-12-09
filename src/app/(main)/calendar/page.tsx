@@ -187,7 +187,7 @@ const SlotInspectionsDialog = ({ inspections, date, hour, onOpenChange }: { insp
                                     <span>Inspector: {inspection.inspector || 'No asignado'}</span>
                                     <span className='font-semibold'>{inspection.status}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-muted-foreground">
+                                <div className="flex items-center gap-2 text-white/80">
                                     <Building className='h-3 w-3'/>
                                     <span className='truncate'>{inspection.collaboratorCompany || 'Empresa no especificada'}</span>
                                 </div>
