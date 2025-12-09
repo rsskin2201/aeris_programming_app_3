@@ -192,6 +192,7 @@ export default function CalendarPage() {
     blockedDays,
     addBlockedDay,
     removeBlockedDay,
+    buildQuery,
   } = useAppContext();
   const firestore = useFirestore();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -222,22 +223,15 @@ export default function CalendarPage() {
   
   const isCollaborator = user?.role === ROLES.COLABORADOR;
 
-  const buildQuery = (collectionName: string) => {
-    if (!firestore || !user) return null;
-    const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
-        constraints.push(where('zone', '==', zone));
-    }
-    return query(collection(firestore, collectionName), ...constraints);
-  };
-  
-  const inspectionsQuery = useMemo(() => buildQuery('inspections'), [firestore, user, zone]);
+  const inspectionsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspections'), ...(buildQuery('inspections') || [])) : null, [firestore, buildQuery]);
+  const expansionManagersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...(buildQuery('gestores_expansion') || [])) : null, [firestore, buildQuery]);
+  const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...(buildQuery('instaladores') || [])) : null, [firestore, buildQuery]);
+  const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...(buildQuery('inspectores') || [])) : null, [firestore, buildQuery]);
 
   const { data: records } = useCollection<InspectionRecord>(inspectionsQuery);
-  
-  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemo(() => buildQuery('gestores_expansion'), [firestore, user, zone]));
-  const { data: installers } = useCollection<Installer>(useMemo(() => buildQuery('instaladores'), [firestore, user, zone]));
-  const { data: inspectors } = useCollection<Inspector>(useMemo(() => buildQuery('inspectores'), [firestore, user, zone]));
+  const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
+  const { data: installers } = useCollection<Installer>(installersQuery);
+  const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
 
 
   const filteredRecordsForView = useMemo(() => {

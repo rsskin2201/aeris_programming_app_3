@@ -8,7 +8,7 @@
 // Opciones para formularios de Puesta en Servicio (PES)
 export const TIPO_PROGRAMACION_PES = ['SALESFORCE', 'PARRILLA', 'REPROGRAMACION', 'ESPONTANEA'] as const;
 export const TIPO_MDD = ['G-1,6', 'G-10', 'G-2,5', 'G-4', 'G-6', 'G-16', 'G-25', 'G-40'] as const;
-export const MERCADO = ['ES-SV', 'CN', 'NE', 'SH', 'SP', 'SV'] as const;
+export const MERCADO = ['ES', 'CN', 'NE', 'SH', 'SP', 'SV'] as const;
 
 // Opciones para el formulario de Inspección Masiva
 export const TIPO_INSPECCION_MASIVA = [

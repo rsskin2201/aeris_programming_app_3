@@ -2,9 +2,9 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback, useEffect } from 'react';
-import { getDoc, doc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { getDoc, doc, setDoc, collection, getDocs, query, where, QueryConstraint } from 'firebase/firestore';
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, FirestorePermissionError } from '@/firebase';
-import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest, NewMeterRequest } from '@/lib/types';
+import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest, NewMeterRequest, ChangeHistory } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS, STATUS } from '@/lib/types';
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
 import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter, mockUsers } from '@/lib/mock-data';
@@ -23,6 +23,7 @@ interface AppContextType {
   requestPasswordReset: (username: string, email: string) => void;
   requestNewMeter: (request: Omit<NewMeterRequest, 'id' | 'date'>) => void;
   reprogramInspection: (record: InspectionRecord) => void;
+  buildQuery: (collectionName: string) => QueryConstraint[] | null;
 
 
   operatorName: string | null;
@@ -325,6 +326,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addMultipleExpansionManagers = addMultipleEntities('gestores_expansion');
   const addMultipleSectors = addMultipleEntities('sectores');
   const addMultipleMeters = addMultipleEntities('medidores');
+  
+  const buildQuery = useCallback((collectionName: string): QueryConstraint[] | null => {
+    if (!user) return null;
+    
+    const constraints: QueryConstraint[] = [];
+    
+    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
+      if (zone === 'Bajios') {
+        constraints.push(where('zone', 'in', ['Bajio Norte', 'Bajio Sur']));
+      } else {
+        constraints.push(where('zone', '==', zone));
+      }
+    }
+    
+    return constraints;
+  }, [user, zone]);
 
 
   const toggleForms = useCallback(() => setFormsEnabled(prev => !prev), []);
@@ -381,10 +398,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addMultipleSectors,
       addMultipleMeters,
       reprogramInspection,
+      buildQuery,
     }),
     [
       user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters, reprogramInspection
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters, reprogramInspection, buildQuery
     ]
   );
 

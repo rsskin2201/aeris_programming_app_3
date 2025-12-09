@@ -43,7 +43,7 @@ const canModifyRoles = [ROLES.ADMIN, ROLES.CANALES];
 const canUploadRoles = [ROLES.ADMIN, ROLES.CANALES];
 
 export default function EntitiesPage() {
-  const { user, zone } = useAppContext();
+  const { user, zone, buildQuery } = useAppContext();
   const firestore = useFirestore();
 
   const [collaboratorDialogOpen, setCollaboratorDialogOpen] = useState(false);
@@ -65,34 +65,20 @@ export default function EntitiesPage() {
   const canModify = user && canModifyRoles.includes(user.role);
   const canUpload = user && canUploadRoles.includes(user.role);
 
-  const buildQuery = (collectionName: string) => {
-    if (!firestore || !user) return null;
-    const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
-        constraints.push(where('zone', '==', zone));
-    }
-    return query(collection(firestore, collectionName), ...constraints);
-  };
+  const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...(buildQuery('empresas_colaboradoras') || [])) : null, [firestore, buildQuery]);
+  const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...(buildQuery('instaladores') || [])) : null, [firestore, buildQuery]);
+  const managersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...(buildQuery('gestores_expansion') || [])) : null, [firestore, buildQuery]);
+  const qualityQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_control_calidad'), ...(buildQuery('empresas_control_calidad') || [])) : null, [firestore, buildQuery]);
+  const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...(buildQuery('inspectores') || [])) : null, [firestore, buildQuery]);
+  const sectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...(buildQuery('sectores') || [])) : null, [firestore, buildQuery]);
+  const metersQuery = useMemo(() => firestore ? query(collection(firestore, 'medidores'), ...(buildQuery('medidores') || [])) : null, [firestore, buildQuery]);
   
-  const collaboratorsQuery = useMemo(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
-  
-  const installersQuery = useMemo(() => buildQuery('instaladores'), [firestore, user, zone]);
   const { data: installers } = useCollection<Installer>(installersQuery);
-
-  const managersQuery = useMemo(() => buildQuery('gestores_expansion'), [firestore, user, zone]);
   const { data: expansionManagers } = useCollection<ExpansionManager>(managersQuery);
-  
-  const qualityQuery = useMemo(() => buildQuery('empresas_control_calidad'), [firestore, user, zone]);
   const { data: qualityCompanies } = useCollection<QualityControlCompany>(qualityQuery);
-  
-  const inspectorsQuery = useMemo(() => buildQuery('inspectores'), [firestore, user, zone]);
   const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
-  
-  const sectorsQuery = useMemo(() => buildQuery('sectores'), [firestore, user, zone]);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
-  
-  const metersQuery = useMemo(() => buildQuery('medidores'), [firestore, user, zone]);
   const { data: meters } = useCollection<Meter>(metersQuery);
 
 

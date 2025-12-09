@@ -160,7 +160,7 @@ interface RecordsTableProps {
 }
 
 export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTableProps) {
-  const { user, zone, reprogramInspection } = useAppContext();
+  const { user, zone, reprogramInspection, buildQuery } = useAppContext();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -178,35 +178,11 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
   const topScrollRef = useRef<HTMLDivElement>(null);
   const bottomScrollRef = useRef<HTMLDivElement>(null);
 
-  const buildQuery = (collectionName: string) => {
-    if (!firestore || !user) return null;
-    const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
-        constraints.push(where('zone', '==', zone));
-    }
-    return query(collection(firestore, collectionName), ...constraints);
-  };
-
-  const inspectionsQuery = useMemo(() => {
-    if (!firestore || !user) return null;
-    const constraints: QueryConstraint[] = [];
-    if (user.role !== ROLES.ADMIN && zone !== 'Todas las zonas') {
-        constraints.push(where('zone', '==', zone));
-    }
-    return query(collection(firestore, 'inspections'), ...constraints);
-  }, [firestore, user, zone]);
-
-  
-  const expansionManagersQuery = useMemo(() => buildQuery('gestores_expansion'), [firestore, user, zone]);
-  const collaboratorsQuery = useMemo(() => buildQuery('empresas_colaboradoras'), [firestore, user, zone]);
-  const sectorsQuery = useMemo(() => buildQuery('sectores'), [firestore, user, zone]);
-  const inspectorsQuery = useMemo(() => buildQuery('inspectores'), [firestore, user, zone]);
-  
-  const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
-  const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
-  const { data: sectors } = useCollection<Sector>(sectorsQuery);
-  const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
-  const { data: records, isLoading } = useCollection<InspectionRecord>(inspectionsQuery);
+  const { data: expansionManagers } = useCollection<ExpansionManager>(useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...(buildQuery('gestores_expansion') || [])) : null, [firestore, buildQuery]));
+  const { data: collaborators } = useCollection<CollaboratorCompany>(useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...(buildQuery('empresas_colaboradoras') || [])) : null, [firestore, buildQuery]));
+  const { data: sectors } = useCollection<Sector>(useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...(buildQuery('sectores') || [])) : null, [firestore, buildQuery]));
+  const { data: inspectors } = useCollection<Inspector>(useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...(buildQuery('inspectores') || [])) : null, [firestore, buildQuery]));
+  const { data: records, isLoading } = useCollection<InspectionRecord>(useMemo(() => firestore ? query(collection(firestore, 'inspections'), ...(buildQuery('inspections') || [])) : null, [firestore, buildQuery]));
 
   const filteredRecords = useMemo(() => {
     if (!records) return [];

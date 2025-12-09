@@ -16,6 +16,7 @@ export const ZONES = [
   'Zona Centro',
   'Bajio Norte',
   'Bajio Sur',
+  'Bajios',
   'Todas las zonas',
 ] as const;
 export type Zone = (typeof ZONES)[number];
@@ -104,4 +105,17 @@ export type NewMeterRequest = {
   marca: string;
   tipo: string;
   date: Date;
+}
+
+export type ChangeHistory = {
+  id: string;
+  inspectionId: string;
+  timestamp: string;
+  userId: string;
+  username: string;
+  changes: {
+    field: string;
+    oldValue: string;
+    newValue: string;
+  }[];
 }
