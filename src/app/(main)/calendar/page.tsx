@@ -140,18 +140,19 @@ const nonAdminRolesWithZoneFilter = [
 ];
 
 const getInspectionDurationInHours = (record: InspectionRecord): number => {
-    if (record.id.includes("INSP-PS") || record.id.includes("SF")) {
+    // Individual PES and Reprogrammed PES are 2 hours
+    if ((record.id.startsWith("INSP-PS") || record.id.startsWith("INSP-RP")) && record.tipoInspeccion === 'Programacion PES') {
         return 2;
     }
+    // Massive PES is 2 hours for the whole block
     if (record.id.includes("INSP-IM") && record.tipoInspeccion === 'Programacion PES') {
-        return 2; // Duration for the whole massive block
+        return 2; 
     }
-     if (record.id.startsWith("INSP-RP")) {
-        if (record.tipoInspeccion === 'Programacion PES') {
-            return 2;
-        }
+    // All other special reprogrammed inspections are 1 hour
+    if (record.id.startsWith("INSP-RP")) {
         return 1;
     }
+    // All other inspections are 1 hour by default
     return 1;
 };
 
@@ -318,14 +319,16 @@ export default function CalendarPage() {
    const inspectionsByTime = useMemo(() => {
     const inspections: Record<string, typeof filteredRecordsForView> = {};
     if (!filteredRecordsForView) return inspections;
+
     filteredRecordsForView.forEach((record) => {
       if (!record.requestDate || !record.horarioProgramacion) return;
-      const [hour] = record.horarioProgramacion.split(':');
+      
       const dateTimeString = `${record.requestDate}T${record.horarioProgramacion}`;
       const recordDateTime = parseISO(dateTimeString);
       
       if (!isValid(recordDateTime)) return; // Skip if date is not valid
 
+      const [hour] = record.horarioProgramacion.split(':');
       const dateKey = format(recordDateTime, 'yyyy-MM-dd');
       const dateTimeKey = `${dateKey}-${hour.padStart(2, '0')}`;
       if (!inspections[dateTimeKey]) {
