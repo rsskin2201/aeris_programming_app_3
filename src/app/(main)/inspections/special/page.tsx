@@ -87,11 +87,11 @@ export default function SpecialInspectionPage() {
 
   const fromParam = searchParams.get('from');
 
-  const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...(buildQuery('empresas_colaboradoras') || [])) : null, [firestore, buildQuery]);
-  const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...(buildQuery('instaladores') || [])) : null, [firestore, buildQuery]);
-  const managersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...(buildQuery('gestores_expansion') || [])) : null, [firestore, buildQuery]);
-  const sectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...(buildQuery('sectores') || [])) : null, [firestore, buildQuery]);
-  const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...(buildQuery('inspectores') || [])) : null, [firestore, buildQuery]);
+  const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...buildQuery('empresas_colaboradoras')) : null, [firestore, buildQuery]);
+  const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...buildQuery('instaladores')) : null, [firestore, buildQuery]);
+  const managersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...buildQuery('gestores_expansion')) : null, [firestore, buildQuery]);
+  const sectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...buildQuery('sectores')) : null, [firestore, buildQuery]);
+  const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...buildQuery('inspectores')) : null, [firestore, buildQuery]);
 
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
   const { data: installers } = useCollection<any>(installersQuery);
@@ -683,7 +683,7 @@ export default function SpecialInspectionPage() {
                     </FormItem>
                     )} />
                     <FormField control={form.control} name="horarioProgramacion" render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem>
                             <FormLabel>Horario Programación</FormLabel>
                             <FormControl>
                                 <Input type="time" {...field} />
