@@ -178,11 +178,11 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
   const topScrollRef = useRef<HTMLDivElement>(null);
   const bottomScrollRef = useRef<HTMLDivElement>(null);
 
-  const expansionManagersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...(buildQuery('gestores_expansion') || [])) : null, [firestore, buildQuery]);
-  const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...(buildQuery('empresas_colaboradoras') || [])) : null, [firestore, buildQuery]);
-  const sectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...(buildQuery('sectores') || [])) : null, [firestore, buildQuery]);
-  const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...(buildQuery('inspectores') || [])) : null, [firestore, buildQuery]);
-  const inspectionsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspections'), ...(buildQuery('inspections') || [])) : null, [firestore, buildQuery]);
+  const expansionManagersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...(buildQuery('gestores_expansion') ?? [])) : null, [firestore, buildQuery]);
+  const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...(buildQuery('empresas_colaboradoras') ?? [])) : null, [firestore, buildQuery]);
+  const sectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...(buildQuery('sectores') ?? [])) : null, [firestore, buildQuery]);
+  const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...(buildQuery('inspectores') ?? [])) : null, [firestore, buildQuery]);
+  const inspectionsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspections'), ...(buildQuery('inspections') ?? [])) : null, [firestore, buildQuery]);
 
   const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);

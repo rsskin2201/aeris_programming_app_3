@@ -323,12 +323,12 @@ export default function CalendarPage() {
     filteredRecordsForView.forEach((record) => {
       if (!record.requestDate || !record.horarioProgramacion) return;
       
+      const [hour] = record.horarioProgramacion.split(':');
       const dateTimeString = `${record.requestDate}T${record.horarioProgramacion}`;
       const recordDateTime = parseISO(dateTimeString);
       
       if (!isValid(recordDateTime)) return; // Skip if date is not valid
 
-      const [hour] = record.horarioProgramacion.split(':');
       const dateKey = format(recordDateTime, 'yyyy-MM-dd');
       const dateTimeKey = `${dateKey}-${hour.padStart(2, '0')}`;
       if (!inspections[dateTimeKey]) {

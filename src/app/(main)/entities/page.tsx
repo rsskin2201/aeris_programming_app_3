@@ -65,13 +65,13 @@ export default function EntitiesPage() {
   const canModify = user && canModifyRoles.includes(user.role);
   const canUpload = user && canUploadRoles.includes(user.role);
 
-  const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...(buildQuery('empresas_colaboradoras') || [])) : null, [firestore, buildQuery]);
-  const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...(buildQuery('instaladores') || [])) : null, [firestore, buildQuery]);
-  const managersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...(buildQuery('gestores_expansion') || [])) : null, [firestore, buildQuery]);
-  const qualityQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_control_calidad'), ...(buildQuery('empresas_control_calidad') || [])) : null, [firestore, buildQuery]);
-  const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...(buildQuery('inspectores') || [])) : null, [firestore, buildQuery]);
-  const sectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...(buildQuery('sectores') || [])) : null, [firestore, buildQuery]);
-  const metersQuery = useMemo(() => firestore ? query(collection(firestore, 'medidores'), ...(buildQuery('medidores') || [])) : null, [firestore, buildQuery]);
+  const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...(buildQuery('empresas_colaboradoras') ?? [])) : null, [firestore, buildQuery]);
+  const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...(buildQuery('instaladores') ?? [])) : null, [firestore, buildQuery]);
+  const managersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...(buildQuery('gestores_expansion') ?? [])) : null, [firestore, buildQuery]);
+  const qualityQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_control_calidad'), ...(buildQuery('empresas_control_calidad') ?? [])) : null, [firestore, buildQuery]);
+  const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...(buildQuery('inspectores') ?? [])) : null, [firestore, buildQuery]);
+  const sectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...(buildQuery('sectores') ?? [])) : null, [firestore, buildQuery]);
+  const metersQuery = useMemo(() => firestore ? query(collection(firestore, 'medidores'), ...(buildQuery('medidores') ?? [])) : null, [firestore, buildQuery]);
   
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
   const { data: installers } = useCollection<Installer>(installersQuery);
