@@ -1,19 +1,19 @@
 'use client';
 
 import { useMemo, useState } from "react";
-import { collection, query, where, QueryConstraint } from "firebase/firestore";
+import { collection, query, where, QueryConstraint, doc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, PlusCircle, Settings, Upload } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, PlusCircle, Settings, Upload, Trash2, AlertTriangle } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { CollaboratorCompanyForm } from "@/components/entities/collaborator-company-form";
 import { QualityControlCompanyForm } from "@/components/entities/quality-control-company-form";
 import { InspectorForm } from "@/components/entities/inspector-form";
 import { InstallerForm } from "@/components/entities/installer-form";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import type { CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter } from "@/lib/mock-data";
 import { ExpansionManagerForm } from "@/components/entities/expansion-manager-form";
 import { SectorForm } from "@/components/entities/sector-form";
@@ -23,6 +23,8 @@ import { useCollection, useFirestore } from "@/firebase";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { PERMISSIONS, ROLES } from "@/lib/types";
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useToast } from "@/hooks/use-toast";
 
 
 const entities = [
@@ -41,10 +43,12 @@ const statusColors: Record<string, string> = {
 const viewOnlyRoles = [ROLES.VISUAL];
 const canModifyRoles = [ROLES.ADMIN, ROLES.CANALES];
 const canUploadRoles = [ROLES.ADMIN, ROLES.CANALES];
+const canDeleteRoles = [ROLES.ADMIN];
 
 export default function EntitiesPage() {
   const { user, zone, buildQuery } = useAppContext();
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const [collaboratorDialogOpen, setCollaboratorDialogOpen] = useState(false);
   const [qualityDialogOpen, setQualityDialogOpen] = useState(false);
@@ -62,8 +66,12 @@ export default function EntitiesPage() {
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
   const [selectedMeter, setSelectedMeter] = useState<Meter | null>(null);
   
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [entityToDelete, setEntityToDelete] = useState<{ id: string; name: string; collection: string; statusField: string; } | null>(null);
+
   const canModify = user && canModifyRoles.includes(user.role);
   const canUpload = user && canUploadRoles.includes(user.role);
+  const canDelete = user && canDeleteRoles.includes(user.role);
 
   const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...buildQuery('empresas_colaboradoras')) : null, [firestore, buildQuery]);
   const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...buildQuery('instaladores')) : null, [firestore, buildQuery]);
@@ -152,9 +160,30 @@ export default function EntitiesPage() {
     setMeterDialogOpen(true);
   };
 
-  const handleStatusChange = (item: any, newStatus: string) => {
-    // Logic to change status, maybe with a confirmation dialog
-    alert(`Cambiando estatus de ${item.name || item.sector} a ${newStatus}`);
+  const handleOpenDeleteDialog = (item: any, collectionName: string, statusField: string = 'status') => {
+    setEntityToDelete({ id: item.id, name: item.name || item.sector, collection: collectionName, statusField });
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const handleConfirmDelete = () => {
+    if (!entityToDelete || !firestore) return;
+
+    const { id, collection, name, statusField } = entityToDelete;
+    const docRef = doc(firestore, collection, id);
+
+    // Determine the 'disabled' status based on the status field name or a default
+    const newStatus = statusField === 'status' ? 'Inactivo' : 'Deshabilitado';
+
+    updateDocumentNonBlocking(docRef, { [statusField]: newStatus });
+
+    toast({
+        variant: "destructive",
+        title: "Entidad Desactivada",
+        description: `La entidad "${name}" ha sido marcada como inactiva y no aparecerá en nuevas selecciones.`,
+    });
+
+    setIsDeleteDialogOpen(false);
+    setEntityToDelete(null);
   };
 
   return (
@@ -230,7 +259,6 @@ export default function EntitiesPage() {
                                   </TableCell>
                                   <TableCell className="py-2 px-4">{item.created_at}</TableCell>
                                   <TableCell className="py-2 px-4 text-right">
-                                      {canModify && (
                                         <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -240,13 +268,12 @@ export default function EntitiesPage() {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                            <DropdownMenuItem onClick={() => handleEditCollaborator(item)}>Editar</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activa')} className="text-green-600">Activar</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactiva')} className="text-yellow-600">Poner Inactiva</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitada')} className="text-red-600">Deshabilitar</DropdownMenuItem>
+                                            {canModify && <DropdownMenuItem onClick={() => handleEditCollaborator(item)}>Editar</DropdownMenuItem>}
+                                            {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'empresas_colaboradoras')}>
+                                                <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                            </DropdownMenuItem></>}
                                         </DropdownMenuContent>
                                         </DropdownMenu>
-                                      )}
                                   </TableCell>
                                </TableRow>
                           ))}
@@ -303,7 +330,6 @@ export default function EntitiesPage() {
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="py-2 px-4 text-right">
-                           {canModify && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -313,13 +339,12 @@ export default function EntitiesPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleEditInstaller(item)}>Editar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activo')} className="text-green-600">Activar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactivo')} className="text-yellow-600">Poner Inactivo</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
+                                {canModify && <DropdownMenuItem onClick={() => handleEditInstaller(item)}>Editar</DropdownMenuItem>}
+                                {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'instaladores')}>
+                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
-                           )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -376,8 +401,7 @@ export default function EntitiesPage() {
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="py-2 px-4 text-right">
-                           {canModify && (
-                            <DropdownMenu>
+                           <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
                                   <MoreHorizontal className="h-4 w-4" />
@@ -386,13 +410,12 @@ export default function EntitiesPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleEditManager(item)}>Editar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activo')} className="text-green-600">Activar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactivo')} className="text-yellow-600">Poner Inactivo</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
+                                {canModify && <DropdownMenuItem onClick={() => handleEditManager(item)}>Editar</DropdownMenuItem>}
+                                {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'gestores_expansion')}>
+                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
-                           )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -447,8 +470,7 @@ export default function EntitiesPage() {
                           </TableCell>
                           <TableCell className="py-2 px-4">{item.created_at}</TableCell>
                           <TableCell className="py-2 px-4 text-right">
-                           {canModify && (
-                            <DropdownMenu>
+                           <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
                                   <MoreHorizontal className="h-4 w-4" />
@@ -457,13 +479,12 @@ export default function EntitiesPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleEditQualityCompany(item)}>Editar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activa')} className="text-green-600">Activar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactiva')} className="text-yellow-600">Poner Inactiva</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitada')} className="text-red-600">Deshabilitar</DropdownMenuItem>
+                                {canModify && <DropdownMenuItem onClick={() => handleEditQualityCompany(item)}>Editar</DropdownMenuItem>}
+                                {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'empresas_control_calidad')}>
+                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
-                           )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -520,8 +541,7 @@ export default function EntitiesPage() {
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="py-2 px-4 text-right">
-                           {canModify && (
-                            <DropdownMenu>
+                           <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
                                   <MoreHorizontal className="h-4 w-4" />
@@ -530,13 +550,12 @@ export default function EntitiesPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleEditInspector(item)}>Editar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activo')} className="text-green-600">Activar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactivo')} className="text-yellow-600">Poner Inactivo</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
+                                {canModify && <DropdownMenuItem onClick={() => handleEditInspector(item)}>Editar</DropdownMenuItem>}
+                                {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'inspectores')}>
+                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
-                           )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -593,7 +612,6 @@ export default function EntitiesPage() {
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="py-2 px-4 text-right">
-                            {canModify && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -603,13 +621,12 @@ export default function EntitiesPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleEditSector(item)}>Editar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activo')} className="text-green-600">Activar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactivo')} className="text-yellow-600">Poner Inactivo</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Deshabilitado')} className="text-red-600">Deshabilitar</DropdownMenuItem>
+                                {canModify && <DropdownMenuItem onClick={() => handleEditSector(item)}>Editar</DropdownMenuItem>}
+                                {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'sectores')}>
+                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
-                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -662,7 +679,6 @@ export default function EntitiesPage() {
                             <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
                           </TableCell>
                           <TableCell className="py-2 px-4 text-right">
-                            {canModify && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -672,12 +688,12 @@ export default function EntitiesPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleEditMeter(item)}>Editar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Activo')} className="text-green-600">Activar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange(item, 'Inactivo')} className="text-yellow-600">Poner Inactivo</DropdownMenuItem>
+                                {canModify && <DropdownMenuItem onClick={() => handleEditMeter(item)}>Editar</DropdownMenuItem>}
+                                {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'medidores')}>
+                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
-                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -691,6 +707,27 @@ export default function EntitiesPage() {
           </TabsContent>
 
         </Tabs>
+
+         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="text-destructive"/>
+                        Confirmar Eliminación
+                    </DialogTitle>
+                    <DialogDescription>
+                        ¿Estás seguro de que quieres eliminar la entidad <strong className="text-foreground">{entityToDelete?.name}</strong>?
+                        Esta acción no borrará el registro, sino que lo marcará como inactivo para que no pueda ser seleccionado en el futuro, preservando los datos históricos.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="ghost">Cancelar</Button>
+                    </DialogClose>
+                    <Button variant="destructive" onClick={handleConfirmDelete}>Sí, Eliminar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }
