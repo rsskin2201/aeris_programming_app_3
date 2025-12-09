@@ -19,7 +19,7 @@ import { MARCA_MDD, TIPO_MDD, SI_NO, MATERIAL_TUBERIA, EQUIPO, FORMA_PAGO, MOTIV
 import { ScrollArea } from "../ui/scroll-area";
 import { ROLES, STATUS } from "@/lib/types";
 import { useCollection, useFirestore } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { collection, query } from "firebase/firestore";
 
 const formSchema = z.object({
   serieMdd: z.string().min(1, "Requerido"),
@@ -93,7 +93,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
     const [newMeterBrand, setNewMeterBrand] = useState('');
     const [newMeterType, setNewMeterType] = useState('');
     
-    const metersQuery = useMemo(() => collection(firestore, 'medidores'), [firestore]);
+    const metersQuery = useMemo(() => firestore ? query(collection(firestore, 'medidores')) : null, [firestore]);
     const { data: meters } = useCollection<Meter>(metersQuery);
 
     const canRequestMeter = user?.role === ROLES.CALIDAD || user?.role === ROLES.ADMIN;

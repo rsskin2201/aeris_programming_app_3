@@ -20,7 +20,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { ZONES } from '@/lib/types';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 
@@ -47,7 +47,7 @@ export function InstallerForm({ installer, onClose }: InstallerFormProps) {
   const { user } = useAppContext();
   const firestore = useFirestore();
 
-  const collaboratorsQuery = useMemo(() => firestore ? collection(firestore, 'empresas_colaboradoras') : null, [firestore]);
+  const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras')) : null, [firestore]);
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
 
   const isEditMode = !!installer;
