@@ -29,9 +29,9 @@ import { SupportValidationForm } from "@/components/inspections/support-validati
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useCollection, useDoc, useFirestore } from "@/firebase";
-import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, query, where, QueryConstraint } from "firebase/firestore";
+import { addDoc, collection, doc, query, where } from "firebase/firestore";
 import { ChangeHistoryViewer } from "@/components/inspections/change-history-viewer";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -439,7 +439,7 @@ export default function IndividualInspectionPage() {
       };
 
       const historyCollectionRef = collection(firestore, `inspections/${currentRecord.id}/history`);
-      addDocumentNonBlocking(historyCollectionRef, historyRecord);
+      addDoc(historyCollectionRef, historyRecord);
     }
   };
 
