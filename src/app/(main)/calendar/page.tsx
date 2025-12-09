@@ -51,6 +51,7 @@ import {
   getDay,
   isWithinInterval,
   parseISO,
+  isValid,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ROLES, Status, STATUS } from '@/lib/types';
@@ -302,13 +303,14 @@ export default function CalendarPage() {
     if (!filteredRecordsForView) return inspections;
     filteredRecordsForView.forEach((record) => {
       if (!record.requestDate) return;
-      // Use parseISO to handle the string date correctly, assuming it's local time.
-      const recordDate = parseISO(`${record.requestDate}T00:00:00`);
-      const dateKey = format(recordDate, 'yyyy-MM-dd');
-      if (!inspections[dateKey]) {
-        inspections[dateKey] = [];
+      const recordDate = parse(record.requestDate, 'yyyy-MM-dd', new Date());
+      if (isValid(recordDate)) {
+        const dateKey = format(recordDate, 'yyyy-MM-dd');
+        if (!inspections[dateKey]) {
+          inspections[dateKey] = [];
+        }
+        inspections[dateKey].push(record);
       }
-      inspections[dateKey].push(record);
     });
     return inspections;
   }, [filteredRecordsForView]);
@@ -319,9 +321,11 @@ export default function CalendarPage() {
     filteredRecordsForView.forEach((record) => {
       if (!record.requestDate || !record.horarioProgramacion) return;
       const [hour] = record.horarioProgramacion.split(':');
-      // Combine date and time into a single ISO-like string for correct local time parsing.
-      const dateTimeString = `${record.requestDate}T${record.horarioProgramacion}:00`;
+      const dateTimeString = `${record.requestDate}T${record.horarioProgramacion}`;
       const recordDateTime = parseISO(dateTimeString);
+      
+      if (!isValid(recordDateTime)) return; // Skip if date is not valid
+
       const dateKey = format(recordDateTime, 'yyyy-MM-dd');
       const dateTimeKey = `${dateKey}-${hour.padStart(2, '0')}`;
       if (!inspections[dateTimeKey]) {
