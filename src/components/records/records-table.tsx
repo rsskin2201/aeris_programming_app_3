@@ -49,7 +49,7 @@ const initialFilters = {
 };
 
 const viewOnlyRoles = [ROLES.CANALES, ROLES.VISUAL];
-const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD];
+const canModifyRoles = [ROLES.ADMIN, ROLES.SOPORTE, ROLES.GESTOR, ROLES.COLABORADOR, ROLES.CALIDAD, ROLES.COORDINADOR_SSPP];
 const canExportRoles = Object.values(ROLES);
 const canExportAllRoles = [ROLES.ADMIN, ROLES.COORDINADOR_SSPP];
 const reprogrammableStatuses: Status[] = [STATUS.CANCELADA, STATUS.NO_APROBADA, STATUS.RECHAZADA];
