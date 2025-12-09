@@ -28,6 +28,7 @@ import {
   Files,
   FileCheck2,
   Users,
+  Building,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppContext } from '@/hooks/use-app-context';
@@ -91,7 +92,25 @@ const daysOfWeek = [
   'Sábado',
   'Domingo',
 ];
-const hoursOfDay = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+
+const hoursOfDay = Array.from({ length: 24 }, (_, i) => {
+    const hour = i % 12 === 0 ? 12 : i % 12;
+    const ampm = i < 12 ? 'AM' : 'PM';
+    return `${hour}:00 ${ampm}`;
+});
+
+// Helper to convert 12-hour format string to a 24-hour number
+const parse12HourFormat = (hourStr: string): number => {
+    const [time, modifier] = hourStr.split(' ');
+    let [hours] = time.split(':').map(Number);
+    if (hours === 12) {
+        hours = modifier === 'AM' ? 0 : 12;
+    } else if (modifier === 'PM') {
+        hours += 12;
+    }
+    return hours;
+};
+
 
 const statusColors: Record<Status, string> = {
     [STATUS.REGISTRADA]: 'bg-gray-500/80 border-gray-600 text-white',
@@ -163,9 +182,15 @@ const SlotInspectionsDialog = ({ inspections, date, hour, onOpenChange }: { insp
                                 <Badge variant="secondary" className="font-mono text-xs">{inspection.id}</Badge>
                             </div>
                             <p className="text-sm mt-1 truncate">{inspection.address}</p>
-                            <div className="flex items-center justify-between text-xs mt-2">
-                                <span>Inspector: {inspection.inspector || 'No asignado'}</span>
-                                <span className='font-semibold'>{inspection.status}</span>
+                            <div className="text-xs mt-3 space-y-1">
+                                <div className="flex items-center justify-between">
+                                    <span>Inspector: {inspection.inspector || 'No asignado'}</span>
+                                    <span className='font-semibold'>{inspection.status}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Building className='h-3 w-3'/>
+                                    <span className='truncate'>{inspection.collaboratorCompany || 'Empresa no especificada'}</span>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -353,7 +378,9 @@ export default function CalendarPage() {
   const handleInspectionTypeSelection = (type: 'individual' | 'massive' | 'special') => {
     if (!selectedSlot) return;
     const { date, hour } = selectedSlot;
-    const url = `/inspections/${type}?date=${format(date, 'yyyy-MM-dd')}&time=${hour}&from=calendar`;
+    const hour24 = parse12HourFormat(hour);
+    const timeParam = `${String(hour24).padStart(2, '0')}:00`;
+    const url = `/inspections/${type}?date=${format(date, 'yyyy-MM-dd')}&time=${timeParam}&from=calendar`;
     router.push(url);
     setIsSchedulingTypeDialogOpen(false);
     setSelectedSlot(null);
@@ -558,9 +585,9 @@ export default function CalendarPage() {
   );
   
 const renderInspectionsForSlot = (day: Date, hour: string) => {
-    const hourNumber = parseInt(hour.split(':')[0]);
+    const hourNumber24 = parse12HourFormat(hour);
     const dateKey = format(day, 'yyyy-MM-dd');
-    const slotKey = `${dateKey}-${String(hourNumber).padStart(2, '0')}`;
+    const slotKey = `${dateKey}-${String(hourNumber24).padStart(2, '0')}`;
     const slotInspections = inspectionsByTime[slotKey] || [];
 
     if (slotInspections.length === 0) return null;
@@ -589,11 +616,12 @@ const renderInspectionsForSlot = (day: Date, hour: string) => {
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <div className="p-1 text-sm">
+                    <div className="p-1 text-sm space-y-1">
                         <p className="font-bold">{inspection.tipoInspeccion}</p>
                         <p><strong>ID:</strong> {inspection.id}</p>
                         <p><strong>Dirección:</strong> {inspection.address}</p>
-                        <p><strong>Inspector:</strong> {inspection.inspector}</p>
+                        <p><strong>Inspector:</strong> {inspection.inspector || 'N/A'}</p>
+                        <p><strong>Empresa:</strong> <span className='truncate'>{inspection.collaboratorCompany || 'N/A'}</span></p>
                         <p><strong>Estatus:</strong> <span className='font-semibold'>{inspection.status}</span></p>
                         <p><strong>Duración:</strong> {duration}h</p>
                     </div>
@@ -626,18 +654,20 @@ const renderInspectionsForSlot = (day: Date, hour: string) => {
 
   const renderWeekView = () => (
     <div className="flex border-t">
-      <div className="w-16 flex-shrink-0 text-center text-xs">
-        {hoursOfDay.map((hour) => (
+      <div className="w-20 flex-shrink-0 text-center text-xs">
+        {hoursOfDay.map((hour) => {
+             const hourNumber24 = parse12HourFormat(hour);
+            return (
           <div
             key={hour}
             className={cn(
               "h-16 border-b pr-2 flex items-center justify-center text-muted-foreground",
-              (parseInt(hour) < 9 || parseInt(hour) >= 20) && "bg-muted/40"
+              (hourNumber24 < 9 || hourNumber24 >= 20) && "bg-muted/40"
             )}
           >
             {hour}
           </div>
-        ))}
+        )})}
       </div>
       <div className="grid grid-cols-7 flex-1">
         {weekDays.map((day) => {
@@ -652,8 +682,8 @@ const renderInspectionsForSlot = (day: Date, hour: string) => {
               )}
             >
               {hoursOfDay.map((hour) => {
-                 const hourNumber = parseInt(hour.split(':')[0]);
-                 const slotKey = `${dateKey}-${String(hourNumber).padStart(2, '0')}`;
+                 const hourNumber24 = parse12HourFormat(hour);
+                 const slotKey = `${dateKey}-${String(hourNumber24).padStart(2, '0')}`;
                  const slotInspections = inspectionsByTime[slotKey] || [];
                 return (
                     <div
@@ -665,7 +695,7 @@ const renderInspectionsForSlot = (day: Date, hour: string) => {
                         isSunday(day) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                         isSunday(day) && weekendsEnabled && 'bg-green-100/50',
                         isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
-                        (parseInt(hour) < 9 || parseInt(hour) >= 20) && 'bg-muted/40 hover:bg-muted/60'
+                        (hourNumber24 < 9 || hourNumber24 >= 20) && 'bg-muted/40 hover:bg-muted/60'
                     )}
                     >
                     {!isBlocked && renderInspectionsForSlot(day, hour)}
@@ -684,18 +714,20 @@ const renderInspectionsForSlot = (day: Date, hour: string) => {
     const isBlocked = !!blockedDays[dateKey];
     return (
     <div className="flex border-t">
-      <div className="w-16 flex-shrink-0 text-center text-xs">
-        {hoursOfDay.map((hour) => (
+      <div className="w-20 flex-shrink-0 text-center text-xs">
+        {hoursOfDay.map((hour) => {
+             const hourNumber24 = parse12HourFormat(hour);
+            return (
           <div
             key={hour}
             className={cn(
               "h-16 border-b pr-2 flex items-center justify-center text-muted-foreground",
-              (parseInt(hour) < 9 || parseInt(hour) >= 20) && "bg-muted/40"
+              (hourNumber24 < 9 || hourNumber24 >= 20) && "bg-muted/40"
             )}
           >
             {hour}
           </div>
-        ))}
+        )})}
       </div>
       <div className="flex-1">
         <div
@@ -706,8 +738,8 @@ const renderInspectionsForSlot = (day: Date, hour: string) => {
           )}
         >
           {hoursOfDay.map((hour) => {
-            const hourNumber = parseInt(hour.split(':')[0]);
-            const slotKey = `${dateKey}-${String(hourNumber).padStart(2, '0')}`;
+            const hourNumber24 = parse12HourFormat(hour);
+            const slotKey = `${dateKey}-${String(hourNumber24).padStart(2, '0')}`;
             const slotInspections = inspectionsByTime[slotKey] || [];
             return (
                  <div
@@ -719,7 +751,7 @@ const renderInspectionsForSlot = (day: Date, hour: string) => {
                         isSunday(currentDate) && !weekendsEnabled && 'bg-destructive/10 cursor-not-allowed hover:bg-destructive/10',
                         isSunday(currentDate) && weekendsEnabled && 'bg-green-100/50',
                         isBlocked && 'cursor-not-allowed hover:bg-muted-foreground/30',
-                        (parseInt(hour) < 9 || parseInt(hour) >= 20) && 'bg-muted/40 hover:bg-muted/60'
+                        (hourNumber24 < 9 || hourNumber24 >= 20) && 'bg-muted/40 hover:bg-muted/60'
                     )}
                     >
                     {!isBlocked && renderInspectionsForSlot(currentDate, hour)}
@@ -1022,7 +1054,7 @@ const renderInspectionsForSlot = (day: Date, hour: string) => {
           {view === 'week' && (
             <div className="overflow-x-auto">
               <div className="grid grid-cols-[auto,1fr] min-w-[900px]">
-                <div className="w-16 flex-shrink-0">&nbsp;</div>
+                <div className="w-20 flex-shrink-0">&nbsp;</div>
                 <div className="grid grid-cols-7">
                   {weekDays.map((day) => (
                     <div
