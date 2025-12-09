@@ -11,11 +11,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ZONES, ROLES, Zone } from '@/lib/types';
+import { ZONES, ROLES, Zone, AppNotification } from '@/lib/types';
 import { useAppContext } from '@/hooks/use-app-context';
 import type { Meter } from '@/lib/mock-data';
 import { useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, getDocs, query, collection, where, limit } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const formSchema = z.object({
@@ -42,7 +42,7 @@ const restrictedRoles = [
 
 export function MeterForm({ meter, onClose }: MeterFormProps) {
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, addNotification } = useAppContext();
   const firestore = useFirestore();
 
   const isEditMode = !!meter;
@@ -75,7 +75,7 @@ export function MeterForm({ meter, onClose }: MeterFormProps) {
     field.onChange(e.target.value.toUpperCase());
   }
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
     if (!firestore) return;
     const dataToSave: Meter = {
         ...values,
@@ -84,12 +84,42 @@ export function MeterForm({ meter, onClose }: MeterFormProps) {
     };
 
     const docRef = doc(firestore, 'medidores', dataToSave.id);
-    setDocumentNonBlocking(docRef, dataToSave, { merge: true });
+    await setDocumentNonBlocking(docRef, dataToSave, { merge: true });
 
     toast({
       title: isEditMode ? 'Medidor Actualizado' : 'Medidor Creado',
       description: `El medidor "${values.marca} - ${values.tipo}" se ha guardado.`,
     });
+    
+    // After creating, check for pending notifications and send a response
+    if (!isEditMode) {
+      const notificationsRef = collection(firestore, 'notifications');
+      const q = query(
+        notificationsRef, 
+        where('message', '==', 'Solicitud de Alta de Medidor'), 
+        where('details', '==', `Marca: ${values.marca}, Tipo: ${values.tipo}`),
+        limit(1)
+      );
+
+      try {
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((notificationDoc) => {
+          const originalNotification = notificationDoc.data() as AppNotification;
+          if (originalNotification.requesterId && originalNotification.requesterUsername) {
+            addNotification({
+              recipientId: originalNotification.requesterId,
+              recipientUsername: originalNotification.requesterUsername,
+              message: 'Medidor Dado de Alta',
+              details: `El medidor ${values.marca} - ${values.tipo} que solicitaste ya está disponible.`,
+            });
+            // Optional: Mark original notification as handled/read
+          }
+        });
+      } catch (e) {
+        console.error("Error finding original notification to respond:", e);
+      }
+    }
+
 
     onClose();
   }

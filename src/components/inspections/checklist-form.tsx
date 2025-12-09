@@ -200,11 +200,14 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         if (!newMeterBrand || !newMeterType || !user || !record) return;
 
         requestNewMeter({
+            requesterId: user.id,
+            requesterUsername: user.username,
             requesterName: user.name,
             requesterRole: user.role,
             zone: record.zone,
             marca: newMeterBrand,
             tipo: newMeterType,
+            details: `Marca: ${newMeterBrand}, Tipo: ${newMeterType}`,
         });
 
         toast({

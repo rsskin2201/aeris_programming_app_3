@@ -186,6 +186,16 @@ service cloud.firestore {
         allow delete: if false; // History is immutable
       }
     }
+    
+    /**
+     * @description Stores notifications for users and roles.
+     * @path /notifications/{notificationId}
+     */
+     match /notifications/{notificationId} {
+       allow read: if isSignedIn(); // Users can read notifications.
+       allow create: if isSignedIn(); // Any authenticated user can create a notification (e.g. request).
+       allow update, delete: if isAdmin(); // Only admins can modify or delete notifications.
+     }
 
     /**
      * @description Stores collaborating company records. Publicly readable, admin-only writes.

@@ -422,6 +422,26 @@
         }
       },
       "required": ["id", "inspectionId", "timestamp", "userId", "username", "changes"]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "Represents a notification for a user or role.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID for the notification." },
+        "recipientId": { "type": "string", "description": "Specific user ID to receive the notification." },
+        "recipientUsername": { "type": "string", "description": "Specific username to receive the notification." },
+        "recipientRole": { "type": "string", "description": "Role to receive the notification (e.g., 'Administrador')." },
+        "requesterId": { "type": "string", "description": "ID of the user who initiated the action causing the notification." },
+        "requesterUsername": { "type": "string", "description": "Username of the user who initiated the action." },
+        "message": { "type": "string", "description": "The main notification message." },
+        "details": { "type": "string", "description": "Additional details for the notification." },
+        "date": { "type": "string", "format": "date-time", "description": "Timestamp of when the notification was created." },
+        "read": { "type": "boolean", "description": "Flag indicating if the notification has been read." },
+        "link": { "type": "string", "description": "A URL link relevant to the notification." }
+      },
+      "required": ["id", "message", "date", "read"]
     }
   },
   "auth": {
@@ -592,6 +612,22 @@
             {
               "name": "medidorId",
               "description": "Unique identifier for the meter type."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/notifications/{notificationId}",
+        "definition": {
+          "entityName": "Notification",
+          "schema": {
+            "$ref": "#/backend/entities/Notification"
+          },
+          "description": "Stores user and role-based notifications.",
+          "params": [
+            {
+              "name": "notificationId",
+              "description": "Unique identifier for the notification."
             }
           ]
         }

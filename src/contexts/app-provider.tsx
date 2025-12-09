@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback, useEffect } from 'react';
-import { getDoc, doc, setDoc, collection, getDocs, query, where, QueryConstraint } from 'firebase/firestore';
+import { getDoc, doc, setDoc, collection, getDocs, query, where, QueryConstraint, addDoc } from 'firebase/firestore';
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest, NewMeterRequest, ChangeHistory } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS, STATUS } from '@/lib/types';
@@ -227,7 +227,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       read: false,
     };
     setNotifications(prev => [newNotification, ...prev]);
-  }, []);
+    // Persist notification to Firestore
+    if (firestore) {
+      addDoc(collection(firestore, 'notifications'), {
+        ...notificationData,
+        date: newNotification.date,
+        read: false,
+      });
+    }
+  }, [firestore]);
 
   const requestPasswordReset = useCallback((username: string, email: string) => {
     const resetRequest: PasswordResetRequest = {
@@ -244,15 +252,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [addNotification]);
   
   const requestNewMeter = useCallback((request: Omit<NewMeterRequest, 'id' | 'date'>) => {
+    const commonNotification = {
+        requesterId: request.requesterId,
+        requesterUsername: request.requesterUsername,
+        message: 'Solicitud de Alta de Medidor',
+        details: request.details,
+        link: `/entities#Medidores`,
+    };
     addNotification({
-        recipientRole: ROLES.ADMIN,
-        message: `Solicitud de Alta de Medidor`,
-        details: `Solicitante: ${request.requesterName} (${request.requesterRole}) | Zona: ${request.zone} | Marca: ${request.marca} | Tipo: ${request.tipo}`,
+      ...commonNotification,
+      recipientRole: ROLES.ADMIN,
     });
-     addNotification({
-        recipientRole: ROLES.COORDINADOR_SSPP,
-        message: `Solicitud de Alta de Medidor`,
-        details: `Solicitante: ${request.requesterName} (${request.requesterRole}) | Zona: ${request.zone} | Marca: ${request.marca} | Tipo: ${request.tipo}`,
+    addNotification({
+      ...commonNotification,
+      recipientRole: ROLES.COORDINADOR_SSPP,
     });
   }, [addNotification]);
 

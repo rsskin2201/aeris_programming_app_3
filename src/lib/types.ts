@@ -88,8 +88,11 @@ export type PasswordResetRequest = {
 
 export type AppNotification = {
     id: string;
+    recipientId?: string;
     recipientUsername?: string;
     recipientRole?: Role;
+    requesterId?: string;
+    requesterUsername?: string;
     message: string;
     details?: string;
     date: Date;
@@ -99,12 +102,15 @@ export type AppNotification = {
 
 export type NewMeterRequest = {
   id: string;
+  requesterId: string;
+  requesterUsername: string;
   requesterName: string;
   requesterRole: Role;
   zone: Zone;
   marca: string;
   tipo: string;
   date: Date;
+  details: string;
 }
 
 export type ChangeHistory = {

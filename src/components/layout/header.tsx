@@ -1,76 +1,50 @@
 'use client';
 
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+  Briefcase,
+  Calendar,
+  Check,
+  ChevronDown,
+  Clock,
+  FlaskConical,
+  Globe,
+  HelpCircle,
+  Home,
+  ListTodo,
+  LogOut,
+  Menu,
+  PieChart,
+  Settings,
+  User as UserIcon,
+  Users,
+} from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+import { useAppContext } from '@/hooks/use-app-context';
+import { cn } from '@/lib/utils';
+import { MODULES, PERMISSIONS, ROLES } from '@/lib/types';
+import { Badge } from '../ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
-  DropdownMenuSubContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  HelpCircle,
-  Home,
-  ChevronDown,
-  User as UserIcon,
-  Globe,
-  Briefcase,
-  Calendar,
-  ListTodo,
-  Settings,
-  PieChart,
-  Users,
-  LogOut,
-  Menu,
-  Copy,
-  Clock,
-  Bell,
-  Check,
-  FlaskConical,
-} from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAppContext } from '@/hooks/use-app-context';
-import { ROLES, MODULES } from '@/lib/types';
-import { ZoneSelector } from './zone-selector';
-import { Badge } from '../ui/badge';
-import { PERMISSIONS } from '@/lib/permissions';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { ScrollArea } from '../ui/scroll-area';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { cn } from '@/lib/utils';
-import { ScrollArea } from '../ui/scroll-area';
+import { ZoneSelector } from './zone-selector';
 
 const moduleIcons = {
   [MODULES.INSPECTIONS]: Briefcase,
@@ -85,8 +59,6 @@ const moduleIcons = {
 export default function Header() {
   const pathname = usePathname();
   const { user, operatorName, logout, notifications, markNotificationAsRead, devModeEnabled, toggleDevMode } = useAppContext();
-  const { toast } = useToast();
-  
 
   if (!user) return null;
 
@@ -131,6 +103,11 @@ export default function Header() {
                                   </Button>
                                 )}
                             </div>
+                             {n.link && (
+                                <Button asChild size="sm" className="w-full mt-2">
+                                  <Link href={n.link}>Gestionar</Link>
+                                </Button>
+                            )}
                         </div>
                       ))
                     )}
