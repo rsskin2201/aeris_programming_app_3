@@ -44,10 +44,10 @@ interface InspectorFormProps {
 
 export function InspectorForm({ inspector, onClose }: InspectorFormProps) {
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, buildQuery } = useAppContext();
   const firestore = useFirestore();
 
-  const qualityCompaniesQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_control_calidad')) : null, [firestore]);
+  const qualityCompaniesQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_control_calidad'), ...(buildQuery('empresas_control_calidad') || [])) : null, [firestore, buildQuery]);
   const { data: qualityCompanies } = useCollection<QualityControlCompany>(qualityCompaniesQuery);
 
   const isEditMode = !!inspector;

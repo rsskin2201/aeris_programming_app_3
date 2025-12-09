@@ -44,10 +44,10 @@ interface InstallerFormProps {
 
 export function InstallerForm({ installer, onClose }: InstallerFormProps) {
   const { toast } = useToast();
-  const { user } = useAppContext();
+  const { user, buildQuery } = useAppContext();
   const firestore = useFirestore();
 
-  const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras')) : null, [firestore]);
+  const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...(buildQuery('empresas_colaboradoras') || [])) : null, [firestore, buildQuery]);
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
 
   const isEditMode = !!installer;
