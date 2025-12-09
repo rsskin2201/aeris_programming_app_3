@@ -145,7 +145,7 @@ const getInspectionDurationInHours = (record: InspectionRecord): number => {
     if (record.id.includes("INSP-IM") && record.tipoInspeccion === 'Programacion PES') {
         return 2; // Duration for the whole massive block
     }
-    if (record.id.startsWith("INSP-RP")) {
+     if (record.id.startsWith("INSP-RP")) {
         if (record.tipoInspeccion === 'Programacion PES') {
             return 2;
         }
@@ -176,7 +176,7 @@ const SlotInspectionsDialog = ({ inspections, date, hour, onOpenChange }: { insp
             <div className="max-h-[60vh] overflow-y-auto">
                 <div className="space-y-3 p-1">
                     {inspections.map(inspection => (
-                        <div key={inspection.id} className={cn("p-4 rounded-lg border-l-4 cursor-pointer transition-colors duration-200 border-2 border-transparent hover:border-primary", statusColors[inspection.status])} onClick={() => handleViewRecord(inspection)}>
+                        <div key={inspection.id} className={cn("p-4 rounded-lg border-l-4 cursor-pointer transition-transform duration-200 border-2 border-transparent hover:border-primary hover:scale-95", statusColors[inspection.status])} onClick={() => handleViewRecord(inspection)}>
                             <div className="flex items-center justify-between">
                                 <p className="font-bold text-lg truncate">{inspection.tipoInspeccion}</p>
                                 <Badge variant="secondary" className="font-mono text-xs">{inspection.id}</Badge>
@@ -621,7 +621,7 @@ const renderInspectionsForSlot = (day: Date, hour: string) => {
                         <p><strong>ID:</strong> {inspection.id}</p>
                         <p><strong>Dirección:</strong> {inspection.address}</p>
                         <p><strong>Inspector:</strong> {inspection.inspector || 'N/A'}</p>
-                        <p><strong>Empresa:</strong> <span className='truncate'>{inspection.collaboratorCompany || 'N/A'}</span></p>
+                        <p><strong>Empresa:</strong> <span className='truncate text-white/80'>{inspection.collaboratorCompany || 'N/A'}</span></p>
                         <p><strong>Estatus:</strong> <span className='font-semibold'>{inspection.status}</span></p>
                         <p><strong>Duración:</strong> {duration}h</p>
                     </div>
