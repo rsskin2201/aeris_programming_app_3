@@ -141,11 +141,9 @@ export default function IndividualInspectionPage() {
 
   const getInitialStatus = (role: Role | undefined) => {
     if (pageMode !== 'new') return currentRecord?.status || '';
-    switch (role) {
-      case ROLES.GESTOR: return STATUS.CONFIRMADA_POR_GE;
-      case ROLES.COLABORADOR:
-      default: return STATUS.REGISTRADA;
-    }
+    if (role === ROLES.COLABORADOR) return STATUS.REGISTRADA;
+    if (role === ROLES.GESTOR) return STATUS.CONFIRMADA_POR_GE;
+    return STATUS.REGISTRADA;
   };
 
   const generateId = () => `INSP-PS-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
@@ -277,13 +275,13 @@ export default function IndividualInspectionPage() {
         return true;
     }
 
+    if (isCollaborator && fieldName === 'status') {
+      return true;
+    }
+
     if (pageMode === 'edit' && currentRecord) {
         const isClosed = [STATUS.APROBADA, STATUS.NO_APROBADA, STATUS.RECHAZADA, STATUS.CANCELADA, STATUS.CONECTADA, STATUS.FALTA_INFORMACION].includes(currentRecord.status as any);
         if (isClosed && user?.role !== ROLES.ADMIN) return true;
-
-        if (isCollaborator && fieldName === 'status') {
-            return true; // Can only change to CANCELADA via special action, not direct selection
-        }
 
         const now = new Date();
         const eighteenHoursBefore = set(parse(currentRecord.requestDate, 'yyyy-MM-dd', new Date()), { hours: -6 });
@@ -926,7 +924,7 @@ export default function IndividualInspectionPage() {
                     </FormItem>
                     )} />
                     <FormField control={form.control} name="horarioProgramacion" render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col">
                             <FormLabel>Horario Programación</FormLabel>
                             <FormControl>
                                 <Input type="time" {...field} disabled={isFieldDisabled('horarioProgramacion')} />

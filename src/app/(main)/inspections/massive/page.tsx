@@ -82,11 +82,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const getInitialStatus = (role: Role | undefined) => {
-    switch (role) {
-      case ROLES.GESTOR: return STATUS.CONFIRMADA_POR_GE;
-      case ROLES.COLABORADOR:
-      default: return STATUS.REGISTRADA;
-    }
+    if (role === ROLES.COLABORADOR) return STATUS.REGISTRADA;
+    if (role === ROLES.GESTOR) return STATUS.CONFIRMADA_POR_GE;
+    return STATUS.REGISTRADA;
 };
 
 const generateId = () => `INSP-IM-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
@@ -695,7 +693,7 @@ export default function MassiveInspectionPage() {
                     </FormItem>
                     )} />
                     <FormField control={form.control} name="horarioProgramacion" render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col">
                             <FormLabel>Horario Programación</FormLabel>
                             <FormControl>
                                 <Input type="time" {...field} />
