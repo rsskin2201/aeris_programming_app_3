@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Bell,
   Briefcase,
   Calendar,
   Check,
