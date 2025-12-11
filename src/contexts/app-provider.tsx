@@ -106,35 +106,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [auth, firestore]);
 
-  const seedUsers = useCallback(() => {
-    const passwords = {
-      [ROLES.ADMIN]: 'Admin.2024!',
-      [ROLES.GESTOR]: 'Gestor.2024!',
-      [ROLES.COLABORADOR]: 'Colab.2024!',
-      [ROLES.SOPORTE]: 'Soporte.2024!',
-      [ROLES.COORDINADOR_SSPP]: 'Coord.2024!',
-      [ROLES.CALIDAD]: 'Calidad.2024!',
-      [ROLES.CANALES]: 'Canales.2024!',
-      [ROLES.VISUAL]: 'Visual.2024!',
-    };
-
-    const usersToSeed = mockUsers.map(u => ({
-      ...u,
-      password: passwords[u.role] || 'Default.2024!',
-    }));
-    
-    addMultipleUsers(usersToSeed);
-    localStorage.setItem('users_seeded', 'true');
-    toast({ title: "Usuarios de demostración creados", description: "Puedes iniciar sesión con los usuarios de prueba."});
-
-  }, [addMultipleUsers, toast]);
-
-  useEffect(() => {
-    if (firestore && auth && !localStorage.getItem('users_seeded')) {
-      seedUsers();
-    }
-  }, [firestore, auth, seedUsers]);
-
+  
 
   useEffect(() => {
     const fetchUserProfile = async (uid: string) => {
@@ -320,25 +292,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsZoneConfirmed(true);
   }, []);
 
-  const addMultipleEntities = (collectionName: string) => (data: any[]) => {
+  const addMultipleEntities = (collectionName: string, idPrefix: string) => (data: any[]) => {
     if (!firestore) return;
     data.forEach(item => {
-        if (!item.id) {
-            console.warn("Skipping item without ID in bulk add:", item);
-            return;
-        }
-        const docRef = doc(firestore, collectionName, item.id);
-        setDocumentNonBlocking(docRef, item, { merge: true });
+        const entityId = item.id || `${idPrefix}-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        const docRef = doc(firestore, collectionName, entityId);
+        setDocumentNonBlocking(docRef, { ...item, id: entityId }, { merge: true });
     });
   };
 
-  const addMultipleCollaborators = addMultipleEntities('empresas_colaboradoras');
-  const addMultipleQualityControlCompanies = addMultipleEntities('empresas_control_calidad');
-  const addMultipleInspectors = addMultipleEntities('inspectores');
-  const addMultipleInstallers = addMultipleEntities('instaladores');
-  const addMultipleExpansionManagers = addMultipleEntities('gestores_expansion');
-  const addMultipleSectors = addMultipleEntities('sectores');
-  const addMultipleMeters = addMultipleEntities('medidores');
+  const addMultipleCollaborators = addMultipleEntities('empresas_colaboradoras', 'EC');
+  const addMultipleQualityControlCompanies = addMultipleEntities('empresas_control_calidad', 'ECC');
+  const addMultipleInspectors = addMultipleEntities('inspectores', 'INSP');
+  const addMultipleInstallers = addMultipleEntities('instaladores', 'INST');
+  const addMultipleExpansionManagers = addMultipleEntities('gestores_expansion', 'GE');
+  const addMultipleSectors = addMultipleEntities('sectores', 'SEC');
+  const addMultipleMeters = addMultipleEntities('medidores', 'MDD');
   
   const buildQuery = useCallback((collectionName: string): QueryConstraint[] => {
     if (!user) return [];

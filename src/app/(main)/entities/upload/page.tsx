@@ -28,7 +28,7 @@ const entityFields: Record<EntityType, FieldDefinition<any>[]> = {
         { key: 'status', label: 'Estatus', required: true },
     ],
     collaborators: [
-        { key: 'id', label: 'ID', required: true },
+        { key: 'id', label: 'ID' },
         { key: 'name', label: 'Nombre Empresa', required: true },
         { key: 'rfc', label: 'RFC', required: true },
         { key: 'zone', label: 'Zona', required: true },
@@ -36,7 +36,7 @@ const entityFields: Record<EntityType, FieldDefinition<any>[]> = {
         { key: 'created_at', label: 'Fecha Alta', required: true },
     ],
     quality: [
-        { key: 'id', label: 'ID', required: true },
+        { key: 'id', label: 'ID' },
         { key: 'name', label: 'Nombre Empresa', required: true },
         { key: 'rfc', label: 'RFC', required: true },
         { key: 'zone', label: 'Zona', required: true },
@@ -44,7 +44,7 @@ const entityFields: Record<EntityType, FieldDefinition<any>[]> = {
         { key: 'created_at', label: 'Fecha Alta', required: true },
     ],
     inspectors: [
-        { key: 'id', label: 'ID', required: true },
+        { key: 'id', label: 'ID' },
         { key: 'name', label: 'Nombre', required: true },
         { key: 'position', label: 'Puesto', required: true },
         { key: 'qualityCompany', label: 'Empresa Calidad', required: true },
@@ -55,7 +55,7 @@ const entityFields: Record<EntityType, FieldDefinition<any>[]> = {
         { key: 'zone', label: 'Zona', required: true },
     ],
     installers: [
-        { key: 'id', label: 'ID', required: true },
+        { key: 'id', label: 'ID' },
         { key: 'name', label: 'Nombre', required: true },
         { key: 'position', label: 'Puesto', required: true },
         { key: 'collaboratorCompany', label: 'Empresa Colaboradora', required: true },
@@ -66,7 +66,7 @@ const entityFields: Record<EntityType, FieldDefinition<any>[]> = {
         { key: 'zone', label: 'Zona', required: true },
     ],
     managers: [
-        { key: 'id', label: 'ID', required: true },
+        { key: 'id', label: 'ID' },
         { key: 'name', label: 'Nombre', required: true },
         { key: 'position', label: 'Puesto', required: true },
         { key: 'zone', label: 'Zona', required: true },
@@ -76,7 +76,7 @@ const entityFields: Record<EntityType, FieldDefinition<any>[]> = {
         { key: 'createdAt', label: 'Fecha Alta', required: true },
     ],
     sectors: [
-        { key: 'id', label: 'ID', required: true },
+        { key: 'id', label: 'ID' },
         { key: 'zone', label: 'Zona', required: true },
         { key: 'assignment', label: 'Asignación', required: true },
         { key: 'subAssignment', label: 'Sub-Asignación', required: true },
@@ -86,7 +86,7 @@ const entityFields: Record<EntityType, FieldDefinition<any>[]> = {
         { key: 'createdAt', label: 'Fecha Alta', required: true },
     ],
     meters: [
-        { key: 'id', label: 'ID', required: true },
+        { key: 'id', label: 'ID' },
         { key: 'marca', label: 'Marca', required: true },
         { key: 'tipo', label: 'Tipo', required: true },
         { key: 'zona', label: 'Zona', required: true },
