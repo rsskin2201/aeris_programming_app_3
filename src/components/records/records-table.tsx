@@ -14,7 +14,7 @@ import { es } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, Server, Loader2, RefreshCw } from "lucide-react";
+import { MoreHorizontal, Download, Filter, ChevronLeft, ChevronRight, CalendarIcon, Eye, Pencil, Server, Loader2, RefreshCw, Trash2, AlertTriangle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useAppContext } from '@/hooks/use-app-context';
 import { cn } from '@/lib/utils';
@@ -160,7 +160,7 @@ interface RecordsTableProps {
 }
 
 export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTableProps) {
-  const { user, zone, reprogramInspection, buildQuery } = useAppContext();
+  const { user, zone, reprogramInspection, cancelInspection, buildQuery } = useAppContext();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -170,8 +170,10 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState(initialFilters);
   const [isExporting, setIsExporting] = useState(false);
-  
+  const [recordToDelete, setRecordToDelete] = useState<InspectionRecord | null>(null);
+
   const canModify = user && canModifyRoles.includes(user.role);
+  const canDelete = user && user.role === ROLES.ADMIN;
   const canExport = user && canExportRoles.includes(user.role);
   const canExportAll = user && canExportAllRoles.includes(user.role);
   
@@ -192,7 +194,14 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
 
   const filteredRecords = useMemo(() => {
     if (!records) return [];
-    return records.filter(record => {
+    let tempRecords = records;
+
+    // Default filter for non-admins: hide canceled records unless explicitly requested
+    if (user?.role !== ROLES.ADMIN && !filters.status.includes(STATUS.CANCELADA)) {
+        tempRecords = tempRecords.filter(record => record.status !== STATUS.CANCELADA);
+    }
+    
+    return tempRecords.filter(record => {
       if (filters.id && !record.id.toLowerCase().includes(filters.id.toLowerCase())) return false;
       if (filters.gestor && record.gestor !== filters.gestor) return false;
       if (filters.inspector && record.inspector !== filters.inspector) return false;
@@ -208,7 +217,7 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
       if (filters.date?.to && parse(record.requestDate, 'yyyy-MM-dd', new Date()) > addDays(filters.date.to, 1)) return false;
       return true;
     });
-  }, [records, filters]);
+  }, [records, filters, user]);
   
   const totalPages = Math.ceil(filteredRecords.length / rowsPerPage);
 
@@ -332,6 +341,13 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
 
   const handleReprogram = (record: InspectionRecord) => {
     reprogramInspection(record);
+  };
+  
+  const handleDeleteConfirm = () => {
+    if (recordToDelete) {
+      cancelInspection(recordToDelete.id);
+      setRecordToDelete(null);
+    }
   };
 
   return (
@@ -612,6 +628,15 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
                                     </DropdownMenuItem>
                                 </>
                                 )}
+                                {canDelete && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setRecordToDelete(record)}>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Eliminar
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
                             </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>
@@ -649,6 +674,27 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
                 </div>
             </div>
         </div>
+
+        <Dialog open={!!recordToDelete} onOpenChange={(isOpen) => !isOpen && setRecordToDelete(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="text-destructive"/>
+                        Confirmar Eliminación
+                    </DialogTitle>
+                    <DialogDescription>
+                        ¿Estás seguro de que quieres eliminar la inspección <strong className="text-foreground font-mono">{recordToDelete?.id}</strong>?
+                        Esta acción cambiará su estatus a "CANCELADA" y no se podrá modificar, pero permanecerá en el sistema para fines de auditoría.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="ghost">Cancelar</Button>
+                    </DialogClose>
+                    <Button variant="destructive" onClick={handleDeleteConfirm}>Sí, Eliminar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </>
   );
 }

@@ -23,6 +23,7 @@ interface AppContextType {
   requestPasswordReset: (username: string, email: string) => void;
   requestNewMeter: (request: Omit<NewMeterRequest, 'id' | 'date'>) => void;
   reprogramInspection: (record: InspectionRecord) => void;
+  cancelInspection: (recordId: string) => void;
   buildQuery: (collectionName: string) => QueryConstraint[];
 
 
@@ -286,6 +287,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   }, [firestore, user, router, toast]);
 
+    const cancelInspection = useCallback((recordId: string) => {
+    if (!firestore || !user) return;
+    
+    const docRef = doc(firestore, 'inspections', recordId);
+    const updateData: Partial<InspectionRecord> = {
+      status: STATUS.CANCELADA,
+      lastModifiedBy: user.username,
+      lastModifiedAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+    };
+    
+    updateDocumentNonBlocking(docRef, updateData);
+    
+    toast({
+      variant: 'destructive',
+      title: 'Inspección Eliminada',
+      description: `El registro ${recordId} ha sido marcado como cancelado.`,
+    });
+  }, [firestore, user, toast]);
+
 
   const confirmZone = useCallback((newZone: Zone) => {
     setZone(newZone);
@@ -381,11 +401,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addMultipleSectors,
       addMultipleMeters,
       reprogramInspection,
+      cancelInspection,
       buildQuery,
     }),
     [
       user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters, reprogramInspection, buildQuery
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters, reprogramInspection, cancelInspection, buildQuery
     ]
   );
 
