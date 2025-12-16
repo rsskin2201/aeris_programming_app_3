@@ -75,6 +75,7 @@ export const STATUS = {
     CANCELADA: 'CANCELADA',
     FALTA_INFORMACION: 'FALTA INFORMACION',
     CONECTADA: 'CONECTADA',
+    DESCARTADO: 'DESCARTADO',
 } as const;
 
 export type Status = (typeof STATUS)[keyof typeof STATUS];

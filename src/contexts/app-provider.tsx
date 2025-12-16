@@ -292,7 +292,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     const docRef = doc(firestore, 'inspections', recordId);
     const updateData: Partial<InspectionRecord> = {
-      status: STATUS.CANCELADA,
+      status: STATUS.DESCARTADO,
       lastModifiedBy: user.username,
       lastModifiedAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
     };
@@ -301,8 +301,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     toast({
       variant: 'destructive',
-      title: 'Inspección Eliminada',
-      description: `El registro ${recordId} ha sido marcado como cancelado.`,
+      title: 'Inspección Descartada',
+      description: `El registro ${recordId} ha sido marcado como descartado.`,
     });
   }, [firestore, user, toast]);
 

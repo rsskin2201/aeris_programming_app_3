@@ -172,14 +172,14 @@ export default function EntitiesPage() {
     const docRef = doc(firestore, collection, id);
 
     // Determine the 'disabled' status based on the status field name or a default
-    const newStatus = statusField === 'status' ? 'Inactivo' : 'Deshabilitado';
+    const newStatus = 'Deshabilitado';
 
     updateDocumentNonBlocking(docRef, { [statusField]: newStatus });
 
     toast({
         variant: "destructive",
-        title: "Entidad Desactivada",
-        description: `La entidad "${name}" ha sido marcada como inactiva y no aparecerá en nuevas selecciones.`,
+        title: "Entidad Deshabilitada",
+        description: `La entidad "${name}" ha sido marcada como deshabilitada y no aparecerá en nuevas selecciones.`,
     });
 
     setIsDeleteDialogOpen(false);
@@ -713,18 +713,18 @@ export default function EntitiesPage() {
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <AlertTriangle className="text-destructive"/>
-                        Confirmar Eliminación
+                        Confirmar Acción
                     </DialogTitle>
                     <DialogDescription>
-                        ¿Estás seguro de que quieres eliminar la entidad <strong className="text-foreground">{entityToDelete?.name}</strong>?
-                        Esta acción no borrará el registro, sino que lo marcará como inactivo para que no pueda ser seleccionado en el futuro, preservando los datos históricos.
+                        ¿Estás seguro de que quieres deshabilitar la entidad <strong className="text-foreground">{entityToDelete?.name}</strong>?
+                        Esta acción no borrará el registro, sino que cambiará su estatus a "Deshabilitado" para que no pueda ser seleccionado en el futuro, preservando los datos históricos.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                     <DialogClose asChild>
                         <Button variant="ghost">Cancelar</Button>
                     </DialogClose>
-                    <Button variant="destructive" onClick={handleConfirmDelete}>Sí, Eliminar</Button>
+                    <Button variant="destructive" onClick={handleConfirmDelete}>Sí, Deshabilitar</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

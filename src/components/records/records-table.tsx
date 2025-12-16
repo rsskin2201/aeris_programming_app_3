@@ -196,9 +196,9 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
     if (!records) return [];
     let tempRecords = records;
 
-    // Default filter for non-admins: hide canceled records unless explicitly requested
-    if (user?.role !== ROLES.ADMIN && !filters.status.includes(STATUS.CANCELADA)) {
-        tempRecords = tempRecords.filter(record => record.status !== STATUS.CANCELADA);
+    // Default filter for non-admins: hide discarded records unless explicitly requested
+    if (user?.role !== ROLES.ADMIN && !filters.status.includes(STATUS.DESCARTADO)) {
+        tempRecords = tempRecords.filter(record => record.status !== STATUS.DESCARTADO);
     }
     
     return tempRecords.filter(record => {
@@ -613,7 +613,7 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
                                     <Eye className="mr-2 h-4 w-4" />
                                     Visualizar
                                 </DropdownMenuItem>
-                                {canModify && (user.role === ROLES.ADMIN || !(record.id.startsWith('SF-') && [STATUS.CANCELADA, STATUS.NO_APROBADA].includes(record.status as any))) && (
+                                {canModify && (user.role === ROLES.ADMIN || !(record.id.startsWith('SF-') && [STATUS.CANCELADA, STATUS.NO_APROBADA, STATUS.DESCARTADO].includes(record.status as any))) && (
                                     <DropdownMenuItem onClick={() => handleAction(record.id, 'edit')}>
                                         <Pencil className="mr-2 h-4 w-4" />
                                         Modificar
@@ -633,7 +633,7 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setRecordToDelete(record)}>
                                             <Trash2 className="mr-2 h-4 w-4" />
-                                            Eliminar
+                                            Descartar
                                         </DropdownMenuItem>
                                     </>
                                 )}
@@ -680,18 +680,18 @@ export function RecordsTable({ statusColors, page, rowsPerPage }: RecordsTablePr
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <AlertTriangle className="text-destructive"/>
-                        Confirmar Eliminación
+                        Confirmar Acción
                     </DialogTitle>
                     <DialogDescription>
-                        ¿Estás seguro de que quieres eliminar la inspección <strong className="text-foreground font-mono">{recordToDelete?.id}</strong>?
-                        Esta acción cambiará su estatus a "CANCELADA" y no se podrá modificar, pero permanecerá en el sistema para fines de auditoría.
+                        ¿Estás seguro de que quieres descartar la inspección <strong className="text-foreground font-mono">{recordToDelete?.id}</strong>?
+                        Esta acción cambiará su estatus a "DESCARTADO" y no se podrá modificar, pero permanecerá en el sistema para fines de auditoría.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                     <DialogClose asChild>
                         <Button variant="ghost">Cancelar</Button>
                     </DialogClose>
-                    <Button variant="destructive" onClick={handleDeleteConfirm}>Sí, Eliminar</Button>
+                    <Button variant="destructive" onClick={handleDeleteConfirm}>Sí, Descartar</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
