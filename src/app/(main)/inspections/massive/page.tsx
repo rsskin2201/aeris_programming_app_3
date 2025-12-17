@@ -186,6 +186,11 @@ export default function MassiveInspectionPage() {
     return false;
   };
 
+  const sortedCollaborators = useMemo(() => {
+    if (!collaborators) return [];
+    return [...collaborators].sort((a, b) => a.name.localeCompare(b.name));
+  }, [collaborators]);
+  
   const availableSectors = useMemo(() => {
     if (!sectors) return [];
     const activeSectors = sectors.filter(s => s.status === 'Activo');
@@ -680,7 +685,7 @@ export default function MassiveInspectionPage() {
                         <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('collaboratorCompany')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una empresa" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {collaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                            {sortedCollaborators?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />
