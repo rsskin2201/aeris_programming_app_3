@@ -412,13 +412,11 @@ export default function IndividualInspectionPage() {
 
   // --- Field Dependency Resets ---
   useEffect(() => {
-    // When sector changes, reset municipality and gestor
     form.setValue('municipality', '');
     form.setValue('gestor', '');
   }, [formData.sector, form]);
 
   useEffect(() => {
-    // When collaborator company changes, reset installer
     form.setValue('instalador', '');
   }, [formData.collaboratorCompany, form]);
 
