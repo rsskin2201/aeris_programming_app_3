@@ -370,7 +370,7 @@ export default function IndividualInspectionPage() {
         return a.sector.localeCompare(b.sector);
     });
   }, [sectors, zone]);
-
+  
   const selectedSectorData = useMemo(() => {
     if (!formData.sector || !sectors) return null;
     return sectors.find(s => s.id === formData.sector) || null;
@@ -411,20 +411,6 @@ export default function IndividualInspectionPage() {
 
 
   // --- Field Dependency Resets ---
-  useEffect(() => {
-    const currentManagerIsValid = availableManagers.some(m => m.name === formData.gestor);
-    if (!currentManagerIsValid) {
-      form.setValue('gestor', '');
-    }
-  }, [availableManagers, formData.gestor, form]);
-
-  useEffect(() => {
-    const currentMunicipalityIsValid = availableMunicipalities.some(m => m.nombre === formData.municipality);
-    if (!currentMunicipalityIsValid) {
-      form.setValue('municipality', '');
-    }
-  }, [availableMunicipalities, formData.municipality, form]);
-  
   useEffect(() => {
     // When sector changes, reset municipality and gestor
     form.setValue('municipality', '');
