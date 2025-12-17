@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { useCollection, useDoc, useFirestore, FirestorePermissionError, errorEmitter } from "@/firebase";
 import { collection, doc, query, where, setDoc } from "firebase/firestore";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { getMunicipiosBySector } from "@/lib/municipios-por-sector";
 
 const inspectionDetailSchema = z.object({
   id: z.string(),
@@ -109,14 +110,12 @@ export default function MassiveInspectionPage() {
   const expansionManagersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...buildQuery('gestores_expansion')) : null, [firestore, buildQuery]);
   const sectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...buildQuery('sectores')) : null, [firestore, buildQuery]);
   const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...buildQuery('inspectores')) : null, [firestore, buildQuery]);
-  const municipiosQuery = useMemo(() => firestore ? query(collection(firestore, 'municipios'), ...buildQuery('municipios')) : null, [firestore, buildQuery]);
   
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
   const { data: installers } = useCollection<any>(installersQuery);
   const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
   const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
-  const { data: municipios } = useCollection<Municipio>(municipiosQuery);
 
   const fromParam = searchParams.get('from');
 
@@ -219,9 +218,9 @@ export default function MassiveInspectionPage() {
   }, [formData.sector, sectors]);
 
   const availableMunicipalities = useMemo(() => {
-    if (!municipios || !selectedSectorData) return [];
-    return municipios.filter(m => m.sectorId === selectedSectorData.id && m.status === 'Activo');
-  }, [municipios, selectedSectorData]);
+    if (!selectedSectorData) return [];
+    return getMunicipiosBySector(selectedSectorData.sector);
+  }, [selectedSectorData]);
   
   const availableManagers = useMemo(() => {
       if (!expansionManagers || !selectedSectorData) return [];
@@ -474,7 +473,7 @@ export default function MassiveInspectionPage() {
                         <Select onValueChange={field.onChange} value={field.value || ''} disabled={!formData.sector}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un municipio" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {availableMunicipalities.map(m => <SelectItem key={m.id} value={m.nombre}>{m.nombre}</SelectItem>)}
+                          {availableMunicipalities.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />
