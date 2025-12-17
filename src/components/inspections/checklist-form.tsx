@@ -160,15 +160,27 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
         mode: "onChange",
     });
 
+    const selectedBrand = form.watch('marcaMdd');
+
     const availableBrands = useMemo(() => {
         if (!meters) return [];
         return [...new Set(meters.map(m => m.marca))];
     }, [meters]);
 
     const availableTypes = useMemo(() => {
-        if (!meters) return [];
-        return [...new Set(meters.map(m => m.tipo))];
-    }, [meters]);
+        if (!meters || !selectedBrand) return [];
+        return [...new Set(meters.filter(m => m.marca === selectedBrand).map(m => m.tipo))];
+    }, [meters, selectedBrand]);
+
+    useEffect(() => {
+        // Reset type field if selected brand changes and the current type is no longer valid
+        if (selectedBrand) {
+            const currentType = form.getValues('tipoMddCampo');
+            if (currentType && !availableTypes.includes(currentType)) {
+                form.setValue('tipoMddCampo', '');
+            }
+        }
+    }, [selectedBrand, availableTypes, form]);
 
     const aparatosConectados = form.watch('aparatosConectados');
     const numberOfEquipments = useMemo(() => parseInt(aparatosConectados || '0', 10), [aparatosConectados]);
@@ -256,7 +268,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                                             <FormItem>
                                                 <FormLabel>MARCA MDD</FormLabel>
                                                 <div className="flex items-center gap-2">
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Seleccionar marca" /></SelectTrigger></FormControl><SelectContent>{availableBrands.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select>
+                                                    <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Seleccionar marca" /></SelectTrigger></FormControl><SelectContent>{availableBrands.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select>
                                                     {canRequestMeter && (
                                                         <Button type="button" variant="outline" size="icon" onClick={() => setIsRequestMeterOpen(true)} className="bg-green-100 border-green-300 text-green-800 hover:bg-green-200">
                                                             <PlusCircle className="h-4 w-4" />
@@ -269,7 +281,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
                                         <FormField control={form.control} name="tipoMddCampo" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>TIPO MDD CAMPO</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger></FormControl><SelectContent>{availableTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select>
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedBrand}><FormControl><SelectTrigger><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger></FormControl><SelectContent>{availableTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )} />
