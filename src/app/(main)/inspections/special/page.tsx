@@ -147,6 +147,8 @@ export default function SpecialInspectionPage() {
     },
   });
 
+  const formData = form.watch();
+
   useEffect(() => {
     const dateParam = searchParams.get('date');
     const timeParam = searchParams.get('time');
@@ -214,8 +216,6 @@ export default function SpecialInspectionPage() {
     }
   }, [user, zone, isCollaborator, collaboratorCompany, searchParams, form, recordId, currentRecord]);
   
-  const formData = form.watch();
-
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
     if (isCollaborator && (fieldName === 'status' || fieldName === 'inspector' || fieldName === 'collaboratorCompany')) {
       return true;
@@ -237,11 +237,6 @@ export default function SpecialInspectionPage() {
         );
     }, [isCollaborator, collaboratorCompany, installers]);
     
-    const availableManagers = useMemo(() => {
-        if (!expansionManagers) return [];
-        return expansionManagers.filter(m => m.status === 'Activo');
-    }, [expansionManagers]);
-
     const availableInspectors = useMemo(() => {
         if (!inspectors) return [];
         return inspectors.filter(m => m.status === 'Activo');
@@ -253,6 +248,28 @@ export default function SpecialInspectionPage() {
         }
         return Object.values(STATUS);
     }, [isCollaborator]);
+    
+    const selectedSectorData = useMemo(() => {
+        return sectors?.find(s => s.id === formData.sector) || null;
+    }, [formData.sector, sectors]);
+
+    const availableManagers = useMemo(() => {
+        if (!expansionManagers) return [];
+        if (!selectedSectorData) return expansionManagers.filter(m => m.status === 'Activo');
+        
+        return expansionManagers.filter(m => 
+            m.status === 'Activo' &&
+            m.assignment === selectedSectorData.assignment &&
+            m.subAssignment === selectedSectorData.subAssignment
+        );
+    }, [expansionManagers, selectedSectorData]);
+    
+    useEffect(() => {
+        const currentManagerIsValid = availableManagers.some(m => m.name === formData.gestor);
+        if (!currentManagerIsValid) {
+            form.setValue('gestor', '');
+        }
+    }, [availableManagers, formData.gestor, form]);
 
 
   const handlePreview = () => {
@@ -284,10 +301,12 @@ export default function SpecialInspectionPage() {
     if (!firestore) return;
     setIsSubmitting(true);
     
+    const finalSectorName = sectors?.find(s => s.id === values.sector)?.sector || values.sector;
+    
     const recordToSave: InspectionRecord = {
         id: values.id || generateId(),
         zone: values.zone,
-        sector: values.sector || '',
+        sector: finalSectorName,
         poliza: values.poliza || '',
         caso: values.caso || '',
         municipality: values.municipality,
@@ -348,7 +367,17 @@ export default function SpecialInspectionPage() {
       const { errors, touchedFields } = form.formState;
       const isTouched = touchedFields[fieldName];
       const error = errors[fieldName];
-      const displayValue = value instanceof Date ? format(value, "PPP", { locale: es }) : value || <span className="text-muted-foreground">No especificado</span>;
+      
+      let displayValue = value;
+      if (value instanceof Date) {
+        displayValue = format(value, "PPP", { locale: es });
+      } else if (fieldName === 'sector') {
+        displayValue = sectors?.find(s => s.id === value)?.sector || value;
+      }
+      
+      if (!displayValue) {
+        displayValue = <span className="text-muted-foreground">No especificado</span>;
+      }
 
       return (
          <div className="flex items-start justify-between py-2 border-b">
@@ -426,7 +455,7 @@ export default function SpecialInspectionPage() {
                       <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {availableSectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                          {availableSectors?.map(s => <SelectItem key={s.id} value={s.id}>{s.sector} ({s.sectorKey})</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />

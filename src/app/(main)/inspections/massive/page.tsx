@@ -200,11 +200,6 @@ export default function MassiveInspectionPage() {
         );
     }, [isCollaborator, collaboratorCompany, installers]);
     
-    const availableManagers = useMemo(() => {
-        if (!expansionManagers) return [];
-        return expansionManagers.filter(m => m.status === 'Activo');
-    }, [expansionManagers]);
-
     const availableInspectors = useMemo(() => {
         if (!inspectors) return [];
         return inspectors.filter(m => m.status === 'Activo');
@@ -216,6 +211,28 @@ export default function MassiveInspectionPage() {
         }
         return Object.values(STATUS);
     }, [isCollaborator]);
+    
+  const selectedSectorData = useMemo(() => {
+    return sectors?.find(s => s.id === formData.sector) || null;
+  }, [formData.sector, sectors]);
+
+  const availableManagers = useMemo(() => {
+      if (!expansionManagers) return [];
+      if (!selectedSectorData) return expansionManagers.filter(m => m.status === 'Activo');
+      
+      return expansionManagers.filter(m => 
+          m.status === 'Activo' &&
+          m.assignment === selectedSectorData.assignment &&
+          m.subAssignment === selectedSectorData.subAssignment
+      );
+  }, [expansionManagers, selectedSectorData]);
+
+  useEffect(() => {
+    const currentManagerIsValid = availableManagers.some(m => m.name === formData.gestor);
+    if (!currentManagerIsValid) {
+        form.setValue('gestor', '');
+    }
+  }, [availableManagers, formData.gestor, form]);
 
 
   const handlePreview = () => {
@@ -249,12 +266,13 @@ export default function MassiveInspectionPage() {
     setIsSubmitting(true);
     
     const createdIds: string[] = [];
+    const finalSectorName = sectors?.find(s => s.id === values.sector)?.sector || values.sector;
     
     const savePromises = values.inspections.map(detail => {
         const recordToSave: InspectionRecord = {
             // Common data
             zone: values.zone,
-            sector: values.sector || '',
+            sector: finalSectorName,
             municipality: values.municipality,
             colonia: values.colonia,
             calle: values.calle,
@@ -342,7 +360,17 @@ export default function MassiveInspectionPage() {
       const { errors, touchedFields } = form.formState;
       const isTouched = touchedFields[fieldName];
       const error = errors[fieldName];
-      const displayValue = value instanceof Date ? format(value, "PPP", { locale: es }) : value || <span className="text-muted-foreground">No especificado</span>;
+      
+      let displayValue = value;
+      if (value instanceof Date) {
+        displayValue = format(value, "PPP", { locale: es });
+      } else if (fieldName === 'sector') {
+        displayValue = sectors?.find(s => s.id === value)?.sector || value;
+      }
+      
+      if (!displayValue) {
+        displayValue = <span className="text-muted-foreground">No especificado</span>;
+      }
 
       return (
          <div className="flex items-start justify-between py-2 border-b">
@@ -406,7 +434,7 @@ export default function MassiveInspectionPage() {
                         <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {availableSectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                            {availableSectors?.map(s => <SelectItem key={s.id} value={s.id}>{s.sector} ({s.sectorKey})</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />

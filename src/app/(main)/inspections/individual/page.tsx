@@ -182,6 +182,8 @@ export default function IndividualInspectionPage() {
     },
   });
   
+  const formData = form.watch();
+  
   useEffect(() => {
     if (recordId) { // Edit or View mode
       setPageMode(mode === 'view' ? 'view' : 'edit');
@@ -342,41 +344,56 @@ export default function IndividualInspectionPage() {
     return canAccess && isValidStatus;
   }, [pageMode, user, currentRecord]);
   
-  const formData = form.watch();
-  
   const availableSectors = useMemo(() => {
     if (!sectors) return [];
     return sectors.filter(s => s.status === 'Activo');
   }, [sectors]);
 
-    const availableInstallers = useMemo(() => {
-        if (!installers) return [];
-        const activeInstallers = installers.filter(i => i.status === 'Activo');
-        if (!isCollaborator) return activeInstallers;
-        return activeInstallers.filter(i => 
-            i.collaboratorCompany === collaboratorCompany
-        );
-    }, [isCollaborator, collaboratorCompany, installers]);
-    
-    const availableManagers = useMemo(() => {
-        if (!expansionManagers) return [];
-        return expansionManagers.filter(m => m.status === 'Activo');
-    }, [expansionManagers]);
+  const availableInstallers = useMemo(() => {
+      if (!installers) return [];
+      const activeInstallers = installers.filter(i => i.status === 'Activo');
+      if (!isCollaborator) return activeInstallers;
+      return activeInstallers.filter(i => 
+          i.collaboratorCompany === collaboratorCompany
+      );
+  }, [isCollaborator, collaboratorCompany, installers]);
+  
+  const availableInspectors = useMemo(() => {
+      if (!inspectors) return [];
+      return inspectors.filter(m => m.status === 'Activo');
+  }, [inspectors]);
 
-    const availableInspectors = useMemo(() => {
-        if (!inspectors) return [];
-        return inspectors.filter(m => m.status === 'Activo');
-    }, [inspectors]);
+  const availableStatusOptions = useMemo(() => {
+      if (isCollaborator) {
+        return [STATUS.REGISTRADA];
+      }
+      if (pageMode === 'edit') {
+          return [currentRecord?.status, STATUS.CANCELADA].filter(Boolean) as string[];
+      }
+      return Object.values(STATUS);
+  }, [isCollaborator, pageMode, currentRecord?.status]);
 
-    const availableStatusOptions = useMemo(() => {
-        if (isCollaborator) {
-          return [STATUS.REGISTRADA];
-        }
-        if (pageMode === 'edit') {
-            return [currentRecord?.status, STATUS.CANCELADA].filter(Boolean) as string[];
-        }
-        return Object.values(STATUS);
-    }, [isCollaborator, pageMode, currentRecord?.status]);
+  const selectedSectorData = useMemo(() => {
+    return sectors?.find(s => s.id === formData.sector) || null;
+  }, [formData.sector, sectors]);
+
+  const availableManagers = useMemo(() => {
+      if (!expansionManagers) return [];
+      if (!selectedSectorData) return expansionManagers.filter(m => m.status === 'Activo');
+      
+      return expansionManagers.filter(m => 
+          m.status === 'Activo' &&
+          m.assignment === selectedSectorData.assignment &&
+          m.subAssignment === selectedSectorData.subAssignment
+      );
+  }, [expansionManagers, selectedSectorData]);
+  
+  useEffect(() => {
+    const currentManagerIsValid = availableManagers.some(m => m.name === formData.gestor);
+    if (!currentManagerIsValid) {
+        form.setValue('gestor', '');
+    }
+  }, [availableManagers, formData.gestor, form]);
 
 
   const handlePreview = () => {
@@ -457,11 +474,13 @@ export default function IndividualInspectionPage() {
       saveChangeHistory(values);
     }
     
+    const finalSectorName = sectors?.find(s => s.id === values.sector)?.sector || values.sector;
+    
     const recordToSave: InspectionRecord = {
         ...(currentRecord || {}),
         id: values.id || generateId(),
         zone: values.zone,
-        sector: values.sector || '',
+        sector: finalSectorName,
         poliza: values.poliza || '',
         caso: values.caso || '',
         municipality: values.municipality || '',
@@ -532,7 +551,17 @@ export default function IndividualInspectionPage() {
       const { errors, touchedFields } = form.formState;
       const isTouched = touchedFields[fieldName];
       const error = errors[fieldName];
-      const displayValue = value instanceof Date ? format(value, "PPP", { locale: es }) : value || <span className="text-muted-foreground">No especificado</span>;
+      
+      let displayValue = value;
+      if (value instanceof Date) {
+        displayValue = format(value, "PPP", { locale: es });
+      } else if (fieldName === 'sector') {
+        displayValue = sectors?.find(s => s.id === value)?.sector || value;
+      }
+      
+      if (!displayValue) {
+        displayValue = <span className="text-muted-foreground">No especificado</span>;
+      }
 
       return (
          <div className="flex items-start justify-between py-2 border-b">
@@ -671,7 +700,7 @@ export default function IndividualInspectionPage() {
                       <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('sector')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {availableSectors?.map(s => <SelectItem key={s.id} value={s.sector}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                          {availableSectors?.map(s => <SelectItem key={s.id} value={s.id}>{s.sector} ({s.sectorKey})</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />
