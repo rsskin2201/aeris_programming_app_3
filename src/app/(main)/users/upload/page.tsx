@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, File, X, ChevronLeft, Download, FileUp } from 'lucide-react';
+import { UploadCloud, File, X, ChevronLeft, Download, FileUp, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CsvEditor, FieldDefinition } from '@/components/shared/csv-editor';
@@ -64,8 +64,8 @@ export default function UserUploadPage() {
     try {
         await addMultipleUsers(newRecords);
         toast({
-            title: "Carga Exitosa",
-            description: `Se han procesado ${newRecords.length} nuevos usuarios.`
+            title: "Carga Masiva Iniciada",
+            description: `Se están procesando ${newRecords.length} nuevos usuarios. Recibirás una notificación por cada uno.`
         });
         setIsEditorOpen(false);
         setFile(null);
@@ -155,6 +155,7 @@ export default function UserUploadPage() {
           )}
 
           <Button onClick={openEditor} disabled={!file} className="w-full">
+            {isUploading ? <Loader2 className='animate-spin mr-2' /> : null}
             Revisar y Cargar Archivo
           </Button>
         </CardContent>

@@ -6,12 +6,13 @@ import { getDoc, doc, setDoc, collection, getDocs, query, where, QueryConstraint
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest, NewMeterRequest, ChangeHistory, Municipio } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS, STATUS } from '@/lib/types';
-import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter, mockUsers } from '@/lib/mock-data';
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import { createFirebaseUser } from '@/firebase/auth-utils';
 
 interface AppContextType {
   // Auth State
@@ -82,59 +83,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { user: firebaseUser, loading: isUserLoading } = useFirebaseAuthUser();
 
  const addMultipleUsers = useCallback(async (users: (Omit<User, 'id'> & { password?: string })[]) => {
-    if (!firestore || !auth || !auth.currentUser) {
-      throw new Error("El administrador no está autenticado para realizar esta operación.");
+    if (!firestore || !auth) {
+      throw new Error("Servicios de Firebase no disponibles para la carga masiva.");
+    }
+    if (!auth.currentUser) {
+        throw new Error("El administrador debe estar autenticado para realizar esta operación.");
     }
 
-    const adminUser = auth.currentUser;
-    const adminEmail = adminUser.email;
-    if (!adminEmail) {
-        throw new Error("No se pudo obtener el email del administrador para mantener la sesión.");
-    }
-    
-    const adminPassword = prompt("Para confirmar, por favor re-ingresa tu contraseña de administrador:");
-    if (!adminPassword) {
-        toast({ variant: 'destructive', title: 'Operación Cancelada', description: 'Se requiere la contraseña del administrador.' });
-        return;
-    }
-    
-    const credential = EmailAuthProvider.credential(adminEmail, adminPassword);
-    
-    try {
-      await reauthenticateWithCredential(adminUser, credential);
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Error de Autenticación', description: 'La contraseña del administrador es incorrecta. La carga masiva ha sido cancelada.' });
-      return;
-    }
-
+    // This loop processes users one by one, which is safer for auth operations.
     for (const newUser of users) {
-      const email = `${newUser.username}@aeris.com`;
-      if (!newUser.password) {
-        console.error("Omitiendo usuario por falta de contraseña:", newUser.username);
-        continue;
-      }
-      
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, newUser.password);
-        const uid = userCredential.user.uid;
-        const { password, ...userProfileData } = newUser;
-        const userProfile: User = { ...userProfileData, id: uid };
-        
-        // This is the crucial step that was missing: saving the profile to Firestore
-        const docRef = doc(firestore, 'users', uid);
-        await setDoc(docRef, userProfile);
+        const email = `${newUser.username}@aeris.com`;
+        if (!newUser.password) {
+            console.warn("Omitiendo usuario por falta de contraseña:", newUser.username);
+            continue; // Skip to the next user
+        }
 
-        // Re-authenticate as admin immediately after creating a new user.
-        await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+        try {
+            // Step 1: Create the user in Firebase Auth using the utility function.
+            // This function creates the user without changing the current admin's session.
+            const createdAuthUser = await createFirebaseUser(auth, email, newUser.password);
+            
+            if (createdAuthUser) {
+                // Step 2: Create the user profile in Firestore with the UID from the auth user.
+                const { password, ...userProfileData } = newUser;
+                const userProfile: User = { ...userProfileData, id: createdAuthUser.uid };
 
-      } catch (error: any) {
-        console.error(`Error al crear el usuario ${newUser.username}:`, error.message);
-        // Ensure admin is logged in before continuing.
-        await signInWithEmailAndPassword(auth, adminEmail, adminPassword).catch(reauthError => {
-            console.error("Fallo crítico al re-autenticar como admin. Abortando.", reauthError);
-            throw new Error("Fallo crítico de autenticación. La carga ha sido abortada.");
-        });
-      }
+                const docRef = doc(firestore, 'users', createdAuthUser.uid);
+                await setDoc(docRef, userProfile);
+                
+                toast({
+                    title: `Éxito: ${newUser.username}`,
+                    description: 'Usuario creado en Auth y Firestore.',
+                    variant: 'default',
+                    duration: 2000,
+                });
+            } else {
+                throw new Error("La creación de la autenticación del usuario no devolvió un usuario.");
+            }
+        } catch (error: any) {
+            console.error(`Error al crear el usuario ${newUser.username}:`, error);
+            // Throw an error to stop the entire process if one user fails.
+            throw new Error(`Falló la creación del usuario ${newUser.username}: ${error.message}`);
+        }
     }
   }, [auth, firestore, toast]);
 
@@ -149,25 +139,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setUser(userProfile);
                 setOperatorName(userProfile.name);
             } else {
-                console.error("No user profile found in Firestore for UID:", uid);
+                console.error("No se encontró perfil de usuario en Firestore para el UID:", uid);
                  if (auth) {
                     await signOut(auth);
                 }
                 setUser(null);
             }
         } catch (error: any) {
-            console.error("Error fetching user profile:", error);
+            console.error("Error al obtener el perfil de usuario:", error);
             if (error.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({
                     path: userDocRef.path,
                     operation: 'get',
                 });
                 errorEmitter.emit('permission-error', permissionError);
+            } else {
+                 if (auth) {
+                   await signOut(auth);
+                }
+                setUser(null);
             }
-             if (auth) {
-               await signOut(auth);
-            }
-            setUser(null);
         }
     };
 
