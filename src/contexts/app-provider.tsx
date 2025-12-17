@@ -90,21 +90,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         throw new Error("El administrador debe estar autenticado para realizar esta operación.");
     }
 
-    // This loop processes users one by one, which is safer for auth operations.
     for (const newUser of users) {
         const email = `${newUser.username}@aeris.com`;
         if (!newUser.password) {
             console.warn("Omitiendo usuario por falta de contraseña:", newUser.username);
-            continue; // Skip to the next user
+            continue;
         }
 
         try {
-            // Step 1: Create the user in Firebase Auth using the utility function.
-            // This function creates the user without changing the current admin's session.
             const createdAuthUser = await createFirebaseUser(auth, email, newUser.password);
             
             if (createdAuthUser) {
-                // Step 2: Create the user profile in Firestore with the UID from the auth user.
                 const { password, ...userProfileData } = newUser;
                 const userProfile: User = { ...userProfileData, id: createdAuthUser.uid };
 
@@ -122,7 +118,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }
         } catch (error: any) {
             console.error(`Error al crear el usuario ${newUser.username}:`, error);
-            // Throw an error to stop the entire process if one user fails.
             throw new Error(`Falló la creación del usuario ${newUser.username}: ${error.message}`);
         }
     }
@@ -130,44 +125,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fetchUserProfile = async (uid: string) => {
-        if (!firestore) return;
-        const userDocRef = doc(firestore, "users", uid);
-        try {
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                const userProfile = userDoc.data() as User;
-                setUser(userProfile);
-                setOperatorName(userProfile.name);
-            } else {
-                console.error("No se encontró perfil de usuario en Firestore para el UID:", uid);
-                 if (auth) {
-                    await signOut(auth);
-                }
-                setUser(null);
-            }
-        } catch (error: any) {
-            console.error("Error al obtener el perfil de usuario:", error);
-            if (error.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError({
-                    path: userDocRef.path,
-                    operation: 'get',
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            } else {
-                 if (auth) {
-                   await signOut(auth);
-                }
-                setUser(null);
-            }
+      if (!firestore) return;
+      const userDocRef = doc(firestore, 'users', uid);
+      try {
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userProfile = userDoc.data() as User;
+          setUser(userProfile);
+          setOperatorName(userProfile.name);
+        } else {
+          console.error(
+            'No se encontró perfil de usuario en Firestore para el UID:',
+            uid
+          );
+          setUser(null);
         }
+      } catch (error: any) {
+        console.error('Error al obtener el perfil de usuario:', error);
+        setUser(null); // Clear user state on error
+        if (error.code === 'permission-denied') {
+          const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'get',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        }
+      }
     };
 
     if (firebaseUser) {
-        fetchUserProfile(firebaseUser.uid);
+      fetchUserProfile(firebaseUser.uid);
     } else {
-        setUser(null);
-        setOperatorName(null);
-        setIsZoneConfirmed(false);
+      setUser(null);
+      setOperatorName(null);
+      setIsZoneConfirmed(false);
     }
   }, [firebaseUser, firestore, auth]);
   
