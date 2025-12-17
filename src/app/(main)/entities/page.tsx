@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, PlusCircle, Settings, Upload, Trash2, AlertTriangle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Settings, Upload, Trash2, AlertTriangle, Edit } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { CollaboratorCompanyForm } from "@/components/entities/collaborator-company-form";
 import { QualityControlCompanyForm } from "@/components/entities/quality-control-company-form";
@@ -34,10 +34,10 @@ const entities = [
 const statusColors: Record<string, string> = {
   'Activa': 'bg-green-600/80 border-green-700 text-white',
   'Inactiva': 'bg-yellow-500/80 border-yellow-600 text-white',
-  'Deshabilitada': 'bg-red-600/80 border-red-700 text-white',
+  'Deshabilitada': 'bg-red-700/80 border-red-800 text-white',
   'Activo': 'bg-green-600/80 border-green-700 text-white',
   'Inactivo': 'bg-yellow-500/80 border-yellow-600 text-white',
-  'Deshabilitado': 'bg-red-600/80 border-red-700 text-white',
+  'Deshabilitado': 'bg-red-700/80 border-red-800 text-white',
 };
 
 const viewOnlyRoles = [ROLES.VISUAL];
@@ -72,6 +72,7 @@ export default function EntitiesPage() {
   const canModify = user && canModifyRoles.includes(user.role);
   const canUpload = user && canUploadRoles.includes(user.role);
   const canDelete = user && canDeleteRoles.includes(user.role);
+  const isAdmin = user?.role === ROLES.ADMIN;
 
   const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...buildQuery('empresas_colaboradoras')) : null, [firestore, buildQuery]);
   const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...buildQuery('instaladores')) : null, [firestore, buildQuery]);
@@ -193,14 +194,24 @@ export default function EntitiesPage() {
           <Settings className="h-8 w-8 text-primary" />
           Gestión de Entidades
         </h1>
-         {canUpload && (
-            <Button asChild>
-              <Link href="/entities/upload">
-                <Upload className="mr-2 h-4 w-4" />
-                Carga Masiva
-              </Link>
-            </Button>
-         )}
+         <div className='flex items-center gap-2'>
+            {isAdmin && (
+              <Button asChild variant="secondary">
+                <Link href="/entities/mass-update">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Modificación Masiva
+                </Link>
+              </Button>
+            )}
+            {canUpload && (
+                <Button asChild>
+                  <Link href="/entities/upload">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Carga Masiva
+                  </Link>
+                </Button>
+            )}
+         </div>
       </div>
 
       
