@@ -100,14 +100,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       } catch (error: any) {
         console.error('Error al obtener el perfil de usuario:', error);
-        setUser(null); // Clear user state on error
-        if (error.code === 'permission-denied') {
-          const permissionError = new FirestorePermissionError({
-            path: userDocRef.path,
-            operation: 'get',
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        }
+        setUser(null);
       }
     };
 

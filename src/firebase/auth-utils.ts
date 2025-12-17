@@ -1,6 +1,6 @@
-"use server";
+'use server';
 
-import { Auth, User as AuthUser, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { Auth, User as AuthUser, createUserWithEmailAndPassword } from "firebase/auth";
 import { Firestore, doc, setDoc } from "firebase/firestore";
 import { User } from "@/lib/types";
 
@@ -42,13 +42,7 @@ export async function addMultipleUsers(
   if (!auth.currentUser) {
     throw new Error("El administrador debe estar autenticado para realizar esta operación.");
   }
-
-  // Store admin credentials to re-authenticate
-  const adminEmail = auth.currentUser.email;
-  if (!adminEmail) {
-    throw new Error("El correo del administrador no está disponible para re-autenticar.");
-  }
-
+  
   for (const newUser of users) {
     const email = `${newUser.username}@aeris.com`;
     if (!newUser.password) {
@@ -57,8 +51,8 @@ export async function addMultipleUsers(
     }
 
     try {
-      // 1. Create the new user. This will sign in the new user and sign out the admin.
-      const userCredential = await createUserWithEmailAndPassword(auth, email, newUser.password);
+      // 1. Create the new user.
+      const userCredential = await createFirebaseUser(auth, email, newUser.password);
       
       // 2. If creation is successful, save their profile to Firestore.
       const userProfile: User = {
