@@ -20,10 +20,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/hooks/use-app-context";
-import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser, ChangeHistory, Status } from "@/lib/types";
+import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser, ChangeHistory, Status, Municipio } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, mockMunicipalities } from "@/lib/form-options";
+import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO } from "@/lib/form-options";
 import { ChecklistForm } from "@/components/inspections/checklist-form";
 import { SupportValidationForm } from "@/components/inspections/support-validation-form";
 import { Textarea } from "@/components/ui/textarea";
@@ -126,12 +126,14 @@ export default function IndividualInspectionPage() {
   const expansionManagersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...buildQuery('gestores_expansion')) : null, [firestore, buildQuery]);
   const sectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...buildQuery('sectores')) : null, [firestore, buildQuery]);
   const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...buildQuery('inspectores')) : null, [firestore, buildQuery]);
+  const municipiosQuery = useMemo(() => firestore ? query(collection(firestore, 'municipios'), ...buildQuery('municipios')) : null, [firestore, buildQuery]);
 
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
   const { data: installers } = useCollection<any>(installersQuery);
   const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
   const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
+  const { data: municipios } = useCollection<Municipio>(municipiosQuery);
 
   const docRef = useMemo(() => recordId ? doc(firestore, 'inspections', recordId) : null, [firestore, recordId]);
   const { data: currentRecord, isLoading: isRecordLoading } = useDoc<InspectionRecord>(docRef);
@@ -354,10 +356,10 @@ export default function IndividualInspectionPage() {
     const activeSectors = sectors.filter(s => s.status === 'Activo');
     // Custom sort logic
     return activeSectors.sort((a, b) => {
-        const aExp = a.sectorKey.startsWith('EXP');
-        const bExp = b.sectorKey.startsWith('EXP');
-        const aSat = a.sectorKey.startsWith('SAT');
-        const bSat = b.sectorKey.startsWith('SAT');
+        const aExp = a.assignment.startsWith('EXP');
+        const bExp = b.assignment.startsWith('EXP');
+        const aSat = a.assignment.startsWith('SAT');
+        const bSat = b.assignment.startsWith('SAT');
 
         if (aExp && !bExp) return -1;
         if (!aExp && bExp) return 1;
@@ -410,12 +412,26 @@ export default function IndividualInspectionPage() {
       return filteredManagers.sort((a, b) => a.name.localeCompare(b.name));
   }, [expansionManagers, selectedSectorData]);
   
+  const availableMunicipalities = useMemo(() => {
+    if (!municipios || !selectedSectorData) return [];
+    return municipios.filter(m => m.sectorId === selectedSectorData.id && m.status === 'Activo');
+  }, [municipios, selectedSectorData]);
+
   useEffect(() => {
     const currentManagerIsValid = availableManagers.some(m => m.name === formData.gestor);
     if (formData.sector && !currentManagerIsValid) {
         form.setValue('gestor', '');
     }
   }, [availableManagers, formData.gestor, formData.sector, form]);
+
+  useEffect(() => {
+    if (formData.sector) {
+        const currentMunicipalityIsValid = availableMunicipalities.some(m => m.nombre === formData.municipality);
+        if (!currentMunicipalityIsValid) {
+            form.setValue('municipality', '');
+        }
+    }
+  }, [availableMunicipalities, formData.municipality, formData.sector, form]);
 
 
   const handlePreview = () => {
@@ -750,10 +766,10 @@ export default function IndividualInspectionPage() {
                   <FormField control={form.control} name="municipality" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Municipio</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('municipality')}>
+                      <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('municipality') || !formData.sector}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un municipio" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {mockMunicipalities.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
+                          {availableMunicipalities.map(m => <SelectItem key={m.id} value={m.nombre}>{m.nombre}</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />

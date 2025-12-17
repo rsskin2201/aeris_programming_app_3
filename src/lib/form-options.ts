@@ -85,15 +85,3 @@ export const MOTIVO_CANCELACION = [
     'CANCELADA POR BIPISA',
     'MEDIDOR EQUIVOCADO',
 ] as const;
-
-
-// Opciones Centralizadas
-export const mockMunicipalities = [
-    { id: 'MUN-01', name: 'Guadalajara' },
-    { id: 'MUN-02', name: 'Zapopan' },
-    { id: 'MUN-03', name: 'Tlaquepaque' },
-    { id: 'MUN-04', name: 'Tonalá' },
-    { id: 'MUN-05', name: 'Monterrey' },
-    { id: 'MUN-06', name: 'San Pedro Garza García' },
-    { id: 'MUN-07', name: 'Ciudad de México - Miguel Hidalgo' },
-];
