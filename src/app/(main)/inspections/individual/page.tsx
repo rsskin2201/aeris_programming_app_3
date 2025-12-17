@@ -722,7 +722,7 @@ export default function IndividualInspectionPage() {
                       <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('sector')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un sector" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {availableSectors?.map(s => <SelectItem key={s.id} value={s.id}>{s.sector} ({s.sectorKey})</SelectItem>)}
+                          {availableSectors?.map(s => <SelectItem key={s.id} value={s.id}>{s.sector} ({s.assignment})</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />
