@@ -121,6 +121,7 @@ export default function IndividualInspectionPage() {
 
   const isCollaborator = user?.role === ROLES.COLABORADOR;
 
+  // --- Data Fetching ---
   const collaboratorsQuery = useMemo(() => firestore ? query(collection(firestore, 'empresas_colaboradoras'), ...buildQuery('empresas_colaboradoras')) : null, [firestore, buildQuery]);
   const installersQuery = useMemo(() => firestore ? query(collection(firestore, 'instaladores'), ...buildQuery('instaladores')) : null, [firestore, buildQuery]);
   const expansionManagersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...buildQuery('gestores_expansion')) : null, [firestore, buildQuery]);
@@ -134,8 +135,8 @@ export default function IndividualInspectionPage() {
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
   const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
   const { data: municipios } = useCollection<Municipio>(municipiosQuery);
-
-  const docRef = useMemo(() => recordId ? doc(firestore, 'inspections', recordId) : null, [firestore, recordId]);
+  
+  const docRef = useMemo(() => recordId && firestore ? doc(firestore, 'inspections', recordId) : null, [firestore, recordId]);
   const { data: currentRecord, isLoading: isRecordLoading } = useDoc<InspectionRecord>(docRef);
   
   const fromParam = searchParams.get('from');
@@ -346,6 +347,7 @@ export default function IndividualInspectionPage() {
     return canAccess && isValidStatus;
   }, [pageMode, user, currentRecord]);
   
+  // --- Computed Lists ---
   const sortedCollaborators = useMemo(() => {
     if (!collaborators) return [];
     return [...collaborators].sort((a, b) => a.name.localeCompare(b.name));
@@ -353,8 +355,7 @@ export default function IndividualInspectionPage() {
 
   const availableSectors = useMemo(() => {
     if (!sectors) return [];
-    const activeSectors = sectors.filter(s => s.status === 'Activo');
-    // Custom sort logic
+    const activeSectors = sectors.filter(s => s.status === 'Activo' && s.zone === zone);
     return activeSectors.sort((a, b) => {
         const aExp = a.assignment.startsWith('EXP');
         const bExp = b.assignment.startsWith('EXP');
@@ -368,16 +369,34 @@ export default function IndividualInspectionPage() {
         
         return a.sector.localeCompare(b.sector);
     });
-  }, [sectors]);
+  }, [sectors, zone]);
+
+  const selectedSectorData = useMemo(() => {
+    if (!formData.sector || !sectors) return null;
+    return sectors.find(s => s.id === formData.sector) || null;
+  }, [formData.sector, sectors]);
+
+  const availableMunicipalities = useMemo(() => {
+    if (!municipios || !selectedSectorData) return [];
+    return municipios.filter(m => m.sectorId === selectedSectorData.id && m.status === 'Activo');
+  }, [municipios, selectedSectorData]);
+
+  const availableManagers = useMemo(() => {
+    if (!expansionManagers || !selectedSectorData) return [];
+    const filtered = expansionManagers.filter(m => 
+      m.status === 'Activo' &&
+      m.assignment === selectedSectorData.assignment &&
+      m.subAssignment === selectedSectorData.subAssignment
+    );
+    return filtered.sort((a, b) => a.name.localeCompare(b.name));
+  }, [expansionManagers, selectedSectorData]);
 
   const availableInstallers = useMemo(() => {
-      if (!installers) return [];
-      const activeInstallers = installers.filter(i => i.status === 'Activo');
-      if (!isCollaborator) return activeInstallers;
-      return activeInstallers.filter(i => 
-          i.collaboratorCompany === collaboratorCompany
-      );
-  }, [isCollaborator, collaboratorCompany, installers]);
+    if (!installers) return [];
+    const active = installers.filter((i: any) => i.status === 'Activo');
+    if (!formData.collaboratorCompany) return active;
+    return active.filter((i: any) => i.collaboratorCompany === formData.collaboratorCompany);
+  }, [installers, formData.collaboratorCompany]);
   
   const availableInspectors = useMemo(() => {
       if (!inspectors) return [];
@@ -385,53 +404,37 @@ export default function IndividualInspectionPage() {
   }, [inspectors]);
 
   const availableStatusOptions = useMemo(() => {
-      if (isCollaborator) {
-        return [STATUS.REGISTRADA];
-      }
-      if (pageMode === 'edit') {
-          return [currentRecord?.status, STATUS.CANCELADA].filter(Boolean) as string[];
-      }
+      if (isCollaborator) return [STATUS.REGISTRADA];
+      if (pageMode === 'edit') return [currentRecord?.status, STATUS.CANCELADA].filter(Boolean) as string[];
       return Object.values(STATUS);
   }, [isCollaborator, pageMode, currentRecord?.status]);
 
-  const selectedSectorData = useMemo(() => {
-    return sectors?.find(s => s.id === formData.sector) || null;
-  }, [formData.sector, sectors]);
 
-  const availableManagers = useMemo(() => {
-      if (!expansionManagers) return [];
-      let filteredManagers = expansionManagers.filter(m => m.status === 'Activo');
-
-      if (selectedSectorData) {
-        filteredManagers = filteredManagers.filter(m => 
-            m.assignment === selectedSectorData.assignment &&
-            m.subAssignment === selectedSectorData.subAssignment
-        );
-      }
-      
-      return filteredManagers.sort((a, b) => a.name.localeCompare(b.name));
-  }, [expansionManagers, selectedSectorData]);
-  
-  const availableMunicipalities = useMemo(() => {
-    if (!municipios || !selectedSectorData) return [];
-    return municipios.filter(m => m.sectorId === selectedSectorData.id && m.status === 'Activo');
-  }, [municipios, selectedSectorData]);
-
+  // --- Field Dependency Resets ---
   useEffect(() => {
     const currentManagerIsValid = availableManagers.some(m => m.name === formData.gestor);
-    if (formData.sector && !currentManagerIsValid) {
-        form.setValue('gestor', '');
+    if (!currentManagerIsValid) {
+      form.setValue('gestor', '');
     }
-  }, [availableManagers, formData.gestor, formData.sector, form]);
+  }, [availableManagers, formData.gestor, form]);
 
   useEffect(() => {
-    if (formData.sector) {
-        const currentMunicipalityIsValid = availableMunicipalities.some(m => m.nombre === formData.municipality);
-        if (!currentMunicipalityIsValid) {
-            form.setValue('municipality', '');
-        }
+    const currentMunicipalityIsValid = availableMunicipalities.some(m => m.nombre === formData.municipality);
+    if (!currentMunicipalityIsValid) {
+      form.setValue('municipality', '');
     }
-  }, [availableMunicipalities, formData.municipality, formData.sector, form]);
+  }, [availableMunicipalities, formData.municipality, form]);
+  
+  useEffect(() => {
+    // When sector changes, reset municipality and gestor
+    form.setValue('municipality', '');
+    form.setValue('gestor', '');
+  }, [formData.sector, form]);
+
+  useEffect(() => {
+    // When collaborator company changes, reset installer
+    form.setValue('instalador', '');
+  }, [formData.collaboratorCompany, form]);
 
 
   const handlePreview = () => {
@@ -934,7 +937,7 @@ export default function IndividualInspectionPage() {
                     <FormField control={form.control} name="gestor" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Gestor</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('gestor')}>
+                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('gestor') || !formData.sector}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un gestor" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {availableManagers?.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
@@ -946,7 +949,7 @@ export default function IndividualInspectionPage() {
                     <FormField control={form.control} name="instalador" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Instalador</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('instalador')}>
+                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('instalador') || !formData.collaboratorCompany}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un instalador" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {availableInstallers?.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
