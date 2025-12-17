@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { collection, doc, getDocs, query, updateDoc, writeBatch } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 
-type EntityType = 'empresas_colaboradoras' | 'instaladores' | 'gestores_expansion' | 'empresas_control_calidad' | 'inspectores' | 'sectores' | 'medidores';
+type EntityType = 'empresas_colaboradoras' | 'instaladores' | 'gestores_expansion' | 'empresas_control_calidad' | 'inspectores' | 'sectores' | 'medidores' | 'municipios';
 
 const entityOptions: { label: string, value: EntityType }[] = [
   { label: "Empresa Colaboradora", value: 'empresas_colaboradoras' },
@@ -25,6 +25,7 @@ const entityOptions: { label: string, value: EntityType }[] = [
   { label: "Inspector", value: 'inspectores' },
   { label: "Sectores", value: 'sectores' },
   { label: "Medidores", value: 'medidores' },
+  { label: "Municipios", value: 'municipios' },
 ];
 
 const entityFields: Record<EntityType, { label: string, value: string, type: 'text' | 'select', options?: readonly string[] }[]> = {
@@ -55,6 +56,10 @@ const entityFields: Record<EntityType, { label: string, value: string, type: 'te
   medidores: [
     { label: 'Zona', value: 'zona', type: 'select', options: ZONES },
     { label: 'Estatus', value: 'status', type: 'select', options: ['Activo', 'Inactivo'] },
+  ],
+  municipios: [
+    { label: 'Zona', value: 'zona', type: 'select', options: ZONES },
+    { label: 'Estatus', value: 'status', type: 'select', options: ['Activo', 'Inactivo', 'Deshabilitado'] },
   ],
 };
 

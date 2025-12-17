@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { createContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { getDoc, doc, setDoc, collection, getDocs, query, where, QueryConstraint, addDoc } from 'firebase/firestore';
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, FirestorePermissionError } from '@/firebase';
-import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest, NewMeterRequest, ChangeHistory } from '@/lib/types';
+import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest, NewMeterRequest, ChangeHistory, Municipio } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS, STATUS } from '@/lib/types';
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
 import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter, mockUsers } from '@/lib/mock-data';
@@ -55,6 +55,7 @@ interface AppContextType {
   addMultipleExpansionManagers: (data: ExpansionManager[]) => void;
   addMultipleSectors: (data: Sector[]) => void;
   addMultipleMeters: (data: Meter[]) => void;
+  addMultipleMunicipios: (data: Municipio[]) => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -328,6 +329,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addMultipleExpansionManagers = addMultipleEntities('gestores_expansion', 'GE');
   const addMultipleSectors = addMultipleEntities('sectores', 'SEC');
   const addMultipleMeters = addMultipleEntities('medidores', 'MDD');
+  const addMultipleMunicipios = addMultipleEntities('municipios', 'MUN');
   
   const buildQuery = useCallback((collectionName: string): QueryConstraint[] => {
     if (!user) return [];
@@ -400,13 +402,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addMultipleExpansionManagers,
       addMultipleSectors,
       addMultipleMeters,
+      addMultipleMunicipios,
       reprogramInspection,
       cancelInspection,
       buildQuery,
     }),
     [
       user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters, reprogramInspection, cancelInspection, buildQuery
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters, addMultipleMunicipios, reprogramInspection, cancelInspection, buildQuery
     ]
   );
 

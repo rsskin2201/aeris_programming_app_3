@@ -9,14 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CsvEditor, FieldDefinition } from '@/components/shared/csv-editor';
 import { useAppContext } from '@/hooks/use-app-context';
-import { CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter } from '@/lib/mock-data';
+import { CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter, Municipio } from '@/lib/mock-data';
 import { ROLES, ZONES } from '@/lib/types';
 import Papa from 'papaparse';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 
-type EntityType = 'users' | 'collaborators' | 'quality' | 'inspectors' | 'installers' | 'managers' | 'sectors' | 'meters';
+type EntityType = 'users' | 'collaborators' | 'quality' | 'inspectors' | 'installers' | 'managers' | 'sectors' | 'meters' | 'municipios';
 
 const entityFields: Record<EntityType, FieldDefinition<any>[]> = {
     users: [
@@ -93,6 +93,13 @@ const entityFields: Record<EntityType, FieldDefinition<any>[]> = {
         { key: 'zona', label: 'Zona', required: true },
         { key: 'status', label: 'Estatus', required: true },
     ],
+    municipios: [
+        { key: 'id', label: 'ID' },
+        { key: 'nombre', label: 'Nombre', required: true },
+        { key: 'zona', label: 'Zona', required: true },
+        { key: 'sectorId', label: 'ID del Sector', required: true },
+        { key: 'status', label: 'Estatus', required: true },
+    ]
 };
 
 const entityInfo = {
@@ -104,6 +111,7 @@ const entityInfo = {
     'managers': { icon: User, name: 'Gestores de Expansión' },
     'sectors': { icon: MapPin, name: 'Sectores' },
     'meters': { icon: MapPin, name: 'Medidores' },
+    'municipios': { icon: MapPin, name: 'Municipios' },
 }
 
 export default function EntityUploadPage() {
@@ -112,7 +120,7 @@ export default function EntityUploadPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const { addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters } = useAppContext();
+  const { addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters, addMultipleMunicipios } = useAppContext();
 
   const handleFileChange = (files: FileList | null) => {
     if (files && files[0]) {
@@ -157,6 +165,7 @@ export default function EntityUploadPage() {
             case 'managers': addMultipleExpansionManagers(newRecords as ExpansionManager[]); break;
             case 'sectors': addMultipleSectors(newRecords as Sector[]); break;
             case 'meters': addMultipleMeters(newRecords as Meter[]); break;
+            case 'municipios': addMultipleMunicipios(newRecords as Municipio[]); break;
             default: throw new Error('Tipo de entidad no soportada para carga masiva.');
         }
 
