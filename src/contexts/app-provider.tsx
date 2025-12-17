@@ -122,26 +122,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setOperatorName(userProfile.name);
             } else {
                 console.error("No user profile found in Firestore for UID:", uid);
-                setUser(null);
-                if (auth) {
+                 if (auth) {
                     await signOut(auth);
                 }
+                setUser(null);
             }
         } catch (error: any) {
+            console.error("Error fetching user profile:", error);
             if (error.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({
                     path: userDocRef.path,
                     operation: 'get',
                 });
                 errorEmitter.emit('permission-error', permissionError);
-            } else {
-              console.error("Error fetching user profile:", error);
             }
-            
-            setUser(null);
             if (auth) {
-                await signOut(auth);
+               await signOut(auth);
             }
+            setUser(null);
         }
     };
 
