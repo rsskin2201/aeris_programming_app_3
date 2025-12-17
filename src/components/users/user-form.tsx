@@ -14,10 +14,10 @@ import type { User } from '@/lib/types';
 import { ROLES, ZONES, USER_STATUS } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RotateCcw, ShieldAlert } from 'lucide-react';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useAuth } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { useAppContext } from '@/hooks/use-app-context';
+import { addMultipleUsers } from '@/firebase/auth-utils';
 
 
 const formSchema = z.object({
@@ -39,7 +39,7 @@ interface UserFormProps {
 export function UserForm({ user, onClose }: UserFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { addMultipleUsers } = useAppContext();
+  const auth = useAuth();
 
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users } = useCollection<User>(usersQuery);
@@ -78,7 +78,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
   }
   
   async function onSubmit(values: FormValues) {
-    if (!firestore) {
+    if (!firestore || !auth) {
       toast({ variant: 'destructive', title: 'Error', description: 'El servicio de base de datos no está disponible.'});
       return;
     }
@@ -95,7 +95,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
     
     try {
         if (!isEditMode && values.password) {
-            addMultipleUsers([{...values, password: values.password}]);
+            await addMultipleUsers(auth, firestore, [{...values, password: values.password}]);
         } else if (isEditMode && user) {
             const dataToSave: Partial<User> = {
                 name: values.name,

@@ -20,7 +20,6 @@ interface AppContextType {
   isUserLoading: boolean;
   login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
-  addMultipleUsers: (users: (Omit<User, 'id'> & { password?: string })[]) => Promise<void>;
   requestPasswordReset: (username: string, email: string) => void;
   requestNewMeter: (request: Omit<NewMeterRequest, 'id' | 'date'>) => void;
   reprogramInspection: (record: InspectionRecord) => void;
@@ -82,47 +81,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user: firebaseUser, loading: isUserLoading } = useFirebaseAuthUser();
 
- const addMultipleUsers = useCallback(async (users: (Omit<User, 'id'> & { password?: string })[]) => {
-    if (!firestore || !auth) {
-      throw new Error("Servicios de Firebase no disponibles para la carga masiva.");
-    }
-    if (!auth.currentUser) {
-        throw new Error("El administrador debe estar autenticado para realizar esta operación.");
-    }
-
-    for (const newUser of users) {
-        const email = `${newUser.username}@aeris.com`;
-        if (!newUser.password) {
-            console.warn("Omitiendo usuario por falta de contraseña:", newUser.username);
-            continue;
-        }
-
-        try {
-            const createdAuthUser = await createFirebaseUser(auth, email, newUser.password);
-            
-            if (createdAuthUser) {
-                const { password, ...userProfileData } = newUser;
-                const userProfile: User = { ...userProfileData, id: createdAuthUser.uid };
-
-                const docRef = doc(firestore, 'users', createdAuthUser.uid);
-                await setDoc(docRef, userProfile);
-                
-                toast({
-                    title: `Éxito: ${newUser.username}`,
-                    description: 'Usuario creado en Auth y Firestore.',
-                    variant: 'default',
-                    duration: 2000,
-                });
-            } else {
-                throw new Error("La creación de la autenticación del usuario no devolvió un usuario.");
-            }
-        } catch (error: any) {
-            console.error(`Error al crear el usuario ${newUser.username}:`, error);
-            throw new Error(`Falló la creación del usuario ${newUser.username}: ${error.message}`);
-        }
-    }
-  }, [auth, firestore, toast]);
-
   useEffect(() => {
     const fetchUserProfile = async (uid: string) => {
       if (!firestore) return;
@@ -160,7 +118,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setOperatorName(null);
       setIsZoneConfirmed(false);
     }
-  }, [firebaseUser, firestore, auth]);
+  }, [firebaseUser, firestore]);
   
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
@@ -402,7 +360,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       requestPasswordReset,
       requestNewMeter,
       markNotificationAsRead,
-      addMultipleUsers,
       addMultipleCollaborators,
       addMultipleQualityControlCompanies,
       addMultipleInspectors,
@@ -417,7 +374,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       user, isUserLoading, login, logout, operatorName, zone, isZoneConfirmed, formsEnabled, weekendsEnabled, blockedDays, notifications, devModeEnabled, 
-      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleUsers, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters, addMultipleMunicipios, reprogramInspection, cancelInspection, buildQuery
+      confirmZone, toggleForms, toggleWeekends, toggleDevMode, addBlockedDay, removeBlockedDay, addNotification, requestPasswordReset, requestNewMeter, markNotificationAsRead, setZone, addMultipleCollaborators, addMultipleQualityControlCompanies, addMultipleInspectors, addMultipleInstallers, addMultipleExpansionManagers, addMultipleSectors, addMultipleMeters, addMultipleMunicipios, reprogramInspection, cancelInspection, buildQuery
     ]
   );
 

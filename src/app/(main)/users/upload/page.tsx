@@ -8,9 +8,10 @@ import { UploadCloud, File, X, ChevronLeft, Download, FileUp, Loader2 } from 'lu
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CsvEditor, FieldDefinition } from '@/components/shared/csv-editor';
-import { useAppContext } from '@/hooks/use-app-context';
 import { User, ROLES, ZONES } from '@/lib/types';
 import Papa from 'papaparse';
+import { useAuth, useFirestore } from '@/firebase';
+import { addMultipleUsers } from '@/firebase/auth-utils';
 
 const userFields: FieldDefinition<User>[] = [
     { key: 'name', label: 'Nombre Completo', required: true },
@@ -26,7 +27,8 @@ export default function UserUploadPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const { addMultipleUsers } = useAppContext();
+  const auth = useAuth();
+  const firestore = useFirestore();
 
   const handleFileChange = (files: FileList | null) => {
     if (files && files[0]) {
@@ -60,12 +62,16 @@ export default function UserUploadPage() {
   };
 
   const handleFinalUpload = async (newRecords: User[]) => {
+    if (!auth || !firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Servicios de Firebase no disponibles.' });
+      return;
+    }
     setIsUploading(true);
     try {
-        await addMultipleUsers(newRecords);
+        await addMultipleUsers(auth, firestore, newRecords);
         toast({
-            title: "Carga Masiva Iniciada",
-            description: `Se están procesando ${newRecords.length} nuevos usuarios. Recibirás una notificación por cada uno.`
+            title: "Carga Masiva Exitosa",
+            description: `Se procesaron ${newRecords.length} nuevos usuarios.`
         });
         setIsEditorOpen(false);
         setFile(null);
