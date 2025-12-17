@@ -158,7 +158,7 @@ export default function SpecialInspectionPage() {
             form.reset({
               id: currentRecord.id || '',
               zone: currentRecord.zone || '',
-              sector: currentRecord.sector || '',
+              sector: sectors?.find(s => s.sector === currentRecord.sector)?.id || '',
               poliza: currentRecord.poliza || '',
               caso: currentRecord.caso || '',
               municipality: currentRecord.municipality || '',
@@ -214,7 +214,7 @@ export default function SpecialInspectionPage() {
             fechaProgramacion: dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : new Date(),
         });
     }
-  }, [user, zone, isCollaborator, collaboratorCompany, searchParams, form, recordId, currentRecord]);
+  }, [user, zone, isCollaborator, collaboratorCompany, searchParams, form, recordId, currentRecord, sectors]);
   
   const isFieldDisabled = (fieldName: keyof FormValues): boolean => {
     if (isCollaborator && (fieldName === 'status' || fieldName === 'inspector' || fieldName === 'collaboratorCompany')) {
@@ -225,7 +225,21 @@ export default function SpecialInspectionPage() {
 
   const availableSectors = useMemo(() => {
     if (!sectors) return [];
-    return sectors.filter(s => s.status === 'Activo');
+    const activeSectors = sectors.filter(s => s.status === 'Activo');
+    // Custom sort logic
+    return activeSectors.sort((a, b) => {
+        const aExp = a.sectorKey.startsWith('EXP');
+        const bExp = b.sectorKey.startsWith('EXP');
+        const aSat = a.sectorKey.startsWith('SAT');
+        const bSat = b.sectorKey.startsWith('SAT');
+
+        if (aExp && !bExp) return -1;
+        if (!aExp && bExp) return 1;
+        if (aSat && !bSat) return -1;
+        if (!aSat && bSat) return 1;
+        
+        return a.sector.localeCompare(b.sector);
+    });
   }, [sectors]);
 
     const availableInstallers = useMemo(() => {
@@ -255,21 +269,23 @@ export default function SpecialInspectionPage() {
 
     const availableManagers = useMemo(() => {
         if (!expansionManagers) return [];
-        if (!selectedSectorData) return expansionManagers.filter(m => m.status === 'Activo');
-        
-        return expansionManagers.filter(m => 
-            m.status === 'Activo' &&
-            m.assignment === selectedSectorData.assignment &&
-            m.subAssignment === selectedSectorData.subAssignment
-        );
+        let filteredManagers = expansionManagers.filter(m => m.status === 'Activo');
+
+        if (selectedSectorData) {
+          filteredManagers = filteredManagers.filter(m => 
+              m.assignment === selectedSectorData.assignment &&
+              m.subAssignment === selectedSectorData.subAssignment
+          );
+        }
+        return filteredManagers.sort((a, b) => a.name.localeCompare(b.name));
     }, [expansionManagers, selectedSectorData]);
     
     useEffect(() => {
         const currentManagerIsValid = availableManagers.some(m => m.name === formData.gestor);
-        if (!currentManagerIsValid) {
+        if (formData.sector && !currentManagerIsValid) {
             form.setValue('gestor', '');
         }
-    }, [availableManagers, formData.gestor, form]);
+    }, [availableManagers, formData.gestor, formData.sector, form]);
 
 
   const handlePreview = () => {
