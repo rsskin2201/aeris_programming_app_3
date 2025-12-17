@@ -27,7 +27,7 @@ import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO, TIPO_INSPECCION_MASIVA, mockM
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useCollection, useDoc, useFirestore, FirestorePermissionError, errorEmitter } from "@/firebase";
-import { collection, doc, query, where } from "firebase/firestore";
+import { collection, doc, query, where, setDoc } from "firebase/firestore";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const inspectionDetailSchema = z.object({
@@ -291,6 +291,7 @@ export default function MassiveInspectionPage() {
         };
         createdIds.push(detail.id);
         const docRef = doc(firestore, 'inspections', detail.id);
+        
         return setDoc(docRef, recordToSave, { merge: true }).catch(error => {
             const contextualError = new FirestorePermissionError({
                 path: docRef.path,

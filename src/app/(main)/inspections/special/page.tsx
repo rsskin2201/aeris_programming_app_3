@@ -27,7 +27,7 @@ import { TIPO_INSPECCION_ESPECIAL, TIPO_PROGRAMACION_ESPECIAL, MERCADO, mockMuni
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useCollection, useDoc, useFirestore, FirestorePermissionError, errorEmitter } from "@/firebase";
-import { collection, doc, query, where } from "firebase/firestore";
+import { collection, doc, query, where, setDoc } from "firebase/firestore";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const formSchema = z.object({
@@ -321,26 +321,19 @@ export default function SpecialInspectionPage() {
     
     const docRef = doc(firestore, 'inspections', recordToSave.id);
     
-    setDoc(docRef, recordToSave, { merge: true }).catch(error => {
-        const contextualError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'create',
-          requestResourceData: recordToSave,
-        });
-        errorEmitter.emit('permission-error', contextualError);
-    }).finally(() => {
-        setIsSubmitting(false);
-        setIsConfirming(false);
+    setDocumentNonBlocking(docRef, recordToSave, { merge: true });
+    
+    setIsSubmitting(false);
+    setIsConfirming(false);
 
-        addNotification({
-            recipientUsername: 'coordinador',
-            message: `Nueva inspección especial ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
-            link: `/inspections/special?id=${recordToSave.id}&mode=view`
-        });
-        
-        setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
-        setIsSuccessDialogOpen(true);
+    addNotification({
+        recipientUsername: 'coordinador',
+        message: `Nueva inspección especial ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
+        link: `/inspections/special?id=${recordToSave.id}&mode=view`
     });
+    
+    setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
+    setIsSuccessDialogOpen(true);
   }
 
   const handleReset = () => {

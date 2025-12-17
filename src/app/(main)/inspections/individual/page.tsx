@@ -497,34 +497,27 @@ export default function IndividualInspectionPage() {
     if (!firestore) return;
     const docRef = doc(firestore, 'inspections', recordToSave.id);
     
-    setDoc(docRef, recordToSave, { merge: true }).catch(error => {
-        const contextualError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: pageMode === 'new' ? 'create' : 'update',
-          requestResourceData: recordToSave,
-        });
-        errorEmitter.emit('permission-error', contextualError);
-    }).finally(() => {
-        setIsSubmitting(false);
-        setIsConfirming(false);
+    setDocumentNonBlocking(docRef, recordToSave, { merge: true });
+    
+    setIsSubmitting(false);
+    setIsConfirming(false);
 
-        if (redirectBypassStatuses.includes(values.status as Status)) {
-            toast({
-                title: "Registro Actualizado",
-                description: "El registro ha sido actualizado. Ahora puedes rellenar el Checklist.",
+    if (redirectBypassStatuses.includes(values.status as Status)) {
+        toast({
+            title: "Registro Actualizado",
+            description: "El registro ha sido actualizado. Ahora puedes rellenar el Checklist.",
+        });
+    } else {
+          if (pageMode === 'new') {
+            addNotification({
+              recipientUsername: 'coordinador',
+              message: `Nueva inspección individual ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
+              link: `/inspections/individual?id=${recordToSave.id}&mode=view`
             });
-        } else {
-             if (pageMode === 'new') {
-                addNotification({
-                  recipientUsername: 'coordinador',
-                  message: `Nueva inspección individual ${recordToSave.id} creada por ${user?.username} en la zona ${recordToSave.zone}.`,
-                  link: `/inspections/individual?id=${recordToSave.id}&mode=view`
-                });
-            }
-            setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
-            setIsSuccessDialogOpen(true);
         }
-    });
+        setCreatedRecordInfo({ ids: [recordToSave.id], status: recordToSave.status });
+        setIsSuccessDialogOpen(true);
+    }
   }
 
   const handleReset = () => {

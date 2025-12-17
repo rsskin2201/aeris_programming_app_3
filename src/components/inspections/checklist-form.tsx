@@ -19,7 +19,7 @@ import { MARCA_MDD, TIPO_MDD, SI_NO, MATERIAL_TUBERIA, EQUIPO, FORMA_PAGO, MOTIV
 import { ScrollArea } from "../ui/scroll-area";
 import { ROLES, STATUS } from "@/lib/types";
 import { useCollection, useFirestore } from "@/firebase";
-import { collection, query } from "firebase/firestore";
+import { collection, query, where } from "firebase/firestore";
 
 const formSchema = z.object({
   serieMdd: z.string().min(1, "Requerido"),
@@ -34,7 +34,7 @@ const formSchema = z.object({
   materialTuberia: z.string().min(1, "Requerido"),
   folioChecklist: z.string().min(1, "Requerido"),
   defectosCorregidos: z.string().optional(),
-  defectosNoCorregidos: z.string().optional(),
+  defectosNoCorregidos: zstring().optional(),
   horaEntrada: z.string().min(1, "Requerido"),
   horaSalida: z.string().min(1, "Requerido"),
   ventilaPreexistente: z.string().min(1, "Requerido"),
@@ -93,7 +93,7 @@ export function ChecklistForm({ record, onClose, onSave }: ChecklistFormProps) {
     const [newMeterBrand, setNewMeterBrand] = useState('');
     const [newMeterType, setNewMeterType] = useState('');
     
-    const metersQuery = useMemo(() => firestore ? query(collection(firestore, 'medidores')) : null, [firestore]);
+    const metersQuery = useMemo(() => firestore && record ? query(collection(firestore, 'medidores'), where('zona', '==', record.zone)) : null, [firestore, record]);
     const { data: meters } = useCollection<Meter>(metersQuery);
 
     const canRequestMeter = user?.role === ROLES.CALIDAD || user?.role === ROLES.ADMIN;
