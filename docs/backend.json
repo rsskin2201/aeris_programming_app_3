@@ -302,6 +302,35 @@
         "name"
       ]
     },
+    "Municipio": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Municipio",
+      "type": "object",
+      "description": "Represents a municipality within a zone and sector.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the municipality."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "Name of the municipality."
+        },
+        "zona": {
+          "type": "string",
+          "description": "The zone the municipality belongs to."
+        },
+        "sectorId": {
+          "type": "string",
+          "description": "Reference to the Sector this municipality is part of."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the municipality (e.g., Activo, Inactivo, Deshabilitado)."
+        }
+      },
+      "required": ["id", "nombre", "zona", "sectorId", "status"]
+    },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
@@ -616,6 +645,22 @@
             {
               "name": "medidorId",
               "description": "Unique identifier for the meter type."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/municipios/{municipioId}",
+        "definition": {
+          "entityName": "Municipio",
+          "schema": {
+            "$ref": "#/backend/entities/Municipio"
+          },
+          "description": "Stores municipality records.",
+          "params": [
+            {
+              "name": "municipioId",
+              "description": "Unique identifier for the municipality record."
             }
           ]
         }

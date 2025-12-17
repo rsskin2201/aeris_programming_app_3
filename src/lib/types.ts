@@ -126,3 +126,187 @@ export type ChangeHistory = {
     newValue: string;
   }[];
 }
+
+export type CollaboratorCompany = {
+    id: string;
+    name: string;
+    rfc: string;
+    codSap: string;
+    zone: Zone;
+    status: 'Activa' | 'Inactiva' | 'Deshabilitada';
+    created_at: string;
+}
+
+export type QualityControlCompany = {
+  id: string;
+  name: string;
+  rfc: string;
+  zone: Zone;
+  status: 'Activa' | 'Inactiva' | 'Deshabilitada';
+  created_at: string;
+}
+
+export type Inspector = {
+    id: string;
+    name: string;
+    position: 'Inspector';
+    qualityCompany: string;
+    certStartDate: string;
+    certEndDate: string;
+    status: 'Activo' | 'Inactivo' | 'Deshabilitado';
+    createdAt: string;
+    zone: Zone;
+};
+
+
+export type Installer = {
+    id: string;
+    name: string;
+    position: 'Instalador';
+    collaboratorCompany: string;
+    certStartDate: string;
+    certEndDate: string;
+    status: 'Activo' | 'Inactivo' | 'Deshabilitado';
+    createdAt: string;
+    zone: Zone;
+};
+
+export type ExpansionManager = {
+    id: string;
+    name: string;
+    position: 'Gestor de Expansion';
+    zone: Zone;
+    assignment: 'Expansión' | 'Saturación' | 'Ambos';
+    subAssignment: string;
+    status: 'Activo' | 'Inactivo' | 'Deshabilitado';
+    createdAt: string;
+}
+
+export type Sector = {
+    id: string;
+    zone: Zone;
+    assignment: 'Expansión' | 'Saturación' | 'Ambos';
+    subAssignment: string;
+    sector: string;
+    sectorKey: string;
+    status: 'Activo' | 'Inactivo' | 'Deshabilitado';
+    createdAt: string;
+};
+
+export type Meter = {
+  id: string;
+  marca: string;
+  tipo: string;
+  zona: Zone;
+  status: 'Activo' | 'Inactivo';
+  createdAt: string;
+};
+
+export type Municipio = {
+  id: string;
+  nombre: string;
+  zona: Zone;
+  sectorId: string;
+  status: 'Activo' | 'Inactivo' | 'Deshabilitado';
+  createdAt: string;
+}
+
+export type InspectionRecord = {
+  id: string;
+  type: 'Individual PES' | 'Masiva PES' | 'Especial' | string;
+  address: string;
+  client: string;
+  requestDate: string; // yyyy-MM-dd
+  createdAt: string; // yyyy-MM-dd HH:mm:ss
+  createdBy: string;
+  status: Status;
+  inspector: string;
+  zone: Zone;
+  gestor: string;
+  collaboratorCompany: string;
+  sector: string;
+  poliza: string;
+  caso: string;
+  serieMdd?: string;
+  mercado: string;
+  horarioProgramacion: string;
+  observaciones?: string;
+
+  // Checklist fields
+  municipality?: string;
+  colonia?: string;
+  calle?: string;
+  numero?: string;
+  portal?: string;
+  escalera?: string;
+  piso?: string;
+  puerta?: string;
+  tipoInspeccion?: string;
+  tipoProgramacion?: string;
+  tipoMdd?: string;
+  oferta?: string;
+  grupoMercado?: string;
+  semana?: string;
+  marcaMdd?: string;
+  tipoMddCampo?: string;
+  presion?: string;
+  folioIt?: string;
+  precinto?: string;
+  epp?: string;
+  controlPrevio?: string;
+  mtsInstalados?: string;
+  materialTuberia?: string;
+  folioChecklist?: string;
+  defectosCorregidos?: string;
+  defectosNoCorregidos?: string;
+  horaEntrada?: string;
+  horaSalida?: string;
+  ventilaPreexistente?: string;
+  ventilacionEcc?: string;
+  aparatosConectados?: string;
+  equipo_1?: string;
+  marca_eq1?: string;
+  coCor_eq1?: string;
+  coAmb_eq1?: string;
+  equipo_2?: string;
+  marca_eq2?: string;
+  coCor_eq2?: string;
+  coAmb_eq2?: string;
+  equipo_3?: string;
+  marca_eq3?: string;
+  coCor_eq3?: string;
+  coAmb_eq3?: string;
+  equipo_4?: string;
+  marca_eq4?: string;
+  coCor_eq4?: string;
+  coAmb_eq4?: string;
+  equipo_5?: string;
+  marca_eq5?: string;
+  coCor_eq5?: string;
+  coAmb_eq5?: string;
+  nombreCliente?: string;
+  telCliente?: string;
+  motivoCancelacion?: string;
+  comentariosOca?: string;
+  formaDePago?: string;
+  equipoExtra?: string;
+  capturista?: string;
+  hraDeAudio?: string;
+  infFormasPago?: string;
+  altaSms?: string;
+  appNaturgy?: string;
+  entregaGuia?: string;
+
+  // Support Validation Fields
+  fechaConexion?: string;
+  datosConfirmados?: boolean;
+  observacionesSoporte?: string;
+  tipoRechazo?: string;
+  motivoRechazo?: string;
+  lastModifiedBy?: string;
+  lastModifiedAt?: string;
+
+  // Reprogramación fields
+  reprogrammedFromId?: string;
+  reprogrammedToId?: string;
+};

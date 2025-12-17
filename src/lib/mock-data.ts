@@ -1,4 +1,4 @@
-import { Role, ROLES, User, Zone, ZONES, Status, STATUS, UserStatus, USER_STATUS } from '@/lib/types';
+import { Role, ROLES, User, Zone, ZONES, Status, STATUS, UserStatus, USER_STATUS, Municipio } from '@/lib/types';
 
 export const mockUsers: User[] = [
   { id: '1', name: 'Admin User', username: 'admin', role: ROLES.ADMIN, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
@@ -133,14 +133,10 @@ export const mockInstallers = [
 ];
 
 
-export const mockMunicipalities = [
-    { id: 'MUN-01', name: 'Guadalajara' },
-    { id: 'MUN-02', name: 'Zapopan' },
-    { id: 'MUN-03', name: 'Tlaquepaque' },
-    { id: 'MUN-04', name: 'Tonalá' },
-    { id: 'MUN-05', name: 'Monterrey' },
-    { id: 'MUN-06', name: 'San Pedro Garza García' },
-    { id: 'MUN-07', name: 'Ciudad de México - Miguel Hidalgo' },
+export const mockMunicipalities: Municipio[] = [
+    { id: 'MUN-01', nombre: 'Guadalajara', zona: 'Zona Centro', sectorId: 'SEC-002', status: 'Activo', createdAt: '2023-01-01' },
+    { id: 'MUN-02', nombre: 'Zapopan', zona: 'Zona Centro', sectorId: 'SEC-002', status: 'Activo', createdAt: '2023-01-01' },
+    { id: 'MUN-03', nombre: 'Monterrey', zona: 'Zona Norte', sectorId: 'SEC-001', status: 'Activo', createdAt: '2023-01-01' },
 ];
 
 export type CollaboratorCompany = {

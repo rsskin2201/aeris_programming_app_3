@@ -33,6 +33,7 @@ import type {
   Sector,
   Meter,
   User,
+  Municipio,
 } from '@/lib/types';
 import { ZONES, USER_STATUS } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -80,6 +81,7 @@ import { InstallerForm } from '@/components/entities/installer-form';
 import { ExpansionManagerForm } from '@/components/entities/expansion-manager-form';
 import { SectorForm } from '@/components/entities/sector-form';
 import { MeterForm } from '@/components/entities/meter-form';
+import { MunicipioForm } from '@/components/entities/municipio-form';
 import { EntityTable } from '@/components/entities/entity-table';
 
 const entities = [
@@ -161,6 +163,17 @@ const entities = [
     ],
   },
   {
+    name: 'Municipios',
+    collection: 'municipios',
+    columns: [
+      { accessor: 'id', header: 'ID' },
+      { accessor: 'nombre', header: 'Municipio' },
+      { accessor: 'sectorId', header: 'Sector' },
+      { accessor: 'zona', header: 'Zona' },
+      { accessor: 'status', header: 'Estatus' },
+    ],
+  },
+  {
     name: 'Medidores',
     collection: 'medidores',
     columns: [
@@ -199,6 +212,7 @@ export default function EntitiesPage() {
     manager: false,
     sector: false,
     meter: false,
+    municipio: false,
     delete: false,
     export: false,
   });
@@ -288,6 +302,13 @@ export default function EntitiesPage() {
         : null,
     [firestore, buildQuery]
   );
+  const municipiosQuery = useMemo(
+    () =>
+      firestore
+        ? query(collection(firestore, 'municipios'), ...buildQuery('municipios'))
+        : null,
+    [firestore, buildQuery]
+  );
 
   const { data: collaborators } = useCollection<CollaboratorCompany>(
     collaboratorsQuery
@@ -300,6 +321,7 @@ export default function EntitiesPage() {
   const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
   const { data: meters } = useCollection<Meter>(metersQuery);
+  const { data: municipios } = useCollection<Municipio>(municipiosQuery);
 
   const dataMap = {
     'Empresa Colaboradora': collaborators,
@@ -309,6 +331,7 @@ export default function EntitiesPage() {
     Inspector: inspectors,
     Sectores: sectors,
     Medidores: meters,
+    Municipios: municipios,
   };
 
   const handleOpenDialog = (
@@ -327,7 +350,7 @@ export default function EntitiesPage() {
   const handleOpenDeleteDialog = (item: any, collectionName: string) => {
     setEntityToDelete({
       id: item.id,
-      name: item.name || item.sector,
+      name: item.name || item.sector || item.nombre,
       collection: collectionName,
     });
     handleOpenDialog('delete');
@@ -352,7 +375,7 @@ export default function EntitiesPage() {
     if (Object.values(filters).every((v) => v === '')) return currentData;
     
     return currentData.filter(item => {
-      const name = item.name || item.sector || item.marca;
+      const name = item.name || item.sector || item.marca || item.nombre;
       if (filters.name && !name.toLowerCase().includes(filters.name.toLowerCase())) return false;
       if (filters.role && 'position' in item && item.position !== filters.role) return false;
       if (filters.zone && 'zone' in item && item.zone !== filters.zone) return false;
@@ -441,6 +464,13 @@ export default function EntitiesPage() {
             onClose={() => handleCloseDialog('meter')}
           />
         );
+      case 'Municipios':
+        return (
+          <MunicipioForm
+            municipio={selectedEntity}
+            onClose={() => handleCloseDialog('municipio')}
+          />
+        );
       default:
         return null;
     }
@@ -455,6 +485,7 @@ export default function EntitiesPage() {
       case 'Inspector': return 'inspector';
       case 'Sectores': return 'sector';
       case 'Medidores': return 'meter';
+      case 'Municipios': return 'municipio';
       default: throw new Error('Invalid tab name');
     }
   }
