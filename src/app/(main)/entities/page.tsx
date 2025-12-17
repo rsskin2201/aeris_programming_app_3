@@ -22,7 +22,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { useCollection, useFirestore } from "@/firebase";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { PERMISSIONS, ROLES } from "@/lib/types";
+import { PERMISSIONS, ROLES, USER_STATUS } from "@/lib/types";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 
@@ -241,6 +241,7 @@ export default function EntitiesPage() {
                               <TableHead>ID</TableHead>
                               <TableHead>Nombre Empresa</TableHead>
                               <TableHead>RFC</TableHead>
+                              <TableHead>Cod SAP</TableHead>
                               <TableHead>Zona</TableHead>
                               <TableHead>Estatus</TableHead>
                                <TableHead>Fecha Alta</TableHead>
@@ -253,6 +254,7 @@ export default function EntitiesPage() {
                                   <TableCell className="py-2 px-4 font-mono">{item.id}</TableCell>
                                   <TableCell className="py-2 px-4 font-medium">{item.name}</TableCell>
                                   <TableCell className="py-2 px-4">{item.rfc}</TableCell>
+                                  <TableCell className="py-2 px-4">{item.codSap}</TableCell>
                                    <TableCell className="py-2 px-4">{item.zone}</TableCell>
                                   <TableCell className="py-2 px-4">
                                       <Badge className={cn('whitespace-nowrap', statusColors[item.status] || 'bg-gray-400')}>{item.status}</Badge>
@@ -270,7 +272,7 @@ export default function EntitiesPage() {
                                             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                             {canModify && <DropdownMenuItem onClick={() => handleEditCollaborator(item)}>Editar</DropdownMenuItem>}
                                             {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'empresas_colaboradoras')}>
-                                                <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                                <Trash2 className="mr-2 h-4 w-4" />Deshabilitar
                                             </DropdownMenuItem></>}
                                         </DropdownMenuContent>
                                         </DropdownMenu>
@@ -341,7 +343,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 {canModify && <DropdownMenuItem onClick={() => handleEditInstaller(item)}>Editar</DropdownMenuItem>}
                                 {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'instaladores')}>
-                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                    <Trash2 className="mr-2 h-4 w-4" />Deshabilitar
                                 </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -412,7 +414,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 {canModify && <DropdownMenuItem onClick={() => handleEditManager(item)}>Editar</DropdownMenuItem>}
                                 {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'gestores_expansion')}>
-                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                    <Trash2 className="mr-2 h-4 w-4" />Deshabilitar
                                 </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -481,7 +483,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 {canModify && <DropdownMenuItem onClick={() => handleEditQualityCompany(item)}>Editar</DropdownMenuItem>}
                                 {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'empresas_control_calidad')}>
-                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                    <Trash2 className="mr-2 h-4 w-4" />Deshabilitar
                                 </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -552,7 +554,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 {canModify && <DropdownMenuItem onClick={() => handleEditInspector(item)}>Editar</DropdownMenuItem>}
                                 {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'inspectores')}>
-                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                    <Trash2 className="mr-2 h-4 w-4" />Deshabilitar
                                 </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -623,7 +625,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 {canModify && <DropdownMenuItem onClick={() => handleEditSector(item)}>Editar</DropdownMenuItem>}
                                 {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'sectores')}>
-                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                    <Trash2 className="mr-2 h-4 w-4" />Deshabilitar
                                 </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -690,7 +692,7 @@ export default function EntitiesPage() {
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 {canModify && <DropdownMenuItem onClick={() => handleEditMeter(item)}>Editar</DropdownMenuItem>}
                                 {canDelete && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleOpenDeleteDialog(item, 'medidores')}>
-                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                    <Trash2 className="mr-2 h-4 w-4" />Deshabilitar
                                 </DropdownMenuItem></>}
                               </DropdownMenuContent>
                             </DropdownMenu>

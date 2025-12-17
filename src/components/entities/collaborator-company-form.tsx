@@ -23,6 +23,7 @@ const formSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'El nombre es requerido.'),
   rfc: z.string().min(12, 'El RFC debe tener al menos 12 caracteres.').max(13, 'El RFC no debe exceder 13 caracteres.'),
+  codSap: z.string().optional(),
   zone: z.string().min(1, 'La zona es requerida.'),
   status: z.string().min(1, 'El estatus es requerido.'),
 });
@@ -57,6 +58,7 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
       id: company?.id || `EC-${Date.now()}`,
       name: company?.name || '',
       rfc: company?.rfc || '',
+      codSap: company?.codSap || '',
       zone: company?.zone || '',
       status: company?.status || 'Activa',
     };
@@ -81,6 +83,7 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
     const dataToSave: CollaboratorCompany = {
         ...values,
         id: values.id!,
+        codSap: values.codSap || '',
         created_at: company?.created_at || format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
     };
     
@@ -100,6 +103,7 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
       id: company?.id || `EC-${Date.now()}`,
       name: company?.name || '',
       rfc: company?.rfc || '',
+      codSap: company?.codSap || '',
       zone: company?.zone || '',
       status: company?.status || 'Activa',
     };
@@ -168,6 +172,20 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
                     <FormMessage />
                 </FormItem>
             )} />
+             <FormField control={form.control} name="codSap" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Cod SAP</FormLabel>
+                    <FormControl>
+                        <Input
+                             {...field}
+                             placeholder="Código SAP"
+                             onChange={(e) => handleUpperCase(e, field)}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
+           </div>
             <FormField control={form.control} name="zone" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Zona</FormLabel>
@@ -180,7 +198,6 @@ export function CollaboratorCompanyForm({ company, onClose }: CollaboratorCompan
                     <FormMessage />
                 </FormItem>
             )} />
-           </div>
 
            {isEditMode && company && (
                <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border bg-muted/50 p-4 text-xs text-muted-foreground">

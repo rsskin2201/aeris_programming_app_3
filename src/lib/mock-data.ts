@@ -147,16 +147,17 @@ export type CollaboratorCompany = {
     id: string;
     name: string;
     rfc: string;
+    codSap: string;
     zone: Zone;
     status: 'Activa' | 'Inactiva' | 'Deshabilitada';
     created_at: string;
 }
 
 export const sampleCollaborators: CollaboratorCompany[] = [
-    { id: 'EC-001', name: 'GASLINK S.A. DE C.V.', rfc: 'GLI010203AB4', zone: 'Zona Norte', status: 'Activa', created_at: '2023-01-15' },
-    { id: 'EC-002', name: 'SERVIGAS DEL NORTE', rfc: 'SGN050607CD8', zone: 'Zona Norte', status: 'Activa', created_at: '2023-02-20' },
-    { id: 'EC-003', name: 'CONEXIONES SEGURAS', rfc: 'CSE101112EFG', zone: 'Bajio Norte', status: 'Inactiva', created_at: '2023-03-10' },
-    { id: 'EC-004', name: 'ENERGÍA CONFIABLE', rfc: 'ECO151213HIJ', zone: 'Zona Centro', status: 'Deshabilitada', created_at: '2023-04-05' },
+    { id: 'EC-001', name: 'GASLINK S.A. DE C.V.', rfc: 'GLI010203AB4', codSap: 'SAP001', zone: 'Zona Norte', status: 'Activa', created_at: '2023-01-15' },
+    { id: 'EC-002', name: 'SERVIGAS DEL NORTE', rfc: 'SGN050607CD8', codSap: 'SAP002', zone: 'Zona Norte', status: 'Activa', created_at: '2023-02-20' },
+    { id: 'EC-003', name: 'CONEXIONES SEGURAS', rfc: 'CSE101112EFG', codSap: 'SAP003', zone: 'Bajio Norte', status: 'Inactiva', created_at: '2023-03-10' },
+    { id: 'EC-004', name: 'ENERGÍA CONFIABLE', rfc: 'ECO151213HIJ', codSap: 'SAP004', zone: 'Zona Centro', status: 'Deshabilitada', created_at: '2023-04-05' },
 ];
 
 export type QualityControlCompany = {
@@ -216,7 +217,7 @@ export type ExpansionManager = {
     name: string;
     position: 'Gestor de Expansion';
     zone: Zone;
-    assignment: 'Expansión' | 'Saturación';
+    assignment: 'Expansión' | 'Saturación' | 'Ambos';
     subAssignment: string;
     status: 'Activo' | 'Inactivo' | 'Deshabilitado';
     createdAt: string;
@@ -231,7 +232,7 @@ export const sampleExpansionManagers: ExpansionManager[] = [
 export type Sector = {
     id: string;
     zone: Zone;
-    assignment: 'Expansión' | 'Saturación';
+    assignment: 'Expansión' | 'Saturación' | 'Ambos';
     subAssignment: string;
     sector: string;
     sectorKey: string;
@@ -242,7 +243,7 @@ export type Sector = {
 export const sampleSectors: Sector[] = [
     { id: 'SEC-001', zone: 'Zona Norte', assignment: 'Expansión', subAssignment: 'RESIDENCIAL SANTA FE', sector: 'SANTA FE', sectorKey: 'SF01', status: 'Activo', createdAt: '2023-01-10' },
     { id: 'SEC-002', zone: 'Zona Centro', assignment: 'Saturación', subAssignment: 'CENTRO HISTORICO', sector: 'CENTRO', sectorKey: 'CEN01', status: 'Activo', createdAt: '2023-02-15' },
-    { id: 'SEC-003', zone: 'Bajio Norte', assignment: 'Expansión', subAssignment: 'PARQUE INDUSTRIAL', sector: 'INDUSTRIAL QUERETARO', sectorKey: 'INDQRO', status: 'Inactivo', createdAt: '2023-03-20' },
+    { id: 'SEC-003', zone: 'Bajio Norte', assignment: 'Ambos', subAssignment: 'PARQUE INDUSTRIAL', sector: 'INDUSTRIAL QUERETARO', sectorKey: 'INDQRO', status: 'Inactivo', createdAt: '2023-03-20' },
 ];
 
 export type Meter = {

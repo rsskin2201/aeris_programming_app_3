@@ -31,6 +31,7 @@ const entityFields: Record<EntityType, FieldDefinition<any>[]> = {
         { key: 'id', label: 'ID' },
         { key: 'name', label: 'Nombre Empresa', required: true },
         { key: 'rfc', label: 'RFC', required: true },
+        { key: 'codSap', label: 'Cod SAP' },
         { key: 'zone', label: 'Zona', required: true },
         { key: 'status', label: 'Estatus', required: true },
         { key: 'created_at', label: 'Fecha Alta', required: true },

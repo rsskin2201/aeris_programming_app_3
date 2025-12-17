@@ -121,6 +121,10 @@
           "type": "string",
           "description": "Phone number of the contact person."
         },
+        "codSap": {
+          "type": "string",
+          "description": "SAP code for the collaborating company."
+        },
         "isEnabled": {
           "type": "boolean",
           "description": "Indicates if the company is currently enabled for use in the system."
