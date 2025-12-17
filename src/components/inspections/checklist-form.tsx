@@ -34,7 +34,7 @@ const formSchema = z.object({
   materialTuberia: z.string().min(1, "Requerido"),
   folioChecklist: z.string().min(1, "Requerido"),
   defectosCorregidos: z.string().optional(),
-  defectosNoCorregidos: zstring().optional(),
+  defectosNoCorregidos: z.string().optional(),
   horaEntrada: z.string().min(1, "Requerido"),
   horaSalida: z.string().min(1, "Requerido"),
   ventilaPreexistente: z.string().min(1, "Requerido"),
