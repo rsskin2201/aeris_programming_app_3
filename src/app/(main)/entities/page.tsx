@@ -214,7 +214,7 @@ export default function EntitiesPage() {
   const [filters, setFilters] = useState(initialFilters);
 
   const handleFilterChange = (key: keyof typeof initialFilters, value: any) => {
-    setFilters((prev) => ({ ...prev, [key]: value || '' }));
+    setFilters((prev) => ({ ...prev, [key]: value === 'all' ? '' : value }));
   };
 
   const clearFilters = () => setFilters(initialFilters);
@@ -507,7 +507,7 @@ export default function EntitiesPage() {
                         <Select value={filters.zone} onValueChange={(v) => handleFilterChange('zone', v)}>
                             <SelectTrigger id="filter-zone"><SelectValue placeholder="Todas" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Todas</SelectItem>
+                                <SelectItem value="all">Todas</SelectItem>
                                 {Object.values(ZONES).map(z => <SelectItem key={z} value={z}>{z}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -517,7 +517,7 @@ export default function EntitiesPage() {
                         <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
                             <SelectTrigger id="filter-status"><SelectValue placeholder="Todos" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Todos</SelectItem>
+                                <SelectItem value="all">Todos</SelectItem>
                                 <SelectItem value="Activo">Activo / Activa</SelectItem>
                                 <SelectItem value="Inactivo">Inactivo / Inactiva</SelectItem>
                                 <SelectItem value="Deshabilitado">Deshabilitado / Deshabilitada</SelectItem>
