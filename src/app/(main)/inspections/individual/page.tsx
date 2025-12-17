@@ -23,7 +23,7 @@ import { useAppContext } from "@/hooks/use-app-context";
 import { ROLES, Role, STATUS, CollaboratorCompany, Sector, ExpansionManager, Inspector, User as AppUser, ChangeHistory, Status, Municipio } from "@/lib/types";
 import { InspectionRecord } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { TIPO_PROGRAMACION_PES, TIPO_MDD, MERCADO } from "@/lib/form-options";
+import { MANUAL_PROGRAMACION_OPTIONS, TIPO_MDD, MERCADO } from "@/lib/form-options";
 import { ChecklistForm } from "@/components/inspections/checklist-form";
 import { SupportValidationForm } from "@/components/inspections/support-validation-form";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,7 +32,6 @@ import { useCollection, useDoc, useFirestore, FirestorePermissionError, errorEmi
 import { addDoc, collection, doc, query, where } from "firebase/firestore";
 import { ChangeHistoryViewer } from "@/components/inspections/change-history-viewer";
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { getMunicipiosBySector } from "@/lib/municipios-por-sector";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -128,12 +127,14 @@ export default function IndividualInspectionPage() {
   const expansionManagersQuery = useMemo(() => firestore ? query(collection(firestore, 'gestores_expansion'), ...buildQuery('gestores_expansion')) : null, [firestore, buildQuery]);
   const sectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'sectores'), ...buildQuery('sectores')) : null, [firestore, buildQuery]);
   const inspectorsQuery = useMemo(() => firestore ? query(collection(firestore, 'inspectores'), ...buildQuery('inspectores')) : null, [firestore, buildQuery]);
+  const municipiosQuery = useMemo(() => firestore ? query(collection(firestore, 'municipios'), ...buildQuery('municipios')) : null, [firestore, buildQuery]);
   
   const { data: collaborators } = useCollection<CollaboratorCompany>(collaboratorsQuery);
   const { data: installers } = useCollection<any>(installersQuery);
   const { data: expansionManagers } = useCollection<ExpansionManager>(expansionManagersQuery);
   const { data: sectors } = useCollection<Sector>(sectorsQuery);
   const { data: inspectors } = useCollection<Inspector>(inspectorsQuery);
+  const { data: municipios } = useCollection<Municipio>(municipiosQuery);
   
   const docRef = useMemo(() => recordId && firestore ? doc(firestore, 'inspections', recordId) : null, [firestore, recordId]);
   const { data: currentRecord, isLoading: isRecordLoading } = useDoc<InspectionRecord>(docRef);
@@ -376,9 +377,12 @@ export default function IndividualInspectionPage() {
   }, [formData.sector, sectors]);
 
   const availableMunicipalities = useMemo(() => {
-    if (!selectedSectorData) return [];
-    return getMunicipiosBySector(selectedSectorData.sector);
-  }, [selectedSectorData]);
+    if (!selectedSectorData || !municipios) return [];
+    return municipios
+      .filter(m => m.sectorId === selectedSectorData.id && m.status === 'Activo')
+      .map(m => m.nombre)
+      .sort((a, b) => a.localeCompare(b));
+  }, [selectedSectorData, municipios]);
 
   const availableManagers = useMemo(() => {
     if (!expansionManagers || !selectedSectorData) return [];
@@ -844,7 +848,7 @@ export default function IndividualInspectionPage() {
                         <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFieldDisabled('tipoProgramacion')}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un tipo" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {TIPO_PROGRAMACION_PES.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                            {MANUAL_PROGRAMACION_OPTIONS.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                         </SelectContent>
                         </Select>
                         <FormMessage />

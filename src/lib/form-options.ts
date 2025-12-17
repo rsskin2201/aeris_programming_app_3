@@ -34,6 +34,9 @@ export const TIPO_INSPECCION_ESPECIAL = [
 
 export const TIPO_PROGRAMACION_ESPECIAL = ['PARRILLA', 'REPROGRAMACION', 'ESPONTANEA'] as const;
 
+// Opciones de programación manual para los formularios de inspección
+export const MANUAL_PROGRAMACION_OPTIONS = ['PARRILLA', 'ESPONTANEA'] as const;
+
 // Opciones para el formulario de Checklist
 export const MARCA_MDD = ['ELSTER', 'ITRON', 'METREX', 'HONEYWELL', 'GOLDCARD'] as const;
 export const SI_NO = ['Si', 'No'] as const;
