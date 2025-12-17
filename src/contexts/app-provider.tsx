@@ -6,7 +6,7 @@ import { getDoc, doc, setDoc, collection, getDocs, query, where, QueryConstraint
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest, NewMeterRequest, ChangeHistory, Municipio } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS, STATUS } from '@/lib/types';
-import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter, mockUsers } from '@/lib/mock-data';
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,7 @@ interface AppContextType {
   isUserLoading: boolean;
   login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
-  addMultipleUsers: (users: (Omit<User, 'id'> & { password?: string })[]) => void;
+  addMultipleUsers: (users: (Omit<User, 'id'> & { password?: string })[]) => Promise<void>;
   requestPasswordReset: (username: string, email: string) => void;
   requestNewMeter: (request: Omit<NewMeterRequest, 'id' | 'date'>) => void;
   reprogramInspection: (record: InspectionRecord) => void;
@@ -81,34 +81,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user: firebaseUser, loading: isUserLoading } = useFirebaseAuthUser();
 
-  const addMultipleUsers = useCallback((users: (Omit<User, 'id'> & { password?: string })[]) => {
-    if (!firestore || !auth) return;
-    users.forEach(async (user) => {
-      const email = `${user.username}@aeris.com`;
-      if (!user.password) {
-          console.error("Skipping user creation due to missing password", user);
-          return;
+ const addMultipleUsers = useCallback(async (users: (Omit<User, 'id'> & { password?: string })[]) => {
+    if (!firestore || !auth || !auth.currentUser) {
+      throw new Error("El administrador no está autenticado para realizar esta operación.");
+    }
+
+    const adminUser = auth.currentUser;
+    const adminEmail = adminUser.email;
+
+    if (!adminEmail) {
+        throw new Error("No se pudo obtener el email del administrador para mantener la sesión.");
+    }
+    
+    // This is a placeholder for the admin's password.
+    // In a real-world scenario, you would securely prompt the admin for their password.
+    const adminPassword = prompt("Para confirmar, por favor re-ingresa tu contraseña de administrador:");
+    if (!adminPassword) {
+        toast({ variant: 'destructive', title: 'Operación Cancelada', description: 'Se requiere la contraseña del administrador.' });
+        return;
+    }
+    
+    const credential = EmailAuthProvider.credential(adminEmail, adminPassword);
+    
+    try {
+      await reauthenticateWithCredential(adminUser, credential);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error de Autenticación', description: 'La contraseña del administrador es incorrecta. La carga masiva ha sido cancelada.' });
+      return;
+    }
+
+
+    for (const newUser of users) {
+      const email = `${newUser.username}@aeris.com`;
+      if (!newUser.password) {
+        console.error("Omitiendo usuario por falta de contraseña:", newUser.username);
+        continue; // Skip to the next user
       }
+
       try {
-        // Create user in Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, email, user.password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, newUser.password);
         const uid = userCredential.user.uid;
-        
-        // Create user profile in Firestore
-        const { password, ...userProfileData } = user;
+
+        const { password, ...userProfileData } = newUser;
         const userProfile: User = { ...userProfileData, id: uid };
         const docRef = doc(firestore, 'users', uid);
-        setDocumentNonBlocking(docRef, userProfile, { merge: false });
+        await setDoc(docRef, userProfile);
+
+        // IMPORTANT: Re-authenticate as admin immediately after creating a new user.
+        await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
 
       } catch (error: any) {
-        if (error.code !== 'auth/email-already-in-use') {
-            console.error("Error creating a user during bulk upload:", error);
-        }
+        console.error(`Error al crear el usuario ${newUser.username}:`, error.message);
+        // If user creation fails, still ensure admin is logged in before continuing.
+        await signInWithEmailAndPassword(auth, adminEmail, adminPassword).catch(reauthError => {
+            console.error("Fallo crítico al re-autenticar como admin. Abortando.", reauthError);
+            throw new Error("Fallo crítico de autenticación. La carga ha sido abortada.");
+        });
       }
-    });
-  }, [auth, firestore]);
-
-  
+    }
+  }, [auth, firestore, toast]);
 
   useEffect(() => {
     const fetchUserProfile = async (uid: string) => {
@@ -136,7 +167,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 });
                 errorEmitter.emit('permission-error', permissionError);
             }
-            if (auth) {
+             if (auth) {
                await signOut(auth);
             }
             setUser(null);

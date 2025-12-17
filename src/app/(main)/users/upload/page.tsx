@@ -59,29 +59,25 @@ export default function UserUploadPage() {
     }
   };
 
-  const handleFinalUpload = (newRecords: User[]) => {
+  const handleFinalUpload = async (newRecords: User[]) => {
     setIsUploading(true);
-    
-    setTimeout(() => {
-        try {
-            addMultipleUsers(newRecords);
-
-            setIsUploading(false);
-            setIsEditorOpen(false);
-            setFile(null);
-            toast({
-                title: "Carga Exitosa",
-                description: `Se han cargado y procesado ${newRecords.length} nuevos usuarios.`
-            });
-        } catch (e: any) {
-            setIsUploading(false);
-             toast({
-                variant: 'destructive',
-                title: "Error en la Carga",
-                description: e.message || "Ocurrió un problema al procesar los registros."
-            });
-        }
-    }, 1500);
+    try {
+        await addMultipleUsers(newRecords);
+        toast({
+            title: "Carga Exitosa",
+            description: `Se han procesado ${newRecords.length} nuevos usuarios.`
+        });
+        setIsEditorOpen(false);
+        setFile(null);
+    } catch (e: any) {
+         toast({
+            variant: 'destructive',
+            title: "Error en la Carga",
+            description: e.message || "Ocurrió un problema al procesar los registros."
+        });
+    } finally {
+        setIsUploading(false);
+    }
   }
 
   const downloadTemplate = () => {
