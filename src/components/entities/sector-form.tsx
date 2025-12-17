@@ -166,6 +166,7 @@ export function SectorForm({ sector, onClose }: SectorFormProps) {
                             <SelectContent>
                                 <SelectItem value="Expansión">Expansión</SelectItem>
                                 <SelectItem value="Saturación">Saturación</SelectItem>
+                                <SelectItem value="Ambos">Ambos</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />

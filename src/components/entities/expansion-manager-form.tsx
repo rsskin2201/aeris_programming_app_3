@@ -186,6 +186,7 @@ export function ExpansionManagerForm({ manager, onClose }: ExpansionManagerFormP
                         <SelectContent>
                             <SelectItem value="Expansión">Expansión</SelectItem>
                             <SelectItem value="Saturación">Saturación</SelectItem>
+                            <SelectItem value="Ambos">Ambos</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />
