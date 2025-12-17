@@ -18,6 +18,7 @@ import {
   Settings,
   User as UserIcon,
   Users,
+  Copy,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -46,6 +47,10 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { ZoneSelector } from './zone-selector';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useToast } from '@/hooks/use-toast';
 
 const moduleIcons = {
   [MODULES.INSPECTIONS]: Briefcase,
@@ -60,6 +65,13 @@ const moduleIcons = {
 export default function Header() {
   const pathname = usePathname();
   const { user, operatorName, logout, notifications, markNotificationAsRead, devModeEnabled, toggleDevMode } = useAppContext();
+  const { toast } = useToast();
+  const supportAvatar = PlaceHolderImages.find(img => img.id === 'support-avatar');
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: 'Copiado', description: 'El correo se ha copiado al portapapeles.' });
+  }
 
   if (!user) return null;
 
@@ -118,6 +130,64 @@ export default function Header() {
         </Popover>
     );
   }
+
+  const SupportDialog = () => (
+      <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9">
+                <HelpCircle className="h-4 w-4" />
+                <span className="sr-only">Soporte</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-lg text-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-2xl">
+                <HelpCircle className="text-primary"/>
+                Soporte Técnico
+              </DialogTitle>
+              <DialogDescription className="text-base">
+                Para dudas, aclaraciones o problemas con la plataforma, no dudes en contactarnos.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-8 pt-4 text-base">
+              <div className="flex items-center gap-4">
+                {supportAvatar && (
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={supportAvatar.imageUrl} alt={supportAvatar.description} data-ai-hint={supportAvatar.imageHint} />
+                    <AvatarFallback><UserIcon className="h-10 w-10" /></AvatarFallback>
+                  </Avatar>
+                )}
+                <div>
+                  <h4 className="font-semibold text-xl">Ricardo González</h4>
+                  <p className="text-muted-foreground">Administrador de la Plataforma</p>
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <h5 className="mb-2 font-medium">Correo de Contacto</h5>
+                  <div className="flex items-center justify-between rounded-md border bg-muted px-3 py-2">
+                    <a href="mailto:jorge.ricardo.seichi.gonzalez.garcia@nttdata.com" className="truncate font-medium text-primary hover:underline">
+                      jorge.ricardo.seichi.gonzalez.garcia@nttdata.com
+                    </a>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy('jorge.ricardo.seichi.gonzalez.garcia@nttdata.com')}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <h5 className="mb-2 font-medium">Horarios de Atención</h5>
+                   <div className="rounded-md border bg-muted p-4">
+                        <p className="flex items-center text-muted-foreground">
+                            <Clock className="mr-2 h-5 w-5 flex-shrink-0" /> 
+                            Lunes a Viernes: 09:00 a.m. - 06:00 p.m.
+                        </p>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+      </Dialog>
+  )
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -180,6 +250,8 @@ export default function Header() {
             <ZoneSelector />
 
             <NotificationBell />
+            
+            <SupportDialog />
 
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
