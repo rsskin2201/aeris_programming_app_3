@@ -6,7 +6,7 @@ import { getDoc, doc, setDoc, collection, getDocs, query, where, QueryConstraint
 import { useAuth, useFirestore, useUser as useFirebaseAuthUser, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { User, Role, Zone, BlockedDay, AppNotification, PasswordResetRequest, NewMeterRequest, ChangeHistory, Municipio } from '@/lib/types';
 import { ZONES, ROLES, USER_STATUS, STATUS } from '@/lib/types';
-import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
 import { InspectionRecord, CollaboratorCompany, QualityControlCompany, Inspector, Installer, ExpansionManager, Sector, Meter, mockUsers } from '@/lib/mock-data';
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
@@ -88,13 +88,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const adminUser = auth.currentUser;
     const adminEmail = adminUser.email;
-
     if (!adminEmail) {
         throw new Error("No se pudo obtener el email del administrador para mantener la sesión.");
     }
     
-    // This is a placeholder for the admin's password.
-    // In a real-world scenario, you would securely prompt the admin for their password.
     const adminPassword = prompt("Para confirmar, por favor re-ingresa tu contraseña de administrador:");
     if (!adminPassword) {
         toast({ variant: 'destructive', title: 'Operación Cancelada', description: 'Se requiere la contraseña del administrador.' });
@@ -110,29 +107,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-
     for (const newUser of users) {
       const email = `${newUser.username}@aeris.com`;
       if (!newUser.password) {
         console.error("Omitiendo usuario por falta de contraseña:", newUser.username);
-        continue; // Skip to the next user
+        continue;
       }
-
+      
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, newUser.password);
         const uid = userCredential.user.uid;
-
         const { password, ...userProfileData } = newUser;
         const userProfile: User = { ...userProfileData, id: uid };
+        
+        // This is the crucial step that was missing: saving the profile to Firestore
         const docRef = doc(firestore, 'users', uid);
         await setDoc(docRef, userProfile);
 
-        // IMPORTANT: Re-authenticate as admin immediately after creating a new user.
+        // Re-authenticate as admin immediately after creating a new user.
         await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
 
       } catch (error: any) {
         console.error(`Error al crear el usuario ${newUser.username}:`, error.message);
-        // If user creation fails, still ensure admin is logged in before continuing.
+        // Ensure admin is logged in before continuing.
         await signInWithEmailAndPassword(auth, adminEmail, adminPassword).catch(reauthError => {
             console.error("Fallo crítico al re-autenticar como admin. Abortando.", reauthError);
             throw new Error("Fallo crítico de autenticación. La carga ha sido abortada.");
