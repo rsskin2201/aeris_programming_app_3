@@ -125,6 +125,7 @@ const statusColors: Record<Status, string> = {
     [STATUS.RECHAZADA]: 'bg-red-700/80 border-red-800 text-white',
     [STATUS.CANCELADA]: 'bg-red-800/80 border-red-900 text-white',
     [STATUS.CONECTADA]: 'bg-purple-600/80 border-purple-700 text-white',
+    [STATUS.DESCARTADO]: 'bg-gray-900/80 border-gray-950 text-white',
 };
 
 const fadedStatuses: Status[] = [STATUS.REGISTRADA, STATUS.CONFIRMADA_POR_GE];
