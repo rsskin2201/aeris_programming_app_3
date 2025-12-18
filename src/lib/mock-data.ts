@@ -1,14 +1,14 @@
 import { Role, ROLES, User, Zone, ZONES, Status, STATUS, UserStatus, USER_STATUS, Municipio } from '@/lib/types';
 
 export const mockUsers: User[] = [
-  { id: '1', name: 'Admin User', username: 'admin', role: ROLES.ADMIN, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { id: '2', name: 'Gerardo Gestor', username: 'gestor', role: ROLES.GESTOR, zone: 'Zona Norte', status: USER_STATUS.ACTIVO },
-  { id: '3', name: 'Ana Colaboradora', username: 'colaboradora', role: ROLES.COLABORADOR, zone: 'Bajio Norte', status: USER_STATUS.ACTIVO },
-  { id: '4', name: 'Sofia Soporte', username: 'soporte', role: ROLES.SOPORTE, zone: 'Zona Centro', status: USER_STATUS.ACTIVO },
-  { id: '5', name: 'Samuel Coordinador', username: 'coordinador', role: ROLES.COORDINADOR_SSPP, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { id: '6', name: 'Carla Calidad', username: 'calidad', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
-  { id: '7', name: 'Carlos Canales', username: 'canales', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
-  { id: '8', name: 'Victor Visual', username: 'visual', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.INACTIVO },
+  { id: '1', customId: 'USER-1001', name: 'Admin User', username: 'admin', role: ROLES.ADMIN, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { id: '2', customId: 'USER-1002', name: 'Gerardo Gestor', username: 'gestor', role: ROLES.GESTOR, zone: 'Zona Norte', status: USER_STATUS.ACTIVO },
+  { id: '3', customId: 'USER-1003', name: 'Ana Colaboradora', username: 'colaboradora', role: ROLES.COLABORADOR, zone: 'Bajio Norte', status: USER_STATUS.ACTIVO },
+  { id: '4', customId: 'USER-1004', name: 'Sofia Soporte', username: 'soporte', role: ROLES.SOPORTE, zone: 'Zona Centro', status: USER_STATUS.ACTIVO },
+  { id: '5', customId: 'USER-1005', name: 'Samuel Coordinador', username: 'coordinador', role: ROLES.COORDINADOR_SSPP, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { id: '6', customId: 'USER-1006', name: 'Carla Calidad', username: 'calidad', role: ROLES.CALIDAD, zone: 'Bajio Sur', status: USER_STATUS.ACTIVO },
+  { id: '7', customId: 'USER-1007', name: 'Carlos Canales', username: 'canales', role: ROLES.CANALES, zone: 'Todas las zonas', status: USER_STATUS.ACTIVO },
+  { id: '8', customId: 'USER-1008', name: 'Victor Visual', username: 'visual', role: ROLES.VISUAL, zone: 'Todas las zonas', status: USER_STATUS.INACTIVO },
 ];
 
 export type InspectionRecord = {
