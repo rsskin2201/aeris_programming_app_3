@@ -21,6 +21,7 @@ import { addMultipleUsers } from '@/firebase/auth-utils';
 
 
 const formSchema = z.object({
+  customId: z.string().optional(),
   name: z.string().min(1, 'El nombre es requerido.'),
   username: z.string().min(1, 'El nombre de usuario es requerido.'),
   role: z.nativeEnum(ROLES),
@@ -54,6 +55,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
   
   useEffect(() => {
     const defaultValues = {
+      customId: user?.customId || `USER-${Date.now()}`,
       name: user?.name || '',
       username: user?.username || '',
       role: user?.role || ROLES.GESTOR,
@@ -126,6 +128,7 @@ export function UserForm({ user, onClose }: UserFormProps) {
   
   const handleReset = () => {
     const defaultValues = {
+      customId: user?.customId || `USER-${Date.now()}`,
       name: user?.name || '',
       username: user?.username || '',
       role: user?.role || ROLES.GESTOR,
@@ -147,6 +150,13 @@ export function UserForm({ user, onClose }: UserFormProps) {
       </DialogHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+            <FormField control={form.control} name="customId" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>ID</FormLabel>
+                    <FormControl><Input {...field} readOnly disabled className="font-mono bg-muted/50" /></FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
             <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Nombre Completo</FormLabel>

@@ -29,6 +29,7 @@ export type UserStatus = (typeof USER_STATUS)[keyof typeof USER_STATUS];
 
 export type User = {
   id: string; // Firebase Auth UID
+  customId?: string; // Custom, human-readable ID
   name: string;
   username: string;
   role: Role;

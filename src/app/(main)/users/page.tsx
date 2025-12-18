@@ -306,6 +306,7 @@ export default function UsersPage() {
             <Table>
                 <TableHeader>
                 <TableRow>
+                    <TableHead>ID de Usuario</TableHead>
                     <TableHead>Nombre</TableHead>
                     <TableHead>Usuario</TableHead>
                     <TableHead>Rol</TableHead>
@@ -317,6 +318,7 @@ export default function UsersPage() {
                 <TableBody>
                 {paginatedUsers.map((userItem) => (
                     <TableRow key={userItem.id} className="hover:bg-muted/60">
+                    <TableCell className="py-2 px-4 font-mono">{userItem.customId || '-'}</TableCell>
                     <TableCell className="py-2 px-4 font-medium">{userItem.name}</TableCell>
                     <TableCell className="py-2 px-4">{userItem.username}</TableCell>
                     <TableCell className="py-2 px-4">{userItem.role}</TableCell>

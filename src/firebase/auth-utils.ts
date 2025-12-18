@@ -57,6 +57,7 @@ export async function addMultipleUsers(
       // 2. If creation is successful, save their profile to Firestore.
       const userProfile: User = {
         id: userCredential.user.uid,
+        customId: newUser.customId,
         name: newUser.name,
         username: newUser.username,
         role: newUser.role,
